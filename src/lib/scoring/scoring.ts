@@ -159,5 +159,7 @@ export function calculateGroupLeaderboard(
 }
 
 function sumScores(picks: EntryWithDetails["picks"]) {
+  if (picks.length === 0) return null;
+  if (picks.every((pick) => pick.tournamentGolfer.totalScore === null)) return null;
   return picks.reduce((total, pick) => total + (pick.tournamentGolfer.totalScore ?? 0), 0);
 }

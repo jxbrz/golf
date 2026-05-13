@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
+import { requireCurrentUser } from "@/lib/auth";
 import { getTournamentGolferScorecard } from "@/lib/mock-data/store";
 import { formatDateTime, formatScore } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ export default async function GolferScorecardPage({
   params: Promise<{ id: string; golferId: string }>;
 }) {
   const { id, golferId } = await params;
+  await requireCurrentUser();
   const data = getTournamentGolferScorecard(id, golferId);
   if (!data) notFound();
 
@@ -23,10 +25,10 @@ export default async function GolferScorecardPage({
       <AppShell tournament={tournament}>
         <main className="space-y-4">
           <Link
-            href={`/tournaments/${tournament.id}/leaderboard`}
+            href={`/tournaments/${tournament.id}/players`}
             className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-bold text-primary"
           >
-            <ArrowLeft size={16} /> Leaderboard
+            <ArrowLeft size={16} /> Field leaderboard
           </Link>
 
           <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">

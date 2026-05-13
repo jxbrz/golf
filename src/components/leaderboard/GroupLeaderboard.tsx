@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ClipboardList } from "lucide-react";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import { PlayerScoreRow } from "@/components/leaderboard/PlayerScoreRow";
 import type { LeaderboardRow, Tournament } from "@/lib/types";
-import { formatScore } from "@/lib/utils";
+import { formatScoreOrLabel } from "@/lib/utils";
 
 export function GroupLeaderboard({
   rows,
@@ -11,23 +11,33 @@ export function GroupLeaderboard({
   preview = false,
   currentUserId,
   revealAll = false,
+  title = "Player leaderboard",
 }: {
   rows: LeaderboardRow[];
   tournament: Tournament;
   preview?: boolean;
   currentUserId?: string;
   revealAll?: boolean;
+  title?: string;
 }) {
   const visibleRows = preview ? rows.slice(0, 4) : rows;
   const picksRevealed =
     new Date() > new Date(tournament.pickDeadline) ||
     !["draft", "picks_open"].includes(tournament.status);
+  const scoreText = (row: LeaderboardRow) => {
+    if (!picksRevealed && !revealAll && row.entry.userId !== currentUserId) {
+      return "Picks hidden";
+    }
+    if (row.status === "drop_required") return "Needs drop";
+    if (row.status === "eliminated") return "Out";
+    return formatScoreOrLabel(row.score, "Not started");
+  };
 
   return (
-    <section className="rounded-lg border border-border bg-surface scorecard-shadow">
-      <div className="flex items-center justify-between gap-3 border-b border-border p-4">
+    <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-white p-4">
         <div>
-          <h2 className="text-lg font-bold">Group leaderboard</h2>
+          <h2 className="text-xl font-black">{title}</h2>
           <p className="text-sm text-muted">
             {["drop_open", "round_3", "round_4", "final"].includes(tournament.status)
               ? "Counting 3 players after the cut"
@@ -44,20 +54,39 @@ export function GroupLeaderboard({
         ) : null}
       </div>
       <div className="divide-y divide-border">
+        {visibleRows.length === 0 ? (
+          <div className="p-6 text-center">
+            <ClipboardList className="mx-auto text-muted" size={34} />
+            <h3 className="mt-3 text-lg font-black">No teams submitted yet</h3>
+            <p className="mt-1 text-sm text-muted">
+              Once players submit their 4 golfers, the leaderboard will appear here.
+            </p>
+          </div>
+        ) : null}
         {visibleRows.map((row) => (
-          <details key={row.entry.id} className="group">
-            <summary className="grid cursor-pointer list-none grid-cols-[2rem_1fr_auto_1.5rem] items-center gap-2 p-4">
-              <span className="font-mono text-lg font-bold text-primary">{row.rank}</span>
+          <details
+            key={row.entry.id}
+            className={row.entry.userId === currentUserId ? "group bg-emerald-50/55" : "group"}
+          >
+            <summary className="grid cursor-pointer list-none grid-cols-[2.75rem_1fr_auto_1.5rem] items-center gap-2 p-4">
+              <span className="flex size-10 items-center justify-center rounded-md border border-border bg-white font-mono text-lg font-black text-primary">
+                {row.rank}
+              </span>
               <span>
-                <span className="block font-bold">{row.entry.user.name}</span>
+                <span className="block text-lg font-black leading-tight">
+                  {row.entry.user.name}
+                  {row.entry.userId === currentUserId ? (
+                    <span className="ml-2 align-middle text-xs font-black uppercase text-emerald-800">
+                      You
+                    </span>
+                  ) : null}
+                </span>
                 <span className="mt-1 block">
                   <CutStatusBadge status={row.needsDrop ? "drop_required" : row.status} />
                 </span>
               </span>
-              <span className="font-mono text-xl font-bold">
-                {picksRevealed || revealAll || row.entry.userId === currentUserId
-                  ? formatScore(row.score)
-                  : "Locked"}
+              <span className="font-mono text-2xl font-black tabular-nums">
+                {scoreText(row)}
               </span>
               <ChevronDown className="text-muted transition group-open:rotate-180" size={18} />
             </summary>

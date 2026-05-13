@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { ClipboardList, Flag, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
+import { requireAdminUser } from "@/lib/auth";
 import { getActiveTournament, getStore } from "@/lib/mock-data/store";
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  await requireAdminUser();
   const active = getActiveTournament();
   const store = getStore();
 
@@ -32,11 +35,28 @@ export default function AdminPage() {
               </Link>
             ))}
           </div>
-          <section className="rounded-lg border border-dashed border-border bg-surface p-4">
-            <h2 className="text-xl font-black">Create tournament</h2>
-            <p className="mt-1 text-muted">
-              The v1 scaffold is ready for creation forms. The seeded U.S. Open tournament is active now.
-            </p>
+          <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+            <h2 className="text-xl font-black">Quick tasks</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <Link
+                href={`/admin/tournaments/${active.id}/entries`}
+                className="rounded-lg border border-border p-4 font-black text-primary"
+              >
+                <ClipboardList className="mb-2" /> Entries
+              </Link>
+              <Link
+                href={`/admin/tournaments/${active.id}/scores`}
+                className="rounded-lg border border-border p-4 font-black text-primary"
+              >
+                <Flag className="mb-2" /> Scores
+              </Link>
+              <Link
+                href={`/tournaments/${active.id}/results`}
+                className="rounded-lg border border-border p-4 font-black text-primary"
+              >
+                <Trophy className="mb-2" /> Final Results
+              </Link>
+            </div>
           </section>
         </main>
       </AppShell>

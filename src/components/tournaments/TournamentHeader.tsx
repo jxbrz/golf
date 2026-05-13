@@ -5,7 +5,13 @@ import { majorThemes } from "@/lib/theme/major-themes";
 import type { Tournament } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
-export function TournamentHeader({ tournament }: { tournament: Tournament }) {
+export function TournamentHeader({
+  tournament,
+  entrySubmitted = false,
+}: {
+  tournament: Tournament;
+  entrySubmitted?: boolean;
+}) {
   const theme = majorThemes[tournament.majorKey];
   return (
     <section className="mb-4 overflow-hidden rounded-lg bg-primary text-white scorecard-shadow">
@@ -27,9 +33,28 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
       </div>
       <div className="flex flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
         <CutStatusBadge status={tournament.status === "drop_open" ? "needs_drop" : "active"} />
-        <Link href={`/tournaments/${tournament.id}/pick`} className="rounded-md bg-white px-3 py-2 text-sm font-bold text-primary">
-          Pick Team
-        </Link>
+        {tournament.status === "final" ? (
+          <Link
+            href={`/tournaments/${tournament.id}/results`}
+            className="rounded-md bg-white px-3 py-2 text-sm font-bold text-primary"
+          >
+            Final Results
+          </Link>
+        ) : entrySubmitted ? (
+          <Link
+            href={`/tournaments/${tournament.id}/pick`}
+            className="rounded-md bg-white px-3 py-2 text-sm font-bold text-primary"
+          >
+            View Team
+          </Link>
+        ) : (
+          <Link
+            href={`/tournaments/${tournament.id}/pick`}
+            className="rounded-md bg-white px-3 py-2 text-sm font-bold text-primary"
+          >
+            Pick Team
+          </Link>
+        )}
         <Link href={`/tournaments/${tournament.id}/leaderboard`} className="rounded-md border border-white/25 px-3 py-2 text-sm font-bold text-white">
           Live Leaderboard
         </Link>

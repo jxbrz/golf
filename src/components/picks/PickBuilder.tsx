@@ -1,25 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Search } from "lucide-react";
 import { submitEntryAction } from "@/app/actions";
 import { BudgetBar } from "@/components/picks/BudgetBar";
+import { FloatingBudgetBar } from "@/components/picks/FloatingBudgetBar";
 import type { TournamentGolfer } from "@/lib/types";
 import { cn, formatScore } from "@/lib/utils";
 
 export function PickBuilder({
   tournamentId,
-  userId,
   golfers,
   locked,
 }: {
   tournamentId: string;
-  userId: string;
   golfers: Array<TournamentGolfer & { golfer: { name: string; country: string | null } }>;
   locked: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [summaryVisible, setSummaryVisible] = useState(false);
+  const summaryRef = useRef<HTMLElement | null>(null);
   const selectedGolfers = golfers.filter((golfer) => selected.includes(golfer.id));
   const used = selectedGolfers.reduce((total, golfer) => total + golfer.pointValue, 0);
   const filtered = useMemo(
@@ -30,6 +31,20 @@ export function PickBuilder({
     [golfers, query],
   );
   const valid = selected.length === 4 && used <= 90 && !locked;
+  const showFloatingBudget = !locked && selected.length > 0 && !summaryVisible;
+
+  useEffect(() => {
+    const element = summaryRef.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setSummaryVisible(entry.isIntersecting),
+      { threshold: 0.25 },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   function toggle(id: string) {
     if (locked) return;
@@ -44,6 +59,7 @@ export function PickBuilder({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
+      <FloatingBudgetBar used={used} visible={showFloatingBudget} />
       <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
         <label className="mb-3 flex h-12 items-center gap-2 rounded-md border border-border bg-white px-3">
           <Search size={20} className="text-muted" />
@@ -65,15 +81,22 @@ export function PickBuilder({
                 onClick={() => toggle(golfer.id)}
                 disabled={locked || unaffordable || (!chosen && selected.length === 4)}
                 className={cn(
-                  "grid w-full grid-cols-[1fr_auto] gap-3 py-3 text-left",
-                  chosen && "text-primary",
+                  "grid w-full grid-cols-[1fr_auto] gap-3 rounded-md px-2 py-3 text-left transition",
+                  chosen &&
+                    "border border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-500/25",
                   unaffordable && "opacity-45",
                 )}
               >
                 <span>
-                  <span className="block text-base font-bold">{golfer.golfer.name}</span>
+                  <span className="flex items-center gap-2 text-base font-bold">
+                    {chosen ? <CheckCircle2 size={18} className="text-emerald-700" /> : null}
+                    {golfer.golfer.name}
+                  </span>
                   <span className="mt-1 block text-sm text-muted">
-                    {golfer.position ?? "-"} · {formatScore(golfer.totalScore)} · {golfer.golfer.country}
+                    {golfer.totalScore === null
+                      ? "Not started"
+                      : `${golfer.position ?? "-"} - ${formatScore(golfer.totalScore)}`}{" "}
+                    - {golfer.golfer.country}
                   </span>
                 </span>
                 <span className="flex size-11 items-center justify-center rounded-md border border-border font-mono text-lg font-black">
@@ -85,7 +108,10 @@ export function PickBuilder({
         </div>
       </section>
 
-      <aside className="rounded-lg border border-border bg-surface p-4 scorecard-shadow lg:sticky lg:top-4 lg:self-start">
+      <aside
+        ref={summaryRef}
+        className="rounded-lg border border-border bg-surface p-4 scorecard-shadow lg:sticky lg:top-4 lg:self-start"
+      >
         <h2 className="text-xl font-black">Selected team</h2>
         <p className="mb-4 mt-1 text-sm text-muted">Pick 4 golfers. Submitted teams are locked.</p>
         <BudgetBar used={used} />
@@ -103,7 +129,6 @@ export function PickBuilder({
         </div>
         <form action={submitEntryAction}>
           <input type="hidden" name="tournamentId" value={tournamentId} />
-          <input type="hidden" name="userId" value={userId} />
           <input type="hidden" name="pickIds" value={selected.join(",")} />
           <button
             disabled={!valid}

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import type { EntryWithDetails, TournamentGolfer } from "@/lib/types";
-import { formatScore } from "@/lib/utils";
+import { formatScore, formatScoreOrLabel } from "@/lib/utils";
 
 export function PlayerScoreRow({
   pick,
@@ -28,11 +28,14 @@ export function PlayerScoreRow({
           {pick?.isCounting ? <CutStatusBadge status="made_cut" /> : null}
         </div>
         <p className="mt-1 text-sm text-muted">
-          {row.position ?? "-"} · Today {formatScore(row.todayScore)} · {row.thru ?? "-"}
+          {row.position ?? "Not started"} · Today {formatScore(row.todayScore)} ·{" "}
+          {row.thru ?? "-"}
         </p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-xl font-bold">{formatScore(row.totalScore)}</p>
+        <p className="font-mono text-xl font-bold">
+          {formatScoreOrLabel(row.totalScore, "Not started")}
+        </p>
         <div className="mt-1">
           <CutStatusBadge status={madeCut ? "made_cut" : row.status} />
         </div>

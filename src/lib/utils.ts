@@ -10,6 +10,14 @@ export function formatScore(score: number | null | undefined) {
   return score > 0 ? `+${score}` : `${score}`;
 }
 
+export function formatScoreOrLabel(
+  score: number | null | undefined,
+  emptyLabel = "Not started",
+) {
+  if (score === null || score === undefined) return emptyLabel;
+  return formatScore(score);
+}
+
 export function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",

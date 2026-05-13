@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { AdminScoreEditor } from "@/components/admin/AdminScoreEditor";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { getCurrentUser, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
+import { requireAdminUser } from "@/lib/auth";
+import { getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
 
 export default async function AdminScoresPage({
   params,
@@ -13,8 +13,7 @@ export default async function AdminScoresPage({
   const { id } = await params;
   const tournament = getTournament(id);
   if (!tournament) notFound();
-  const cookieStore = await cookies();
-  const user = getCurrentUser(cookieStore.get("mockUserId")?.value);
+  const user = await requireAdminUser();
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>

@@ -106,6 +106,16 @@ export type EntryPick = {
   updatedAt: string;
 };
 
+export type AdminTeamCorrection = {
+  id: string;
+  entryId: string;
+  oldPickIds: string;
+  newPickIds: string;
+  reason: string;
+  createdByUserId: string;
+  createdAt: string;
+};
+
 export type LeaderboardPlayer = {
   providerPlayerId: string;
   name: string;
@@ -135,4 +145,16 @@ export type LeaderboardRow = {
   status: EntryStatus;
   madeCutCount: number;
   needsDrop: boolean;
+};
+
+export type AdminEntryRow = {
+  user: User;
+  entry: EntryWithDetails | null;
+};
+
+export type LowestRoundSummary = {
+  scoreToPar: number | null;
+  roundNumber: number | null;
+  golfers: Array<TournamentGolfer & { golfer: Golfer }>;
+  pickedBy: User[];
 };
