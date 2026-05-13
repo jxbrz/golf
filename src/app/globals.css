@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f7;
+  --foreground: #111827;
+  --surface: #ffffff;
+  --primary: #0a3161;
+  --secondary: #b31942;
+  --accent: #1e293b;
+  --muted: #64748b;
+  --border: #d9dee6;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.scorecard-shadow {
+  box-shadow: 0 10px 30px rgb(15 23 42 / 0.08);
+}

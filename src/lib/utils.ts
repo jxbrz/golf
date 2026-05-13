@@ -1,0 +1,24 @@
+import { clsx, type ClassValue } from "clsx";
+
+export function cn(...values: ClassValue[]) {
+  return clsx(values);
+}
+
+export function formatScore(score: number | null | undefined) {
+  if (score === null || score === undefined) return "-";
+  if (score === 0) return "E";
+  return score > 0 ? `+${score}` : `${score}`;
+}
+
+export function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
+}
+
+export function nowIso() {
+  return new Date().toISOString();
+}
