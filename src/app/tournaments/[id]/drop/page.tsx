@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { DropPlayerForm } from "@/components/drop/DropPlayerForm";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
@@ -10,6 +10,9 @@ export default async function DropPage({ params }: { params: Promise<{ id: strin
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const user = await requireCurrentUser();
+  if (tournament.status === "final" && user.role !== "admin") {
+    redirect(`/tournaments/${tournament.id}/results`);
+  }
   const entry = getEntry(tournament.id, user.id);
 
   return (
@@ -19,8 +22,10 @@ export default async function DropPage({ params }: { params: Promise<{ id: strin
           <DropPlayerForm entry={entry} tournament={tournament} />
         ) : (
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-            <h1 className="text-2xl font-black">No drop needed</h1>
-            <p className="mt-1 text-muted">This entry does not currently need to drop a player.</p>
+            <h1 className="text-2xl font-black">No manual drop needed</h1>
+            <p className="mt-1 text-muted">
+              The standings now count the best 3 available scores automatically.
+            </p>
           </section>
         )}
       </AppShell>

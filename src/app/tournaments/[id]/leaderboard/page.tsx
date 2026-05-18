@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
@@ -11,13 +11,16 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const user = await requireCurrentUser();
+  if (tournament.status === "final" && user.role !== "admin") {
+    redirect(`/tournaments/${tournament.id}/results`);
+  }
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament}>
         <main className="space-y-4">
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-            <h1 className="text-3xl font-black">Group standings</h1>
+            <h1 className="text-3xl font-black">Current standings</h1>
             <p className="mt-1 text-muted">Your friends from first place to last place. Tap a name to see the full team.</p>
             <Link
               href={`/tournaments/${tournament.id}/players`}
@@ -31,7 +34,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
             tournament={tournament}
             currentUserId={user.id}
             revealAll={user.role === "admin"}
-            title="Player standings"
+            title="Current standings"
           />
         </main>
       </AppShell>

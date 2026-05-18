@@ -83,7 +83,7 @@ export const tournamentGolfers = pgTable("tournament_golfers", {
   id: uuid("id").primaryKey().defaultRandom(),
   tournamentId: uuid("tournament_id").notNull().references(() => tournaments.id),
   golferId: uuid("golfer_id").notNull().references(() => golfers.id),
-  pointValue: integer("point_value").notNull(),
+  pointValue: integer("point_value"),
   position: text("position"),
   totalScore: integer("total_score"),
   todayScore: integer("today_score"),
@@ -104,6 +104,7 @@ export const golferRoundScores = pgTable("golfer_round_scores", {
   scoreToPar: integer("score_to_par"),
   strokes: integer("strokes"),
   thru: text("thru"),
+  holeScores: text("hole_scores"),
   status: golferStatusEnum("status").notNull().default("active"),
   ...timestamps,
 });

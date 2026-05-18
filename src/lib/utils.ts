@@ -18,6 +18,10 @@ export function formatScoreOrLabel(
   return formatScore(score);
 }
 
+export function formatCost(cost: number | null | undefined) {
+  return cost === null || cost === undefined ? "N/A" : String(cost);
+}
+
 export function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en-GB", {
     day: "2-digit",

@@ -57,7 +57,7 @@ export type TournamentGolfer = {
   id: string;
   tournamentId: string;
   golferId: string;
-  pointValue: number;
+  pointValue: number | null;
   position: string | null;
   totalScore: number | null;
   todayScore: number | null;
@@ -77,6 +77,7 @@ export type GolferRoundScore = {
   scoreToPar: number | null;
   strokes: number | null;
   thru: string | null;
+  holeScores?: number[] | null;
   status: GolferStatus;
   createdAt: string;
   updatedAt: string;
@@ -127,6 +128,30 @@ export type LeaderboardPlayer = {
   madeCut: boolean | null;
   status: GolferStatus;
   lastUpdated: string;
+  rounds?: Array<{
+    roundNumber: 1 | 2 | 3 | 4;
+    scoreToPar: number | null;
+    strokes: number | null;
+    thru: string | null;
+    status: GolferStatus;
+  }>;
+};
+
+export type ProviderLeaderboard = {
+  players: LeaderboardPlayer[];
+  roundId: number | null;
+  status: string | null;
+  roundStatus: string | null;
+  cutScore: number | null;
+  lastUpdated: string | null;
+};
+
+export type ProviderRoundScorecard = {
+  roundNumber: 1 | 2 | 3 | 4;
+  scoreToPar: number | null;
+  strokes: number | null;
+  thru: string | null;
+  holeScores: number[] | null;
 };
 
 export type EntryWithDetails = Entry & {
@@ -157,4 +182,5 @@ export type LowestRoundSummary = {
   roundNumber: number | null;
   golfers: Array<TournamentGolfer & { golfer: Golfer }>;
   pickedBy: User[];
+  countback: "b3" | "b6" | "b9" | "b18" | null;
 };

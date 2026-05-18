@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
@@ -12,6 +12,9 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const user = await requireCurrentUser();
+  if (tournament.status === "final" && user.role !== "admin") {
+    redirect(`/tournaments/${tournament.id}/results`);
+  }
   const entry = getEntry(tournament.id, user.id);
   const locked = Boolean(entry?.submittedAt) || !canSubmitPicks(tournament);
 
@@ -42,7 +45,7 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
                   href={`/tournaments/${tournament.id}/leaderboard`}
                   className="mt-4 flex h-12 items-center justify-center rounded-md bg-primary px-4 font-black text-white"
                 >
-                  View Player Standings
+                  View Current Standings
                 </Link>
               </section>
             </div>

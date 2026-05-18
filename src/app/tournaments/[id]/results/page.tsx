@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Medal, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
+import { PlayerScoreRow } from "@/components/leaderboard/PlayerScoreRow";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
+import { requireCurrentUser } from "@/lib/auth";
 import {
   getLeaderboard,
   getLowestRoundSummary,
@@ -21,18 +23,25 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const tournament = getTournament(id);
   if (!tournament) notFound();
+  if (tournament.status !== "final") redirect(`/tournaments/${tournament.id}/leaderboard`);
+  const user = await requireCurrentUser();
   const rows = getLeaderboard(tournament.id);
   const lowestRound = getLowestRoundSummary(tournament.id);
+  const backHref =
+    user.role === "admin"
+      ? `/tournaments/${tournament.id}/leaderboard`
+      : `/tournaments/${tournament.id}/players`;
+  const backLabel = user.role === "admin" ? "Current Standings" : "Field Results";
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament}>
         <main className="space-y-4">
           <Link
-            href={`/tournaments/${tournament.id}/leaderboard`}
+            href={backHref}
             className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-2 text-sm font-bold text-primary"
           >
-            <ArrowLeft size={16} /> Leaderboard
+            <ArrowLeft size={16} /> {backLabel}
           </Link>
 
           <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
@@ -44,9 +53,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                 {tournament.name} {tournament.year}
               </h1>
               <p className="mt-2 text-white/85">
-                {tournament.status === "final"
-                  ? "Tournament complete"
-                  : "Results preview - finalise tournament when play is complete"}
+                Tournament complete
               </p>
             </div>
           </section>
@@ -59,13 +66,16 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               <div>
                 <h2 className="text-xl font-black">Lowest round</h2>
                 {lowestRound.scoreToPar === null ? (
-                  <p className="mt-1 text-muted">No round scores have been recorded yet.</p>
+                  <p className="mt-1 text-muted">No picked golfer round scores have been recorded yet.</p>
                 ) : (
                   <>
                     <p className="mt-1 text-lg font-bold">
                       {lowestRound.golfers.map((golfer) => golfer.golfer.name).join(", ")} shot{" "}
                       {formatScoreOrLabel(lowestRound.scoreToPar)} in round{" "}
-                      {lowestRound.roundNumber}.
+                      {lowestRound.roundNumber}
+                      {lowestRound.countback
+                        ? `, winning on ${lowestRound.countback.toUpperCase()} countback.`
+                        : "."}
                     </p>
                     <p className="mt-2 text-sm text-muted">
                       {lowestRound.pickedBy.length
@@ -85,27 +95,36 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             </div>
             <div className="divide-y divide-border">
               {rows.map((row) => (
-                <div
+                <details
                   key={row.entry.id}
-                  className="grid grid-cols-[3.25rem_1fr_auto] items-center gap-3 p-4"
+                  className="group"
                 >
-                  <span
-                    className={`flex size-11 items-center justify-center rounded-md border text-lg font-black ${
-                      podiumStyles[row.rank] ?? "border-border bg-slate-50 text-primary"
-                    }`}
-                  >
-                    {row.rank <= 3 ? <Medal size={22} /> : row.rank}
-                  </span>
-                  <span>
-                    <span className="block text-lg font-black">{row.entry.user.name}</span>
-                    <span className="mt-1 block">
-                      <CutStatusBadge status={row.status} />
+                  <summary className="grid cursor-pointer list-none grid-cols-[3.25rem_1fr_auto] items-center gap-3 p-4 transition hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                    <span
+                      className={`flex size-11 items-center justify-center rounded-md border text-lg font-black ${
+                        podiumStyles[row.rank] ?? "border-border bg-slate-50 text-primary"
+                      }`}
+                    >
+                      {row.rank <= 3 ? <Medal size={22} /> : row.rank}
                     </span>
-                  </span>
-                  <span className="font-mono text-2xl font-black">
-                    {formatScoreOrLabel(row.score, "-")}
-                  </span>
-                </div>
+                    <span>
+                      <span className="block text-lg font-black">{row.entry.user.name}</span>
+                      <span className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+                        <CutStatusBadge status={row.status} />
+                        <span className="font-bold text-primary group-open:hidden">Show team</span>
+                        <span className="hidden font-bold text-primary group-open:inline">Hide team</span>
+                      </span>
+                    </span>
+                    <span className="font-mono text-2xl font-black">
+                      {formatScoreOrLabel(row.score, "-")}
+                    </span>
+                  </summary>
+                  <div className="border-t border-border bg-slate-50 px-4 py-2">
+                    {row.entry.picks.map((pick) => (
+                      <PlayerScoreRow key={pick.id} pick={pick} />
+                    ))}
+                  </div>
+                </details>
               ))}
             </div>
           </section>

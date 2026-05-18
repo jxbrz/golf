@@ -61,7 +61,7 @@ export function DropPlayerForm({
                   </span>
                 </span>
                 <span className="rounded-md border border-border bg-white px-3 py-2 font-mono font-black">
-                  {pick.pointValueAtPick}
+                  {formatScoreOrLabel(pick.tournamentGolfer.totalScore)}
                 </span>
               </button>
             );

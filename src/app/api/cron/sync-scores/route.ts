@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
-import { getActiveTournament, syncMockLeaderboard } from "@/lib/mock-data/store";
+import { getActiveTournament, syncProviderLeaderboard } from "@/lib/mock-data/store";
 
 export async function GET() {
   const tournament = getActiveTournament();
-  syncMockLeaderboard(tournament.id, "mock-cron");
+  const result = await syncProviderLeaderboard(
+    tournament.id,
+    process.env.GOLF_DATA_PROVIDER ?? "mock",
+  );
 
   return NextResponse.json({
-    ok: true,
+    ok: result.ok,
     tournamentId: tournament.id,
-    message: "Scores synced.",
+    message: result.message,
   });
 }

@@ -5,6 +5,8 @@ export const majorThemes: Record<
   MajorKey,
   {
     label: string;
+    shortLabel: string;
+    monogram: string;
     primary: string;
     secondary: string;
     background: string;
@@ -16,6 +18,8 @@ export const majorThemes: Record<
 > = {
   masters: {
     label: "Masters",
+    shortLabel: "Masters",
+    monogram: "M",
     primary: "#006747",
     secondary: "#F2C75C",
     background: "#F6F3EA",
@@ -26,6 +30,8 @@ export const majorThemes: Record<
   },
   pga: {
     label: "PGA Championship",
+    shortLabel: "PGA",
+    monogram: "PGA",
     primary: "#102A43",
     secondary: "#D4AF37",
     background: "#F5F7FA",
@@ -36,6 +42,8 @@ export const majorThemes: Record<
   },
   us_open: {
     label: "U.S. Open",
+    shortLabel: "U.S. Open",
+    monogram: "US",
     primary: "#0A3161",
     secondary: "#B31942",
     background: "#F7F7F7",
@@ -46,6 +54,8 @@ export const majorThemes: Record<
   },
   the_open: {
     label: "The Open",
+    shortLabel: "The Open",
+    monogram: "OPEN",
     primary: "#111827",
     secondary: "#C8A45D",
     background: "#F4EFE6",

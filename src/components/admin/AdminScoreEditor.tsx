@@ -1,6 +1,6 @@
 import { updateGolferScoreAction } from "@/app/actions";
 import type { TournamentGolfer, User } from "@/lib/types";
-import { formatScore } from "@/lib/utils";
+import { formatCost, formatScore } from "@/lib/utils";
 
 export function AdminScoreEditor({
   tournamentId,
@@ -29,7 +29,7 @@ export function AdminScoreEditor({
                 </p>
               </div>
               <span className="rounded-md border border-border px-2 py-1 font-mono font-black">
-                {row.pointValue}
+                {formatCost(row.pointValue)}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">

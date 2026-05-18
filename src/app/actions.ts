@@ -5,14 +5,16 @@ import { redirect } from "next/navigation";
 import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
 import {
   advanceWeekendStep,
+  advanceWeekendStepFromProvider,
   adminUpsertEntryPicks,
+  applyOddsPricing,
   dropPlayer,
   finaliseTournament,
   importGolfersFromCsv,
   processCut,
   recalculateTournament,
   submitEntry,
-  syncMockLeaderboard,
+  syncProviderLeaderboard,
   updateGolferScore,
   updateTournamentStatus,
 } from "@/lib/mock-data/store";
@@ -106,15 +108,28 @@ export async function importGolfersAction(formData: FormData) {
 export async function syncScoresAction(formData: FormData) {
   await requireAdminUser();
   const tournamentId = String(formData.get("tournamentId"));
-  syncMockLeaderboard(tournamentId);
+  await syncProviderLeaderboard(tournamentId);
   revalidatePath(`/admin/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
+  revalidatePath(`/tournaments/${tournamentId}/players`);
+  redirect(`/admin/tournaments/${tournamentId}`);
+}
+
+export async function applyOddsPricingAction(formData: FormData) {
+  await requireAdminUser();
+  const tournamentId = String(formData.get("tournamentId"));
+  const result = await applyOddsPricing(tournamentId);
+  revalidatePath(`/admin/tournaments/${tournamentId}`);
+  revalidatePath(`/admin/tournaments/${tournamentId}/entries`);
+  revalidatePath(`/tournaments/${tournamentId}/pick`);
+  redirect(`/admin/tournaments/${tournamentId}?odds=${result.ok ? "applied" : "error"}`);
 }
 
 export async function advanceWeekendStepAction(formData: FormData) {
   await requireAdminUser();
   const tournamentId = String(formData.get("tournamentId"));
-  advanceWeekendStep(
+  await advanceWeekendStepFromProvider(
     tournamentId,
     String(formData.get("step")) as Parameters<typeof advanceWeekendStep>[1],
   );

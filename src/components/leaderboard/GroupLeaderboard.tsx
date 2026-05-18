@@ -11,7 +11,7 @@ export function GroupLeaderboard({
   preview = false,
   currentUserId,
   revealAll = false,
-  title = "Player leaderboard",
+  title = "Current standings",
 }: {
   rows: LeaderboardRow[];
   tournament: Tournament;
@@ -20,7 +20,7 @@ export function GroupLeaderboard({
   revealAll?: boolean;
   title?: string;
 }) {
-  const visibleRows = preview ? rows.slice(0, 4) : rows;
+  const visibleRows = preview ? rows.slice(0, 3) : rows;
   const picksRevealed =
     new Date() > new Date(tournament.pickDeadline) ||
     !["draft", "picks_open"].includes(tournament.status);
@@ -28,7 +28,7 @@ export function GroupLeaderboard({
     if (!picksRevealed && !revealAll && row.entry.userId !== currentUserId) {
       return "Picks hidden";
     }
-    if (row.status === "drop_required") return "Needs drop";
+    if (row.status === "drop_required") return "Pending";
     if (row.status === "eliminated") return "Out";
     return formatScoreOrLabel(row.score, "Not started");
   };
@@ -40,8 +40,8 @@ export function GroupLeaderboard({
           <h2 className="text-xl font-black">{title}</h2>
           <p className="text-sm text-muted">
             {["drop_open", "round_3", "round_4", "final"].includes(tournament.status)
-              ? "Counting 3 players after the cut"
-              : "Pre-cut live score: all 4 players count"}
+              ? "Best 3 scores count after the cut"
+              : "Best 3 available scores count"}
           </p>
         </div>
         {preview ? (

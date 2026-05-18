@@ -9,6 +9,12 @@ import {
   calculateLiveEntryScore,
   validateEntryPicks,
 } from "@/lib/scoring/scoring";
+import { getGolfDataProvider } from "@/lib/golf-data/providers";
+import {
+  getOddsProvider,
+  normalizeOddsName,
+  type OddsPricingPreview,
+} from "@/lib/odds/providers";
 import type {
   AdminEntryRow,
   AdminTeamCorrection,
@@ -21,6 +27,7 @@ import type {
   LeaderboardPlayer,
   LowestRoundSummary,
   MajorKey,
+  ProviderRoundScorecard,
   Tournament,
   TournamentGolfer,
   TournamentStatus,
@@ -69,37 +76,37 @@ type Store = {
 const globalForStore = globalThis as typeof globalThis & { golfStore?: Store };
 
 const mockCutResults = new Map<string, Partial<TournamentGolfer>>([
-  ["g01", { position: "1", totalScore: -6, todayScore: -2, round: 2, thru: "F", madeCut: true }],
-  ["g02", { position: "T2", totalScore: -4, todayScore: -1, round: 2, thru: "F", madeCut: true }],
-  ["g03", { position: "T4", totalScore: -3, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g04", { position: "T4", totalScore: -3, todayScore: -1, round: 2, thru: "F", madeCut: true }],
-  ["g05", { position: "T6", totalScore: -2, todayScore: 1, round: 2, thru: "F", madeCut: true }],
-  ["g06", { position: "T6", totalScore: -2, todayScore: -2, round: 2, thru: "F", madeCut: true }],
-  ["g07", { position: "T8", totalScore: -1, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g08", { position: "T8", totalScore: -1, todayScore: -1, round: 2, thru: "F", madeCut: true }],
-  ["g09", { position: "T10", totalScore: 0, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g10", { position: "T10", totalScore: 0, todayScore: 1, round: 2, thru: "F", madeCut: true }],
-  ["g11", { position: "T12", totalScore: 1, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g12", { position: "T12", totalScore: 1, todayScore: -1, round: 2, thru: "F", madeCut: true }],
-  ["g13", { position: "T14", totalScore: 2, todayScore: 1, round: 2, thru: "F", madeCut: true }],
-  ["g14", { position: "T14", totalScore: 2, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g15", { position: "T16", totalScore: 3, todayScore: 2, round: 2, thru: "F", madeCut: true }],
-  ["g16", { position: "T16", totalScore: 3, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g17", { position: "T18", totalScore: 4, todayScore: 3, round: 2, thru: "F", madeCut: true }],
-  ["g18", { position: "T18", totalScore: 4, todayScore: 1, round: 2, thru: "F", madeCut: true }],
-  ["g19", { position: "T20", totalScore: 5, todayScore: 2, round: 2, thru: "F", madeCut: true }],
-  ["g20", { position: "T20", totalScore: 5, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g21", { position: "CUT", totalScore: 7, todayScore: 3, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g22", { position: "CUT", totalScore: 8, todayScore: 4, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g23", { position: "CUT", totalScore: 8, todayScore: 2, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g24", { position: "CUT", totalScore: 9, todayScore: 3, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g25", { position: "CUT", totalScore: 10, todayScore: 5, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g30", { position: "CUT", totalScore: 8, todayScore: 2, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g50", { position: "CUT", totalScore: 15, todayScore: 6, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g51", { position: "CUT", totalScore: 14, todayScore: 2, round: 2, thru: "F", madeCut: false, status: "cut" }],
-  ["g53", { position: "T21", totalScore: 5, todayScore: -1, round: 2, thru: "F", madeCut: true }],
-  ["g54", { position: "T21", totalScore: 5, todayScore: 0, round: 2, thru: "F", madeCut: true }],
-  ["g55", { position: "T21", totalScore: 5, todayScore: 1, round: 2, thru: "F", madeCut: true }],
+  ["g01", { position: "1", totalScore: -6, todayScore: -2, round: 2, thru: "18", madeCut: true }],
+  ["g02", { position: "T2", totalScore: -4, todayScore: -1, round: 2, thru: "18", madeCut: true }],
+  ["g03", { position: "T4", totalScore: -3, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g04", { position: "T4", totalScore: -3, todayScore: -1, round: 2, thru: "18", madeCut: true }],
+  ["g05", { position: "T6", totalScore: -2, todayScore: 1, round: 2, thru: "18", madeCut: true }],
+  ["g06", { position: "T6", totalScore: -2, todayScore: -2, round: 2, thru: "18", madeCut: true }],
+  ["g07", { position: "T8", totalScore: -1, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g08", { position: "T8", totalScore: -1, todayScore: -1, round: 2, thru: "18", madeCut: true }],
+  ["g09", { position: "T10", totalScore: 0, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g10", { position: "T10", totalScore: 0, todayScore: 1, round: 2, thru: "18", madeCut: true }],
+  ["g11", { position: "T12", totalScore: 1, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g12", { position: "T12", totalScore: 1, todayScore: -1, round: 2, thru: "18", madeCut: true }],
+  ["g13", { position: "T14", totalScore: 2, todayScore: 1, round: 2, thru: "18", madeCut: true }],
+  ["g14", { position: "T14", totalScore: 2, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g15", { position: "T16", totalScore: 3, todayScore: 2, round: 2, thru: "18", madeCut: true }],
+  ["g16", { position: "T16", totalScore: 3, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g17", { position: "T18", totalScore: 4, todayScore: 3, round: 2, thru: "18", madeCut: true }],
+  ["g18", { position: "T18", totalScore: 4, todayScore: 1, round: 2, thru: "18", madeCut: true }],
+  ["g19", { position: "T20", totalScore: 5, todayScore: 2, round: 2, thru: "18", madeCut: true }],
+  ["g20", { position: "T20", totalScore: 5, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g21", { position: "CUT", totalScore: 7, todayScore: 3, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g22", { position: "CUT", totalScore: 8, todayScore: 4, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g23", { position: "CUT", totalScore: 8, todayScore: 2, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g24", { position: "CUT", totalScore: 9, todayScore: 3, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g25", { position: "CUT", totalScore: 10, todayScore: 5, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g30", { position: "CUT", totalScore: 8, todayScore: 2, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g50", { position: "CUT", totalScore: 15, todayScore: 6, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g51", { position: "CUT", totalScore: 14, todayScore: 2, round: 2, thru: "18", madeCut: false, status: "cut" }],
+  ["g53", { position: "T21", totalScore: 5, todayScore: -1, round: 2, thru: "18", madeCut: true }],
+  ["g54", { position: "T21", totalScore: 5, todayScore: 0, round: 2, thru: "18", madeCut: true }],
+  ["g55", { position: "T21", totalScore: 5, todayScore: 1, round: 2, thru: "18", madeCut: true }],
 ]);
 
 export function getStore() {
@@ -156,11 +163,11 @@ export function getTournamentGolfers(tournamentId: string) {
       ...item,
       golfer: store.golfers.find((golfer) => golfer.id === item.golferId)!,
     }))
-    .sort((a, b) => b.pointValue - a.pointValue || a.golfer.name.localeCompare(b.golfer.name));
+    .sort((a, b) => (b.pointValue ?? -1) - (a.pointValue ?? -1) || a.golfer.name.localeCompare(b.golfer.name));
 }
 
 export function getFieldLeaderboard(tournamentId: string) {
-  return getTournamentGolfers(tournamentId).sort((a, b) => {
+  return getTournamentGolfers(tournamentId).filter((golfer) => golfer.status !== "cut").sort((a, b) => {
     if (a.totalScore === null && b.totalScore !== null) return 1;
     if (b.totalScore === null && a.totalScore !== null) return -1;
     if (a.totalScore !== null && b.totalScore !== null && a.totalScore !== b.totalScore) {
@@ -237,21 +244,113 @@ export function getAdminEntryRows(tournamentId: string): AdminEntryRow[] {
     }));
 }
 
+export function getScoreSyncLogs(tournamentId: string) {
+  return getStore().scoreSyncLogs.filter((log) => log.tournamentId === tournamentId);
+}
+
+export async function getOddsPricingPreview(tournamentId: string): Promise<OddsPricingPreview> {
+  const store = getStore();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
+  const provider = getOddsProvider();
+  const sportKey = provider.sportKeyForMajor(tournament.majorKey);
+
+  try {
+    const runners = await provider.getOutrightOdds(tournament);
+    const golfers = getTournamentGolfers(tournamentId);
+    const rows = runners.slice(0, 55).map((runner, index) => {
+      const matchedGolfer = findTournamentGolferByOddsName(golfers, runner.name);
+      return {
+        rank: index + 1,
+        cost: 55 - index,
+        runnerName: runner.name,
+        averageDecimalOdds: runner.averageDecimalOdds,
+        bookmakerCount: runner.bookmakerCount,
+        matchedTournamentGolferId: matchedGolfer?.id ?? null,
+        matchedGolferName: matchedGolfer?.golfer.name ?? null,
+      };
+    });
+
+    return {
+      provider: process.env.ODDS_DATA_PROVIDER ?? "the-odds-api",
+      sportKey,
+      rows,
+      unmatched: rows.filter((row) => !row.matchedTournamentGolferId),
+      matchedCount: rows.filter((row) => row.matchedTournamentGolferId).length,
+      generatedAt: nowIso(),
+    };
+  } catch (error) {
+    return {
+      provider: process.env.ODDS_DATA_PROVIDER ?? "the-odds-api",
+      sportKey,
+      rows: [],
+      unmatched: [],
+      matchedCount: 0,
+      generatedAt: nowIso(),
+      error: error instanceof Error ? error.message : "Unknown odds import error.",
+    };
+  }
+}
+
+export async function applyOddsPricing(tournamentId: string) {
+  const store = getStore();
+  const preview = await getOddsPricingPreview(tournamentId);
+  if (preview.error) {
+    return { ok: false, message: preview.error };
+  }
+
+  for (const golfer of store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId)) {
+    golfer.pointValue = null;
+    golfer.updatedAt = nowIso();
+  }
+
+  let updated = 0;
+  for (const row of preview.rows) {
+    if (!row.matchedTournamentGolferId) continue;
+    const golfer = store.tournamentGolfers.find((item) => item.id === row.matchedTournamentGolferId);
+    if (!golfer) continue;
+    golfer.pointValue = row.cost;
+    golfer.updatedAt = nowIso();
+    updated += 1;
+  }
+
+  return {
+    ok: true,
+    message: `Applied odds pricing to ${updated} golfers. ${preview.unmatched.length} top-55 odds runners were unmatched.`,
+  };
+}
+
 export function getLowestRoundSummary(tournamentId: string): LowestRoundSummary {
   const store = getStore();
   const golferLookup = getTournamentGolfers(tournamentId);
+  const pickedGolferIds = new Set(
+    store.entryPicks
+      .filter((pick) =>
+        store.entries.some((entry) => entry.id === pick.entryId && entry.tournamentId === tournamentId),
+      )
+      .map((pick) => pick.tournamentGolferId),
+  );
   const rounds = store.golferRoundScores
     .filter((round) => round.scoreToPar !== null)
+    .filter((round) => pickedGolferIds.has(round.tournamentGolferId))
     .filter((round) =>
       golferLookup.some((tournamentGolfer) => tournamentGolfer.id === round.tournamentGolferId),
     );
 
   if (rounds.length === 0) {
-    return { scoreToPar: null, roundNumber: null, golfers: [], pickedBy: [] };
+    return { scoreToPar: null, roundNumber: null, golfers: [], pickedBy: [], countback: null };
   }
 
-  const bestScore = Math.min(...rounds.map((round) => round.scoreToPar!));
-  const bestRounds = rounds.filter((round) => round.scoreToPar === bestScore);
+  const sortedRounds = [...rounds].sort((a, b) => {
+    if (a.scoreToPar !== b.scoreToPar) return a.scoreToPar! - b.scoreToPar!;
+    const countback = compareCountback(a.holeScores, b.holeScores);
+    if (countback !== 0) return countback;
+    return golferNameForRound(golferLookup, a).localeCompare(golferNameForRound(golferLookup, b));
+  });
+  const bestRound = sortedRounds[0];
+  const bestScore = bestRound.scoreToPar!;
+  const bestRounds = sortedRounds.filter(
+    (round) => round.scoreToPar === bestScore && compareCountback(round.holeScores, bestRound.holeScores) === 0,
+  );
   const bestGolferIds = new Set(bestRounds.map((round) => round.tournamentGolferId));
   const golfers = golferLookup.filter((golfer) => bestGolferIds.has(golfer.id));
   const pickedUserIds = new Set(
@@ -263,9 +362,10 @@ export function getLowestRoundSummary(tournamentId: string): LowestRoundSummary 
 
   return {
     scoreToPar: bestScore,
-    roundNumber: bestRounds[0]?.roundNumber ?? null,
+    roundNumber: bestRound.roundNumber ?? null,
     golfers,
     pickedBy: store.users.filter((user) => pickedUserIds.has(user.id)),
+    countback: bestRounds.length === 1 ? countbackWinnerLabel(rounds, bestRound) : null,
   };
 }
 
@@ -287,6 +387,9 @@ export function submitEntry(tournamentId: string, userId: string, tournamentGolf
   const golfers = tournamentGolferIds.map((id) =>
     mustFind(store.tournamentGolfers, id, "Tournament golfer"),
   );
+  if (golfers.some((golfer) => golfer.pointValue === null)) {
+    return { ok: false, message: "Every picked golfer must have a sweepstake cost." };
+  }
   const validation = validateEntryPicks(
     golfers.map((golfer) => ({ id: golfer.id, pointValue: golfer.pointValue })),
   );
@@ -325,7 +428,7 @@ export function submitEntry(tournamentId: string, userId: string, tournamentGolf
       id: id("pick"),
       entryId: entry.id,
       tournamentGolferId: golfer.id,
-      pointValueAtPick: golfer.pointValue,
+      pointValueAtPick: golfer.pointValue!,
       isDropped: false,
       isCounting: false,
       createdAt: timestamp,
@@ -349,6 +452,9 @@ export function adminUpsertEntryPicks(input: {
   const golfers = input.tournamentGolferIds.map((id) =>
     mustFind(store.tournamentGolfers, id, "Tournament golfer"),
   );
+  if (golfers.some((golfer) => golfer.pointValue === null)) {
+    return { ok: false, message: "Every picked golfer must have a sweepstake cost." };
+  }
   const validation = validateEntryPicks(
     golfers.map((golfer) => ({ id: golfer.id, pointValue: golfer.pointValue })),
   );
@@ -393,7 +499,7 @@ export function adminUpsertEntryPicks(input: {
       id: id("pick"),
       entryId: entry!.id,
       tournamentGolferId: golfer.id,
-      pointValueAtPick: golfer.pointValue,
+      pointValueAtPick: golfer.pointValue!,
       isDropped: false,
       isCounting: false,
       createdAt: timestamp,
@@ -420,10 +526,6 @@ export function dropPlayer(entryId: string, pickId: string) {
 
   if (!["drop_open", "round_3", "round_4"].includes(tournament.status)) {
     return { ok: false, message: "The drop window is not open." };
-  }
-
-  if (new Date() > new Date(tournament.dropDeadline)) {
-    return { ok: false, message: "The drop deadline has passed." };
   }
 
   const picks = store.entryPicks.filter((pick) => pick.entryId === entryId);
@@ -454,6 +556,34 @@ export function processCut(tournamentId: string) {
   const tournament = mustFind(getStore().tournaments, tournamentId, "Tournament");
   tournament.status = "drop_open";
   tournament.updatedAt = nowIso();
+  recalculateTournament(tournamentId, true);
+}
+
+export function processCutFromSyncedScores(tournamentId: string) {
+  const store = getStore();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
+  const cutScore = latestCutScore(store, tournamentId);
+  const timestamp = nowIso();
+
+  for (const golfer of store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId)) {
+    if (golfer.status === "wd" || golfer.status === "dq") {
+      golfer.madeCut = false;
+    } else if (golfer.status === "cut" || golfer.position === "CUT") {
+      golfer.status = "cut";
+      golfer.madeCut = false;
+    } else if (golfer.totalScore !== null && cutScore !== null) {
+      golfer.madeCut = golfer.totalScore <= cutScore;
+      if (!golfer.madeCut) {
+        golfer.status = "cut";
+      }
+    } else {
+      golfer.madeCut = golfer.totalScore !== null;
+    }
+    golfer.updatedAt = timestamp;
+  }
+
+  tournament.status = "drop_open";
+  tournament.updatedAt = timestamp;
   recalculateTournament(tournamentId, true);
 }
 
@@ -580,6 +710,170 @@ export function syncMockLeaderboard(tournamentId: string, provider = "mock") {
   recalculateTournament(tournamentId);
 }
 
+export async function syncProviderLeaderboard(
+  tournamentId: string,
+  provider = process.env.GOLF_DATA_PROVIDER ?? "mock",
+  options?: { roundId?: string; applyCut?: boolean },
+) {
+  const store = getStore();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
+  const timestamp = nowIso();
+  if (provider === "mock" || provider === "manual") {
+    syncMockLeaderboard(tournamentId, provider);
+    return { ok: true, message: "Mock scores synced." };
+  }
+
+  try {
+    const dataProvider = getGolfDataProvider(provider);
+    const leaderboard = await dataProvider.getTournamentLeaderboard(tournament, options);
+    const rows = leaderboard.players;
+    let matched = 0;
+    let scorecards = 0;
+    const pickedProviderPlayerIds = pickedProviderIdsForTournament(store, tournamentId);
+
+    for (const row of rows) {
+      const golfer = findOrCreateTournamentGolferForProviderRow(store, tournamentId, row);
+
+      golfer.position = row.position;
+      golfer.totalScore = row.totalScore;
+      golfer.todayScore = row.todayScore;
+      golfer.round = row.round;
+      golfer.thru = row.thru;
+      golfer.status = row.status;
+      golfer.madeCut = resolveSyncedMadeCut(row, golfer, leaderboard.cutScore, options?.applyCut);
+      golfer.lastSyncedAt = timestamp;
+      golfer.updatedAt = timestamp;
+      if (row.rounds?.length) {
+        upsertProviderRoundScores(store, golfer, row.rounds);
+      } else {
+        upsertLatestRoundScore(store, golfer);
+      }
+      if (
+        options?.roundId &&
+        dataProvider.getPlayerRoundScorecard &&
+        pickedProviderPlayerIds.has(row.providerPlayerId)
+      ) {
+        const scorecard = await dataProvider.getPlayerRoundScorecard(
+          tournament,
+          row.providerPlayerId,
+          options.roundId,
+        );
+        if (scorecard) {
+          upsertProviderRoundScores(store, golfer, [{ ...scorecard, status: row.status }]);
+          scorecards += 1;
+        }
+      }
+      matched += 1;
+    }
+
+    store.scoreSyncLogs.unshift({
+      id: id("sync"),
+      tournamentId,
+      provider,
+      success: true,
+      message: [
+        `Synced ${matched} of ${rows.length} provider rows.`,
+        scorecards ? `${scorecards} picked-player scorecards.` : null,
+        leaderboard.roundId ? `Round ${leaderboard.roundId}.` : null,
+        leaderboard.cutScore !== null ? `Cut score: ${formatProviderScore(leaderboard.cutScore)}.` : null,
+      ].filter(Boolean).join(" "),
+      syncedAt: timestamp,
+    });
+    recalculateTournament(
+      tournamentId,
+      options?.applyCut ?? ["drop_open", "round_3", "round_4", "final"].includes(tournament.status),
+    );
+    return { ok: true, message: `Synced ${matched} of ${rows.length} provider rows.` };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown provider sync error.";
+    store.scoreSyncLogs.unshift({
+      id: id("sync"),
+      tournamentId,
+      provider,
+      success: false,
+      message,
+      syncedAt: timestamp,
+    });
+    return { ok: false, message };
+  }
+}
+
+function upsertProviderRoundScores(
+  store: Store,
+  golfer: TournamentGolfer,
+  rounds: Array<NonNullable<LeaderboardPlayer["rounds"]>[number] | (ProviderRoundScorecard & { status: GolferStatus })>,
+) {
+  for (const round of rounds) {
+    let score = store.golferRoundScores.find(
+      (item) => item.tournamentGolferId === golfer.id && item.roundNumber === round.roundNumber,
+    );
+    if (!score) {
+      score = {
+        id: id("round"),
+        tournamentGolferId: golfer.id,
+        roundNumber: round.roundNumber,
+        scoreToPar: round.scoreToPar,
+        strokes: round.strokes,
+        thru: round.thru,
+        holeScores: "holeScores" in round ? round.holeScores : null,
+        status: round.status,
+        createdAt: nowIso(),
+        updatedAt: nowIso(),
+      };
+      store.golferRoundScores.push(score);
+      continue;
+    }
+
+    score.scoreToPar = round.scoreToPar;
+    score.strokes = round.strokes;
+    score.thru = round.thru;
+    if ("holeScores" in round) {
+      score.holeScores = round.holeScores;
+    }
+    score.status = round.status;
+    score.updatedAt = nowIso();
+  }
+}
+
+function pickedProviderIdsForTournament(store: Store, tournamentId: string) {
+  const pickedTournamentGolferIds = new Set(
+    store.entryPicks
+      .filter((pick) =>
+        store.entries.some((entry) => entry.id === pick.entryId && entry.tournamentId === tournamentId),
+      )
+      .map((pick) => pick.tournamentGolferId),
+  );
+  const pickedGolferIds = new Set(
+    store.tournamentGolfers
+      .filter((golfer) => pickedTournamentGolferIds.has(golfer.id))
+      .map((golfer) => golfer.golferId),
+  );
+  return new Set(
+    store.golfers
+      .filter((golfer) => pickedGolferIds.has(golfer.id))
+      .map((golfer) => golfer.providerPlayerId),
+  );
+}
+
+function resolveSyncedMadeCut(
+  row: LeaderboardPlayer,
+  existing: TournamentGolfer,
+  cutScore: number | null,
+  applyCut = false,
+) {
+  if (row.madeCut !== null) return row.madeCut;
+  if (row.status === "wd" || row.status === "dq" || row.status === "cut" || row.position === "CUT") {
+    return false;
+  }
+  if (applyCut && row.totalScore !== null && cutScore !== null) {
+    return row.totalScore <= cutScore;
+  }
+  if (applyCut && existing.madeCut !== null) {
+    return existing.madeCut;
+  }
+  return null;
+}
+
 export function advanceWeekendStep(
   tournamentId: string,
   step: "lock_picks" | "round_1" | "round_2" | "process_cut" | "round_3" | "round_4" | "final",
@@ -603,6 +897,41 @@ export function advanceWeekendStep(
   recalculateTournament(tournamentId, step === "round_3" || step === "round_4");
 }
 
+export async function advanceWeekendStepFromProvider(
+  tournamentId: string,
+  step: Parameters<typeof advanceWeekendStep>[1],
+  provider = process.env.GOLF_DATA_PROVIDER ?? "mock",
+) {
+  if (provider === "mock" || provider === "manual") {
+    advanceWeekendStep(tournamentId, step);
+    return;
+  }
+
+  if (step === "lock_picks") {
+    updateTournamentStatus(tournamentId, "picks_locked");
+    return;
+  }
+
+  if (step === "process_cut") {
+    processCutFromSyncedScores(tournamentId);
+    return;
+  }
+
+  if (step === "final") {
+    await syncProviderLeaderboard(tournamentId, provider, { roundId: "4", applyCut: true });
+    finaliseTournament(tournamentId);
+    return;
+  }
+
+  const roundId = step === "round_1" ? "1" : step === "round_2" ? "2" : step === "round_3" ? "3" : "4";
+  await syncProviderLeaderboard(tournamentId, provider, {
+    roundId,
+    applyCut: step === "round_3" || step === "round_4",
+  });
+  updateTournamentStatus(tournamentId, step);
+  recalculateTournament(tournamentId, step === "round_3" || step === "round_4");
+}
+
 function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) {
   const store = getStore();
   const timestamp = nowIso();
@@ -617,23 +946,29 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
       golfer.totalScore = score;
       golfer.todayScore = score;
       golfer.round = 1;
-      golfer.thru = "F";
+      golfer.thru = "18";
       golfer.position = index === 0 ? "1" : `T${Math.min(index + 1, 24)}`;
       golfer.madeCut = null;
       golfer.status = "active";
     } else if (roundNumber === 2) {
-      const fallbackTotal = 7 + (golfer.pointValue % 7);
-      const fallbackToday = 2 + (golfer.pointValue % 4);
-      golfer.totalScore = cutResult?.totalScore ?? fallbackTotal;
+      const pointValue = golfer.pointValue ?? 0;
+      const fallbackTotal = 7 + (pointValue % 7);
+      const fallbackToday = 2 + (pointValue % 4);
       golfer.todayScore = cutResult?.todayScore ?? fallbackToday;
+      golfer.totalScore = cumulativeRoundTwoTotal(
+        store,
+        golfer,
+        golfer.todayScore,
+        cutResult?.totalScore ?? fallbackTotal,
+      );
       golfer.round = 2;
-      golfer.thru = "F";
+      golfer.thru = "18";
       golfer.position = cutResult?.position === "CUT" ? `T${Math.min(index + 1, 68)}` : cutResult?.position ?? `T${Math.min(index + 1, 68)}`;
       golfer.madeCut = null;
       golfer.status = "active";
     } else if (missedCut) {
       golfer.round = 2;
-      golfer.thru = "F";
+      golfer.thru = "18";
       golfer.status = "cut";
       golfer.madeCut = false;
     } else {
@@ -641,7 +976,7 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
       golfer.totalScore = (golfer.totalScore ?? cutResult?.totalScore ?? 0) + roundMove;
       golfer.todayScore = roundMove;
       golfer.round = roundNumber;
-      golfer.thru = "F";
+      golfer.thru = "18";
       golfer.position = index === 0 ? "1" : `T${Math.min(index + 1, 30)}`;
       golfer.madeCut = true;
       golfer.status = roundNumber === 4 ? "finished" : "active";
@@ -668,21 +1003,27 @@ function applyMockCutResults(tournamentId: string) {
   const golfers = store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId);
 
   for (const golfer of golfers) {
-    const fallbackScore = 7 + (golfer.pointValue % 7);
-    const fallbackToday = 2 + (golfer.pointValue % 4);
+    const pointValue = golfer.pointValue ?? 0;
+    const fallbackScore = 7 + (pointValue % 7);
+    const fallbackToday = 2 + (pointValue % 4);
     const result = mockCutResults.get(golfer.golferId) ?? {
       position: "CUT",
       totalScore: fallbackScore,
       todayScore: fallbackToday,
       round: 2,
-      thru: "F",
+      thru: "18",
       madeCut: false,
       status: "cut" as GolferStatus,
     };
 
     golfer.position = result.position ?? null;
-    golfer.totalScore = result.totalScore ?? null;
     golfer.todayScore = result.todayScore ?? null;
+    golfer.totalScore = cumulativeRoundTwoTotal(
+      store,
+      golfer,
+      golfer.todayScore,
+      result.totalScore ?? null,
+    );
     golfer.round = result.round ?? null;
     golfer.thru = result.thru ?? null;
     golfer.madeCut = result.madeCut ?? null;
@@ -706,6 +1047,88 @@ export function getProviderLeaderboard(tournamentId: string): LeaderboardPlayer[
     status: row.status,
     lastUpdated: row.lastSyncedAt ?? row.updatedAt,
   }));
+}
+
+function findOrCreateTournamentGolferForProviderRow(
+  store: Store,
+  tournamentId: string,
+  row: LeaderboardPlayer,
+) {
+  const normalizedName = normalizeName(row.name);
+  const existing = store.tournamentGolfers.find((item) => {
+    if (item.tournamentId !== tournamentId) return false;
+    const golfer = store.golfers.find((storeGolfer) => storeGolfer.id === item.golferId);
+    if (!golfer) return false;
+    return (
+      golfer.providerPlayerId === row.providerPlayerId ||
+      normalizeName(golfer.name) === normalizedName
+    );
+  });
+  if (existing) {
+    const matchedGolfer = store.golfers.find((golfer) => golfer.id === existing.golferId);
+    if (matchedGolfer && matchedGolfer.providerPlayerId !== row.providerPlayerId) {
+      matchedGolfer.providerPlayerId = row.providerPlayerId;
+      matchedGolfer.updatedAt = nowIso();
+    }
+    return existing;
+  }
+
+  let golfer = store.golfers.find((item) => item.providerPlayerId === row.providerPlayerId);
+  if (!golfer) {
+    golfer = {
+      id: id("golfer"),
+      providerPlayerId: row.providerPlayerId,
+      name: row.name,
+      country: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    store.golfers.push(golfer);
+  }
+
+  const tournamentGolfer: TournamentGolfer = {
+    id: id("tg"),
+    tournamentId,
+    golferId: golfer.id,
+    pointValue: null,
+    position: null,
+    totalScore: null,
+    todayScore: null,
+    round: null,
+    thru: null,
+    madeCut: null,
+    status: "active",
+    lastSyncedAt: null,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  store.tournamentGolfers.push(tournamentGolfer);
+  return tournamentGolfer;
+}
+
+function findTournamentGolferByOddsName(
+  golfers: Array<TournamentGolfer & { golfer: Golfer }>,
+  runnerName: string,
+) {
+  const normalizedRunner = normalizeOddsName(runnerName);
+  return golfers.find((golfer) => {
+    const normalizedGolfer = normalizeOddsName(golfer.golfer.name);
+    if (normalizedGolfer === normalizedRunner) return true;
+    const nameParts = golfer.golfer.name.trim().split(/\s+/);
+    if (nameParts.length < 2) return false;
+    const first = nameParts[0];
+    const last = nameParts[nameParts.length - 1];
+    return normalizeOddsName(`${last} ${first}`) === normalizedRunner;
+  });
+}
+
+function normalizeName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+function formatProviderScore(score: number) {
+  if (score === 0) return "E";
+  return score > 0 ? `+${score}` : String(score);
 }
 
 export function recalculateTournament(tournamentId: string, applyCut = false) {
@@ -732,17 +1155,14 @@ export function recalculateTournament(tournamentId: string, applyCut = false) {
       tournament.status === "final" ? calculateFinalEntryScore(refreshed) : null;
     entry.totalPoints = calculateEntryPointTotal(refreshed.picks);
     entry.updatedAt = nowIso();
-    if (tournament.status === "final" && entry.status !== "eliminated") {
+    if (tournament.status === "final" && entry.status === "qualified") {
       entry.status = "final";
     }
   }
 }
 
 export function canSubmitPicks(tournament: Tournament) {
-  return (
-    ["draft", "picks_open"].includes(tournament.status) &&
-    new Date() <= new Date(tournament.pickDeadline)
-  );
+  return ["draft", "picks_open"].includes(tournament.status);
 }
 
 function parseScoreValue(field: string, value: string) {
@@ -767,6 +1187,7 @@ function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
       scoreToPar: golfer.todayScore,
       strokes: golfer.todayScore === null ? null : 70 + golfer.todayScore,
       thru: golfer.thru,
+      holeScores: null,
       status: golfer.status,
       createdAt: nowIso(),
       updatedAt: nowIso(),
@@ -780,6 +1201,76 @@ function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
   score.thru = golfer.thru;
   score.status = golfer.status;
   score.updatedAt = nowIso();
+}
+
+function cumulativeRoundTwoTotal(
+  store: Store,
+  golfer: TournamentGolfer,
+  todayScore: number | null,
+  fallbackTotal: number | null,
+) {
+  const roundOne = store.golferRoundScores.find(
+    (score) => score.tournamentGolferId === golfer.id && score.roundNumber === 1,
+  );
+
+  if (roundOne?.scoreToPar !== null && roundOne?.scoreToPar !== undefined && todayScore !== null) {
+    return roundOne.scoreToPar + todayScore;
+  }
+
+  return fallbackTotal;
+}
+
+function golferNameForRound(
+  golfers: Array<TournamentGolfer & { golfer: Golfer }>,
+  round: GolferRoundScore,
+) {
+  return golfers.find((golfer) => golfer.id === round.tournamentGolferId)?.golfer.name ?? "";
+}
+
+function compareCountback(a?: number[] | null, b?: number[] | null) {
+  if (!a?.length || !b?.length) return 0;
+  for (const holes of [3, 6, 9, 18]) {
+    const difference = countbackScore(a, holes) - countbackScore(b, holes);
+    if (difference !== 0) return difference;
+  }
+  return 0;
+}
+
+function countbackWinnerLabel(rounds: GolferRoundScore[], winner: GolferRoundScore) {
+  const tiedRounds = rounds.filter((round) => round.scoreToPar === winner.scoreToPar);
+  if (tiedRounds.length < 2 || !winner.holeScores?.length) return null;
+
+  for (const holes of [3, 6, 9, 18] as const) {
+    const winnerScore = countbackScore(winner.holeScores, holes);
+    if (
+      tiedRounds.every(
+        (round) => {
+          if (round.id === winner.id) return true;
+          if (!round.holeScores?.length) return false;
+          return winnerScore < countbackScore(round.holeScores, holes);
+        },
+      )
+    ) {
+      return `b${holes}` as const;
+    }
+  }
+
+  return null;
+}
+
+function countbackScore(scores: number[], holes: number) {
+  return scores.slice(18 - holes).reduce((total, score) => total + score, 0);
+}
+
+function latestCutScore(store: Store, tournamentId: string) {
+  const latestLog = store.scoreSyncLogs.find(
+    (log) => log.tournamentId === tournamentId && log.success && log.message.includes("Cut score:"),
+  );
+  if (!latestLog) return null;
+  const match = latestLog.message.match(/Cut score:\s*([+-]?\d+|E)/);
+  if (!match) return null;
+  if (match[1] === "E") return 0;
+  return Number(match[1]);
 }
 
 function mustFind<T extends { id: string }>(items: T[], idToFind: string, label: string) {
@@ -808,7 +1299,8 @@ function buildRoundScores(tournamentGolfers: TournamentGolfer[], timestamp: stri
         roundNumber: roundNumber as 1 | 2 | 3 | 4,
         scoreToPar,
         strokes: scoreToPar === null ? null : 70 + scoreToPar + (index % 2),
-        thru: roundNumber <= 2 ? "F" : null,
+        thru: roundNumber <= 2 ? "18" : null,
+        holeScores: null,
         status:
           roundNumber <= 2
             ? status
@@ -862,17 +1354,17 @@ function createSeedStore(): Store {
 
   const tournaments: Tournament[] = [
     {
-      id: "t_us_open_2026",
+      id: "t_pga_2026",
       name: "PGA Championship",
       majorKey: "pga" as MajorKey,
       year: 2026,
-      venue: "Mock major venue",
-      startDate: "2026-06-18T12:00:00.000Z",
-      endDate: "2026-06-21T23:00:00.000Z",
-      pickDeadline: "2026-06-18T11:00:00.000Z",
-      dropDeadline: "2026-06-20T16:00:00.000Z",
+      venue: "Aronimink Golf Club, Newtown Square, Pennsylvania",
+      startDate: "2026-05-14T12:00:00.000Z",
+      endDate: "2026-05-17T23:00:00.000Z",
+      pickDeadline: "2026-05-14T11:00:00.000Z",
+      dropDeadline: "2026-05-16T16:00:00.000Z",
       status: "picks_open",
-      providerTournamentId: "pga-2026",
+      providerTournamentId: "033",
       createdAt: timestamp,
       updatedAt: timestamp,
     },
@@ -949,7 +1441,7 @@ function createSeedStore(): Store {
     ([golferId, , , points]) => {
       return {
       id: `tg_${golferId}`,
-      tournamentId: "t_us_open_2026",
+      tournamentId: "t_pga_2026",
       golferId,
       pointValue: points,
       position: null,

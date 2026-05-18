@@ -21,14 +21,18 @@ export function PickBuilder({
   const [selected, setSelected] = useState<string[]>([]);
   const [summaryVisible, setSummaryVisible] = useState(false);
   const summaryRef = useRef<HTMLElement | null>(null);
-  const selectedGolfers = golfers.filter((golfer) => selected.includes(golfer.id));
-  const used = selectedGolfers.reduce((total, golfer) => total + golfer.pointValue, 0);
+  const pickableGolfers = useMemo(
+    () => golfers.filter((golfer) => golfer.pointValue !== null),
+    [golfers],
+  );
+  const selectedGolfers = pickableGolfers.filter((golfer) => selected.includes(golfer.id));
+  const used = selectedGolfers.reduce((total, golfer) => total + (golfer.pointValue ?? 0), 0);
   const filtered = useMemo(
     () =>
-      golfers.filter((golfer) =>
+      pickableGolfers.filter((golfer) =>
         golfer.golfer.name.toLowerCase().includes(query.trim().toLowerCase()),
       ),
-    [golfers, query],
+    [pickableGolfers, query],
   );
   const valid = selected.length === 4 && used <= 90 && !locked;
   const showFloatingBudget = !locked && selected.length > 0 && !summaryVisible;
@@ -71,9 +75,14 @@ export function PickBuilder({
           />
         </label>
         <div className="divide-y divide-border">
+          {filtered.length === 0 ? (
+            <p className="px-2 py-8 text-center text-sm font-semibold text-muted">
+              No priced sweepstake golfers match that search.
+            </p>
+          ) : null}
           {filtered.map((golfer) => {
             const chosen = selected.includes(golfer.id);
-            const unaffordable = !chosen && used + golfer.pointValue > 90;
+            const unaffordable = !chosen && used + (golfer.pointValue ?? 0) > 90;
             return (
               <button
                 key={golfer.id}

@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateLiveEntryScore,
   calculateCutStatus,
   calculateEntryPointTotal,
   validateEntryPicks,
 } from "./scoring";
 import type { EntryWithDetails } from "@/lib/types";
 
-const basePick = (id: string, madeCut: boolean | null, status = "active") =>
+const basePick = (
+  id: string,
+  madeCut: boolean | null,
+  status = "active",
+  totalScore = 0,
+) =>
   ({
     id,
     entryId: "entry",
@@ -22,7 +28,7 @@ const basePick = (id: string, madeCut: boolean | null, status = "active") =>
       golferId: id,
       pointValue: 20,
       position: null,
-      totalScore: 0,
+      totalScore,
       todayScore: 0,
       round: 2,
       thru: "F",
@@ -88,25 +94,100 @@ describe("scoring", () => {
 
   it("requires a drop when all four players make the cut", () => {
     const result = calculateCutStatus([
-      basePick("a", true),
-      basePick("b", true),
-      basePick("c", true),
-      basePick("d", true),
+      basePick("a", true, "active", -2),
+      basePick("b", true, "active", -1),
+      basePick("c", true, "active", 0),
+      basePick("d", true, "active", 1),
     ]);
     expect(result.status).toBe("drop_required");
+    expect(result.countingPickIds).toEqual([]);
   });
 
-  it("qualifies four-through-cut entries after one drop", () => {
-    const picks = [
-      basePick("a", true),
-      basePick("b", true),
-      basePick("c", true),
-      basePick("d", true),
-    ];
-    picks[0].isDropped = true;
-    const result = calculateCutStatus(picks);
+  it("counts the remaining three after a player is dropped", () => {
+    const dropped = basePick("d", true, "active", 1);
+    dropped.isDropped = true;
+    const result = calculateCutStatus([
+      basePick("a", true, "active", -2),
+      basePick("b", true, "active", -1),
+      basePick("c", true, "active", 0),
+      dropped,
+    ]);
     expect(result.status).toBe("qualified");
-    expect(result.countingPickIds).toHaveLength(3);
+    expect(result.countingPickIds).toEqual(["a", "b", "c"]);
+  });
+
+  it("never counts a dropped player even if stale counting flags say otherwise", () => {
+    const dropped = basePick("a", true, "active", -9);
+    dropped.isDropped = true;
+    dropped.isCounting = true;
+    const picks = [
+      dropped,
+      basePick("b", true, "active", -1),
+      basePick("c", true, "active", 2),
+      basePick("d", true, "active", 3),
+    ];
+    picks[1].isCounting = true;
+    picks[2].isCounting = true;
+    picks[3].isCounting = true;
+
+    const score = calculateLiveEntryScore(
+      {
+        id: "entry",
+        tournamentId: "t",
+        userId: "u",
+        status: "qualified",
+        totalPoints: 80,
+        liveScore: null,
+        finalScore: null,
+        submittedAt: "",
+        createdAt: "",
+        updatedAt: "",
+        user: {
+          id: "u",
+          name: "User",
+          email: "u@example.com",
+          role: "player",
+          createdAt: "",
+        },
+        picks,
+      },
+      { status: "round_4" },
+    );
+
+    expect(score).toBe(4);
+  });
+
+  it("uses the best three live scores for the group score", () => {
+    const picks = [
+      basePick("a", true, "active", -2),
+      basePick("b", true, "active", -1),
+      basePick("c", true, "active", 0),
+      basePick("d", true, "active", 1),
+    ];
+    const score = calculateLiveEntryScore(
+      {
+        id: "entry",
+        tournamentId: "t",
+        userId: "u",
+        status: "submitted",
+        totalPoints: 80,
+        liveScore: null,
+        finalScore: null,
+        submittedAt: "",
+        createdAt: "",
+        updatedAt: "",
+        user: {
+          id: "u",
+          name: "User",
+          email: "u@example.com",
+          role: "player",
+          createdAt: "",
+        },
+        picks,
+      },
+      { status: "round_1" },
+    );
+    expect(score).toBe(-3);
   });
 
   it("handles withdrawn and disqualified players as not made cut unless overridden", () => {

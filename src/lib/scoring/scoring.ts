@@ -10,7 +10,7 @@ const POINT_CAP = 90;
 const TEAM_SIZE = 4;
 
 export function calculateEntryPointTotal(
-  picks: Array<{ pointValueAtPick?: number; pointValue?: number }>,
+  picks: Array<{ pointValueAtPick?: number; pointValue?: number | null }>,
 ) {
   return picks.reduce(
     (total, pick) => total + (pick.pointValueAtPick ?? pick.pointValue ?? 0),
@@ -19,7 +19,7 @@ export function calculateEntryPointTotal(
 }
 
 export function validateEntryPicks(
-  picks: Array<{ id: string; pointValueAtPick?: number; pointValue?: number }>,
+  picks: Array<{ id: string; pointValueAtPick?: number; pointValue?: number | null }>,
 ) {
   const uniqueIds = new Set(picks.map((pick) => pick.id));
   const totalPoints = calculateEntryPointTotal(picks);
@@ -27,6 +27,9 @@ export function validateEntryPicks(
 
   if (picks.length !== TEAM_SIZE) errors.push("Pick exactly 4 golfers.");
   if (uniqueIds.size !== picks.length) errors.push("Each golfer can only be picked once.");
+  if (picks.some((pick) => (pick.pointValueAtPick ?? pick.pointValue) == null)) {
+    errors.push("Every picked golfer must have a sweepstake cost.");
+  }
   if (totalPoints > POINT_CAP) errors.push("The team is over the 90 point cap.");
 
   return {
@@ -64,20 +67,16 @@ export function calculateCutStatus(
     };
   }
 
-  const dropped = madeCutPicks.find((pick) => pick.isDropped);
-  if (!dropped) {
-    return {
-      madeCutCount,
-      status: "drop_required" as EntryStatus,
-      countingPickIds: [],
-    };
+  const droppedPick = madeCutPicks.find((pick) => pick.isDropped);
+  if (!droppedPick) {
+    return { madeCutCount, status: "drop_required" as EntryStatus, countingPickIds: [] };
   }
 
   return {
     madeCutCount,
     status: "qualified" as EntryStatus,
     countingPickIds: madeCutPicks
-      .filter((pick) => pick.id !== dropped.id)
+      .filter((pick) => !pick.isDropped)
       .map((pick) => pick.id),
   };
 }
@@ -85,7 +84,7 @@ export function calculateCutStatus(
 export function calculateDropRequirement(picks: EntryWithDetails["picks"]) {
   const cutStatus = calculateCutStatus(picks);
   return {
-    required: cutStatus.madeCutCount === 4 && cutStatus.status === "drop_required",
+    required: cutStatus.status === "drop_required",
     madeCutCount: cutStatus.madeCutCount,
   };
 }
@@ -101,18 +100,20 @@ export function calculateLiveEntryScore(
     "final",
   ].includes(tournament.status);
   const picksToCount = hasCutHappened
-    ? entry.picks.filter((pick) => pick.isCounting && !pick.isDropped)
-    : entry.picks;
+    ? bestScoredPicks(entry.picks.filter((pick) => pick.isCounting && !pick.isDropped))
+    : bestScoredPicks(entry.picks);
+  const cutStatus = hasCutHappened ? calculateCutStatus(entry.picks) : null;
 
-  if (hasCutHappened && entry.status === "eliminated") return null;
-  if (hasCutHappened && entry.status === "drop_required") return null;
+  if (cutStatus?.status === "eliminated") return null;
+  if (cutStatus?.status === "drop_required") return null;
 
   return sumScores(picksToCount);
 }
 
 export function calculateFinalEntryScore(entry: EntryWithDetails) {
-  if (entry.status === "eliminated" || entry.status === "drop_required") return null;
-  return sumScores(entry.picks.filter((pick) => pick.isCounting && !pick.isDropped));
+  const cutStatus = calculateCutStatus(entry.picks);
+  if (cutStatus.status === "eliminated" || cutStatus.status === "drop_required") return null;
+  return sumScores(bestScoredPicks(entry.picks.filter((pick) => pick.isCounting && !pick.isDropped)));
 }
 
 export function calculateGroupLeaderboard(
@@ -159,7 +160,13 @@ export function calculateGroupLeaderboard(
 }
 
 function sumScores(picks: EntryWithDetails["picks"]) {
-  if (picks.length === 0) return null;
-  if (picks.every((pick) => pick.tournamentGolfer.totalScore === null)) return null;
+  if (picks.length < 3) return null;
   return picks.reduce((total, pick) => total + (pick.tournamentGolfer.totalScore ?? 0), 0);
+}
+
+function bestScoredPicks(picks: EntryWithDetails["picks"]) {
+  return picks
+    .filter((pick) => pick.tournamentGolfer.totalScore !== null)
+    .sort((a, b) => a.tournamentGolfer.totalScore! - b.tournamentGolfer.totalScore!)
+    .slice(0, 3);
 }

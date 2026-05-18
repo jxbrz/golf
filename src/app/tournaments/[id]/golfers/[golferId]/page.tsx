@@ -6,7 +6,7 @@ import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
 import { getTournamentGolferScorecard } from "@/lib/mock-data/store";
-import { formatDateTime, formatScore } from "@/lib/utils";
+import { formatCost, formatDateTime, formatScore } from "@/lib/utils";
 
 export default async function GolferScorecardPage({
   params,
@@ -49,7 +49,7 @@ export default async function GolferScorecardPage({
               <Stat label="Position" value={tournamentGolfer.position ?? "-"} />
               <Stat label="Total" value={formatScore(tournamentGolfer.totalScore)} />
               <Stat label="Today" value={formatScore(tournamentGolfer.todayScore)} />
-              <Stat label="Points" value={String(tournamentGolfer.pointValue)} />
+              <Stat label="Cost" value={formatCost(tournamentGolfer.pointValue)} />
             </div>
 
             <div className="p-4">

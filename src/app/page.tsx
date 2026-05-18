@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { AlertTriangle, Trophy } from "lucide-react";
+import { redirect } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
+import { MajorMark } from "@/components/theme/MajorMark";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { TournamentHeader } from "@/components/tournaments/TournamentHeader";
 import { requireCurrentUser } from "@/lib/auth";
@@ -15,8 +17,12 @@ import {
 export default async function Home() {
   const tournament = getActiveTournament();
   const user = await requireCurrentUser();
+  if (tournament.status === "final" && user.role !== "admin") {
+    redirect(`/tournaments/${tournament.id}/results`);
+  }
   const entry = getEntry(tournament.id, user.id);
   const rows = getLeaderboard(tournament.id);
+  const stage = homeStageCopy(tournament.status, entry?.status);
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -25,23 +31,21 @@ export default async function Home() {
           <main className="space-y-4">
             <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
               <div className="flex items-start gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-primary text-white">
-                  <Trophy size={22} />
-                </span>
+                <MajorMark majorKey={tournament.majorKey} size="md" />
                 <div>
                   <p className="text-sm font-bold uppercase text-muted">
                     {tournament.name} {tournament.year}
                   </p>
-                  <h1 className="text-2xl font-black">Player standings</h1>
+                  <h1 className="text-2xl font-black">{stage.title}</h1>
                   <p className="mt-1 text-sm text-muted">
-                    Your team is locked. Check where everyone stands from first to last.
+                    {stage.description}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href={`/tournaments/${tournament.id}/leaderboard`}
                       className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
                     >
-                      Group Standings
+                      Current Standings
                     </Link>
                     <Link
                       href={`/tournaments/${tournament.id}/players`}
@@ -58,17 +62,17 @@ export default async function Home() {
                 rows={rows}
                 tournament={tournament}
                 currentUserId={user.id}
-                title="Player standings"
+                title="Current standings"
               />
               <div className="space-y-4">
                 <EntryTeamCard entry={entry} />
                 {entry.status === "drop_required" ? (
-                  <Link
-                    href={`/tournaments/${tournament.id}/drop`}
-                    className="block rounded-lg bg-secondary p-4 text-center text-lg font-black text-white scorecard-shadow"
-                  >
-                    Drop required: choose 1 player
-                  </Link>
+                  <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+                    <h2 className="text-lg font-black">Cut being processed</h2>
+                    <p className="mt-1 text-sm text-muted">
+                      Your best 3 scores will count automatically once the standings refresh.
+                    </p>
+                  </section>
                 ) : null}
               </div>
             </div>
@@ -97,7 +101,7 @@ export default async function Home() {
                           href={`/tournaments/${tournament.id}/leaderboard`}
                           className="rounded-md border border-border bg-white px-4 py-3 font-black text-primary"
                         >
-                          Group Standings
+                          Current Standings
                         </Link>
                         <Link
                           href={`/tournaments/${tournament.id}/players`}
@@ -114,7 +118,7 @@ export default async function Home() {
                   tournament={tournament}
                   currentUserId={user.id}
                   preview
-                  title="Player standings"
+                  title="Current standings"
                 />
               </div>
               <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
@@ -132,4 +136,53 @@ export default async function Home() {
       </AppShell>
     </MajorThemeProvider>
   );
+}
+
+function homeStageCopy(tournamentStatus: string, entryStatus?: string) {
+  if (entryStatus === "drop_required") {
+    return {
+      title: "Cut pending",
+      description: "Your score will use the best 3 golfers once the cut is processed.",
+    };
+  }
+
+  const copy: Record<string, { title: string; description: string }> = {
+    picks_open: {
+      title: "Team submitted",
+      description: "Your team is locked in. Current standings will come alive when play starts.",
+    },
+    picks_locked: {
+      title: "Teams are locked",
+      description: "Picks are closed. Next up is the first round leaderboard.",
+    },
+    round_1: {
+      title: "Round 1 live",
+      description: "Track the current standings and the field leaderboard as scores move.",
+    },
+    round_2: {
+      title: "Round 2 live",
+      description: "Friday scores are in progress. The cut comes next.",
+    },
+    drop_open: {
+      title: "Cut processed",
+      description: "Teams with at least 3 golfers through now count their best 3 scores.",
+    },
+    round_3: {
+      title: "Saturday standings",
+      description: "After the cut, only 3 golfers count for each team.",
+    },
+    round_4: {
+      title: "Sunday standings",
+      description: "Final-round scores are shaping the result.",
+    },
+    final: {
+      title: "Results are ready",
+      description: "The final podium and lowest-round banner are available.",
+    },
+  };
+
+  return copy[tournamentStatus] ?? {
+    title: "Current standings",
+    description: "Check where everyone stands from first to last.",
+  };
 }

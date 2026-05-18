@@ -50,12 +50,14 @@ export default async function AdminPage() {
               >
                 <Flag className="mb-2" /> Scores
               </Link>
-              <Link
-                href={`/tournaments/${active.id}/results`}
-                className="rounded-lg border border-border p-4 font-black text-primary"
-              >
-                <Trophy className="mb-2" /> Final Results
-              </Link>
+              {active.status === "final" ? (
+                <Link
+                  href={`/tournaments/${active.id}/results`}
+                  className="rounded-lg border border-border p-4 font-black text-primary"
+                >
+                  <Trophy className="mb-2" /> Final Results
+                </Link>
+              ) : null}
             </div>
           </section>
         </main>

@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { Trophy } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
+import { MajorMark } from "@/components/theme/MajorMark";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { TournamentHeader } from "@/components/tournaments/TournamentHeader";
 import { requireCurrentUser } from "@/lib/auth";
@@ -14,6 +14,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const user = await requireCurrentUser();
+  if (tournament.status === "final" && user.role !== "admin") {
+    redirect(`/tournaments/${tournament.id}/results`);
+  }
   const entry = getEntry(tournament.id, user.id);
 
   return (
@@ -23,23 +26,21 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
           <main className="space-y-4">
             <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
               <div className="flex items-start gap-3">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-primary text-white">
-                  <Trophy size={22} />
-                </span>
+                <MajorMark majorKey={tournament.majorKey} size="md" />
                 <div>
                   <p className="text-sm font-bold uppercase text-muted">
                     {tournament.name} {tournament.year}
                   </p>
-                  <h1 className="text-2xl font-black">Player standings</h1>
+                  <h1 className="text-2xl font-black">Current standings</h1>
                   <p className="mt-1 text-sm text-muted">
-                    Tap a name to see the players counting for that team.
+                    Tap a name to see the golfers counting for that team.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       href={`/tournaments/${tournament.id}/leaderboard`}
                       className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
                     >
-                      Group Standings
+                      Current Standings
                     </Link>
                     <Link
                       href={`/tournaments/${tournament.id}/players`}
@@ -57,17 +58,17 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 tournament={tournament}
                 currentUserId={user.id}
                 revealAll={user.role === "admin"}
-                title="Player standings"
+                title="Current standings"
               />
               <div className="space-y-4">
                 <EntryTeamCard entry={entry} />
                 {entry.status === "drop_required" ? (
-                  <Link
-                    href={`/tournaments/${tournament.id}/drop`}
-                    className="block rounded-lg bg-secondary p-4 text-center text-lg font-black text-white scorecard-shadow"
-                  >
-                    Drop required: choose 1 player
-                  </Link>
+                  <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+                    <h2 className="text-lg font-black">Cut being processed</h2>
+                    <p className="mt-1 text-sm text-muted">
+                      Your best 3 scores will count automatically once the standings refresh.
+                    </p>
+                  </section>
                 ) : null}
               </div>
             </div>
@@ -81,7 +82,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 tournament={tournament}
                 currentUserId={user.id}
                 revealAll={user.role === "admin"}
-                title="Player standings"
+                title="Current standings"
               />
               <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
                 <h2 className="text-lg font-black">No team submitted</h2>

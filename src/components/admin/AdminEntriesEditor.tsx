@@ -1,6 +1,7 @@
 import { adminUpdateEntryPicksAction } from "@/app/actions";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import type { AdminEntryRow, TournamentGolfer } from "@/lib/types";
+import { formatCost } from "@/lib/utils";
 
 export function AdminEntriesEditor({
   tournamentId,
@@ -61,9 +62,9 @@ export function AdminEntriesEditor({
                       className="mt-1 h-11 w-full rounded-md border border-border bg-white px-3 text-sm font-semibold"
                     >
                       <option value="">Choose golfer</option>
-                      {golfers.map((golfer) => (
+                      {golfers.filter((golfer) => golfer.pointValue !== null).map((golfer) => (
                         <option key={golfer.id} value={golfer.id}>
-                          {golfer.pointValue} - {golfer.golfer.name}
+                          {formatCost(golfer.pointValue)} - {golfer.golfer.name}
                         </option>
                       ))}
                     </select>
