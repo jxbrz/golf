@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Flag } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { FieldLeaderboard } from "@/components/leaderboard/FieldLeaderboard";
 import { MajorMark } from "@/components/theme/MajorMark";
@@ -29,18 +29,19 @@ export default async function PlayersLeaderboardPage({
           >
             <ArrowLeft size={16} /> Back
           </Link>
-          <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+          <section className="event-hero rounded-xl p-5 text-white scorecard-shadow sm:p-6">
             <div className="flex items-start gap-3">
               <MajorMark majorKey={tournament.majorKey} size="lg" />
               <div>
-                <p className="text-sm font-bold uppercase text-muted">
+                <p className="text-sm font-bold uppercase text-white/70">
                   {tournament.name} {tournament.year}
                 </p>
                 <h1 className="text-3xl font-black">{title}</h1>
-                <p className="mt-1 text-muted">
-                  See where Scheffler, McIlroy and the rest of the field sit in the tournament.
+                <p className="mt-1 max-w-2xl text-white/80">
+                  The tournament leaderboard. Cut players are removed after the cut, but remain visible inside picked teams.
                 </p>
               </div>
+              <Flag className="ml-auto hidden text-white/50 sm:block" size={36} />
             </div>
           </section>
           <FieldLeaderboard

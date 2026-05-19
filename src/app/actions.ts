@@ -11,6 +11,7 @@ import {
   dropPlayer,
   finaliseTournament,
   importGolfersFromCsv,
+  importScoresFromCsv,
   processCut,
   recalculateTournament,
   submitEntry,
@@ -103,6 +104,19 @@ export async function importGolfersAction(formData: FormData) {
   const tournamentId = String(formData.get("tournamentId"));
   importGolfersFromCsv(tournamentId, String(formData.get("csv")));
   revalidatePath(`/admin/tournaments/${tournamentId}`);
+}
+
+export async function importScoresAction(formData: FormData) {
+  await requireAdminUser();
+  const tournamentId = String(formData.get("tournamentId"));
+  importScoresFromCsv(tournamentId, String(formData.get("csv")));
+  revalidatePath(`/admin/tournaments/${tournamentId}`);
+  revalidatePath(`/admin/tournaments/${tournamentId}/scores`);
+  revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
+  revalidatePath(`/tournaments/${tournamentId}/players`);
+  revalidatePath(`/tournaments/${tournamentId}/results`);
+  redirect(`/admin/tournaments/${tournamentId}/scores?imported=1`);
 }
 
 export async function syncScoresAction(formData: FormData) {

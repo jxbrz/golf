@@ -20,21 +20,32 @@ export async function AppShell({
   const theme = majorThemes[tournament.majorKey];
   const showResults = tournament.status === "final";
   const finalReadOnly = showResults && user.role !== "admin";
+  const prePlay = ["draft", "picks_open", "picks_locked"].includes(tournament.status);
   const fieldNavLabel = showResults ? "Field Results" : "Field";
   const showDropNav = entry?.status === "drop_required" && !finalReadOnly;
-  const navItems = finalReadOnly
-    ? [
-        { href: `/tournaments/${tournament.id}/results`, label: "Results" },
-        { href: `/tournaments/${tournament.id}/players`, label: "Field Results" },
-      ]
-    : [
-        { href: "/", label: "Home" },
-        { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel },
-        { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings" },
-        ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop" }] : []),
-        { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel },
-        ...(showResults ? [{ href: `/tournaments/${tournament.id}/results`, label: "Results" }] : []),
-      ];
+  const navItems =
+    user.role !== "admin" && finalReadOnly
+      ? [
+          { href: `/tournaments/${tournament.id}/results`, label: "Results" },
+          { href: `/tournaments/${tournament.id}/players`, label: "Field Results" },
+        ]
+      : user.role !== "admin" && prePlay
+        ? [{ href: entry?.submittedAt ? `/tournaments/${tournament.id}/pick` : "/", label: entry?.submittedAt ? "Team" : "Welcome" }]
+        : user.role !== "admin"
+          ? [
+              { href: `/tournaments/${tournament.id}/pick`, label: "Team" },
+              { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings" },
+              ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop" }] : []),
+              { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel },
+            ]
+          : [
+              { href: "/", label: "Home" },
+              { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel },
+              { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings" },
+              ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop" }] : []),
+              { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel },
+              ...(showResults ? [{ href: `/tournaments/${tournament.id}/results`, label: "Results" }] : []),
+            ];
   const mobileNavColumns =
     navItems.length + (user.role === "admin" ? 1 : 0) >= 6
       ? "grid-cols-6"
@@ -42,13 +53,15 @@ export async function AppShell({
         ? "grid-cols-5"
         : navItems.length + (user.role === "admin" ? 1 : 0) === 4
           ? "grid-cols-4"
-          : navItems.length + (user.role === "admin" ? 1 : 0) === 3
+        : navItems.length + (user.role === "admin" ? 1 : 0) === 3
             ? "grid-cols-3"
-            : "grid-cols-2";
+            : navItems.length + (user.role === "admin" ? 1 : 0) === 2
+              ? "grid-cols-2"
+              : "grid-cols-1";
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-8 pt-4 sm:px-6 lg:px-8">
-      <header className="mb-4 flex items-center justify-between gap-3">
+    <div className="flex min-h-screen w-full flex-col pb-8 pt-4">
+      <header className="mx-auto mb-4 flex w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2 text-primary">
           <MajorMark majorKey={tournament.majorKey} size="sm" />
           <span>
@@ -85,7 +98,7 @@ export async function AppShell({
           </form>
         </div>
       </header>
-      {children}
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">{children}</div>
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur sm:hidden">
         <div className={`mx-auto grid max-w-md ${mobileNavColumns} gap-1 text-center text-xs font-semibold`}>
           {navItems.map((item) => (

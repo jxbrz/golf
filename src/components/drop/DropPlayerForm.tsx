@@ -27,9 +27,9 @@ export function DropPlayerForm({
       <input type="hidden" name="entryId" value={entry.id} />
       <input type="hidden" name="pickId" value={selectedPickId} />
 
-      <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-        <h1 className="text-2xl font-black">Drop one player</h1>
-        <p className="mt-1 text-muted">
+      <section className="event-hero rounded-xl p-5 text-white scorecard-shadow">
+        <h1 className="text-3xl font-black">Drop one player</h1>
+        <p className="mt-2 max-w-2xl text-white/80">
           Choose the one player you do not want to count. Your other 3 players will stay in your score.
         </p>
       </section>
@@ -60,7 +60,7 @@ export function DropPlayerForm({
                     {formatScoreOrLabel(pick.tournamentGolfer.totalScore)}
                   </span>
                 </span>
-                <span className="rounded-md border border-border bg-white px-3 py-2 font-mono font-black">
+                <span className="rounded-md border border-border bg-white px-3 py-2 font-mono text-xl font-black">
                   {formatScoreOrLabel(pick.tournamentGolfer.totalScore)}
                 </span>
               </button>
@@ -69,7 +69,7 @@ export function DropPlayerForm({
         </div>
       </section>
 
-      <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+      <section className="paper-panel rounded-lg border border-border p-4 scorecard-shadow">
         <h2 className="text-lg font-black">Confirm your choice</h2>
         <p className="mt-2 text-sm text-muted">
           Dropping:{" "}

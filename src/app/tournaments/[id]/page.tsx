@@ -17,6 +17,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
   }
+  if (user.role !== "admin" && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
+    redirect("/");
+  }
+  if (user.role !== "admin") {
+    redirect(`/tournaments/${tournament.id}/leaderboard`);
+  }
   const entry = getEntry(tournament.id, user.id);
 
   return (

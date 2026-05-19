@@ -35,7 +35,7 @@ export function GroupLeaderboard({
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-white p-4">
+      <div className="flex items-center justify-between gap-3 border-b border-border paper-panel p-4">
         <div>
           <h2 className="text-xl font-black">{title}</h2>
           <p className="text-sm text-muted">
@@ -47,7 +47,7 @@ export function GroupLeaderboard({
         {preview ? (
           <Link
             href={`/tournaments/${tournament.id}/leaderboard`}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-bold text-white"
+            className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
           >
             View all
           </Link>
@@ -68,7 +68,7 @@ export function GroupLeaderboard({
             key={row.entry.id}
             className={row.entry.userId === currentUserId ? "group bg-emerald-50/55" : "group"}
           >
-            <summary className="grid cursor-pointer list-none grid-cols-[2.75rem_1fr_auto_1.5rem] items-center gap-2 p-4">
+            <summary className="grid cursor-pointer list-none grid-cols-[2.75rem_1fr_auto_1.5rem] items-center gap-2 p-4 transition hover:bg-slate-50">
               <span className="flex size-10 items-center justify-center rounded-md border border-border bg-white font-mono text-lg font-black text-primary">
                 {row.rank}
               </span>

@@ -44,8 +44,8 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             <ArrowLeft size={16} /> {backLabel}
           </Link>
 
-          <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
-            <div className="bg-primary p-5 text-white">
+          <section className="overflow-hidden rounded-xl text-white scorecard-shadow event-hero">
+            <div className="p-5 sm:p-7">
               <p className="text-sm font-bold uppercase tracking-wide text-white/75">
                 Final results
               </p>
@@ -58,7 +58,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             </div>
           </section>
 
-          <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+          <section className="paper-panel rounded-lg border border-border p-4 scorecard-shadow">
             <div className="flex gap-3">
               <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary text-white">
                 <Trophy />
@@ -88,7 +88,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             </div>
           </section>
 
-          <section className="rounded-lg border border-border bg-surface scorecard-shadow">
+          <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
             <div className="border-b border-border p-4">
               <h2 className="text-xl font-black">Final leaderboard</h2>
               <p className="mt-1 text-sm text-muted">Lowest combined score wins.</p>

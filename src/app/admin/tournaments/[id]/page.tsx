@@ -67,6 +67,8 @@ export default async function AdminTournamentPage({
   const nextStep = getNextWeekendStep(tournament.status);
   const syncLogs = getScoreSyncLogs(tournament.id).slice(0, 3);
   const oddsPreview = odds === "preview" ? await getOddsPricingPreview(tournament.id) : undefined;
+  const syncMode = process.env.SCORE_SYNC_MODE === "mock" ? "mock" : "live";
+  const activeScoreProvider = syncMode === "mock" ? "mock simulator" : process.env.GOLF_DATA_PROVIDER ?? "mock";
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -182,7 +184,14 @@ export default async function AdminTournamentPage({
             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-sm font-bold uppercase text-muted">Score sync</p>
-                <h2 className="text-xl font-black">{process.env.GOLF_DATA_PROVIDER ?? "mock"}</h2>
+                <h2 className="text-xl font-black">{activeScoreProvider}</h2>
+                <p className="mt-1 text-sm font-semibold text-muted">
+                  {syncMode === "mock"
+                    ? "Testing mode is on, so no live score API calls will be made."
+                    : process.env.SCORECARD_SYNC_ENABLED === "true"
+                      ? "Live leaderboard and scorecard calls are enabled."
+                      : "Live leaderboard sync is allowed; scorecard API calls are skipped."}
+                </p>
               </div>
               <p className="text-sm font-semibold text-muted">
                 Tournament ID: {tournament.providerTournamentId}

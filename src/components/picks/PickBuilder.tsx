@@ -64,7 +64,12 @@ export function PickBuilder({
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
       <FloatingBudgetBar used={used} visible={showFloatingBudget} />
-      <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+      <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
+        <div className="border-b border-border bg-primary p-4 text-white">
+          <h2 className="text-xl font-black">Available golfers</h2>
+          <p className="mt-1 text-sm font-semibold text-white/75">Only priced sweepstake players can be selected.</p>
+        </div>
+        <div className="p-4">
         <label className="mb-3 flex h-12 items-center gap-2 rounded-md border border-border bg-white px-3">
           <Search size={20} className="text-muted" />
           <input
@@ -115,14 +120,15 @@ export function PickBuilder({
             );
           })}
         </div>
+        </div>
       </section>
 
       <aside
         ref={summaryRef}
-        className="rounded-lg border border-border bg-surface p-4 scorecard-shadow lg:sticky lg:top-4 lg:self-start"
+        className="paper-panel rounded-lg border border-border p-4 scorecard-shadow lg:sticky lg:top-4 lg:self-start"
       >
-        <h2 className="text-xl font-black">Selected team</h2>
-        <p className="mb-4 mt-1 text-sm text-muted">Pick 4 golfers. Submitted teams are locked.</p>
+        <h2 className="text-xl font-black">Team sheet</h2>
+        <p className="mb-4 mt-1 text-sm text-muted">Four names. Ninety points. No changes after submission.</p>
         <BudgetBar used={used} />
         <div className="my-4 min-h-40 divide-y divide-border">
           {selectedGolfers.length ? (

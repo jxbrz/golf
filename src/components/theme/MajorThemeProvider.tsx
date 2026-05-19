@@ -9,7 +9,7 @@ export function MajorThemeProvider({
   children: React.ReactNode;
 }) {
   return (
-    <div style={themeStyle(majorKey)} className="min-h-screen bg-background text-foreground">
+    <div style={themeStyle(majorKey)} className="app-backdrop min-h-screen text-foreground">
       {children}
     </div>
   );

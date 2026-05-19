@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { loginAction } from "@/app/actions";
+import { MajorMark } from "@/components/theme/MajorMark";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { getSessionUser } from "@/lib/auth";
+import { getActiveTournament } from "@/lib/mock-data/store";
+import { majorThemes } from "@/lib/theme/major-themes";
 
 export default async function LoginPage({
   searchParams,
@@ -11,13 +15,36 @@ export default async function LoginPage({
   const user = await getSessionUser();
   if (user) redirect("/");
   const { error } = await searchParams;
+  const tournament = getActiveTournament();
+  const theme = majorThemes[tournament.majorKey];
 
   return (
-    <MajorThemeProvider majorKey="us_open">
-      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-8">
+    <MajorThemeProvider majorKey={tournament.majorKey}>
+      <main className="flex min-h-screen w-full items-center px-4 py-8">
+        <div className="mx-auto grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_25rem] lg:items-stretch">
+          <section className="event-hero hidden overflow-hidden rounded-xl p-7 text-white scorecard-shadow lg:flex lg:flex-col lg:justify-between">
+            <div>
+              <MajorMark majorKey={tournament.majorKey} size="lg" />
+              <h1 className="mt-8 max-w-xl text-5xl font-black leading-tight">Major Picks</h1>
+              <p className="mt-4 max-w-md text-lg font-semibold leading-8 text-white/82">
+                {theme.label} {tournament.year}, built for one private sweepstake.
+              </p>
+            </div>
+            <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-lg border border-white/15">
+              <Image
+                src="/images/aronimink-clubhouse.jpg"
+                alt=""
+                fill
+                sizes="(min-width: 1024px) 34rem, 100vw"
+                className="object-cover"
+                priority
+              />
+            </div>
+          </section>
+          <div className="flex flex-col justify-center">
         <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
           <div className="bg-primary p-5 text-white">
-            <p className="text-sm font-bold uppercase tracking-wide text-white/75">
+            <p className="text-sm font-bold uppercase tracking-wide" style={{ color: theme.secondary }}>
               Private competition
             </p>
             <h1 className="mt-1 text-3xl font-black">Major Picks</h1>
@@ -59,6 +86,8 @@ export default async function LoginPage({
           <p className="mt-2 text-muted">Admin: admin@majorpicks.local / Admin123!</p>
           <p className="mt-1 text-muted">Players: player1@majorpicks.local or player2@majorpicks.local / Player123!</p>
         </section>
+          </div>
+        </div>
       </main>
     </MajorThemeProvider>
   );

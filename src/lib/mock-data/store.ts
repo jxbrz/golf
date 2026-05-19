@@ -27,6 +27,7 @@ import type {
   LeaderboardPlayer,
   LowestRoundSummary,
   MajorKey,
+  ProviderLeaderboard,
   ProviderRoundScorecard,
   Tournament,
   TournamentGolfer,
@@ -67,6 +68,13 @@ type Store = {
     success: boolean;
     message: string;
     syncedAt: string;
+  }>;
+  providerLeaderboardCache: Array<{
+    key: string;
+    provider: string;
+    tournamentId: string;
+    leaderboard: ProviderLeaderboard;
+    cachedAt: string;
   }>;
   adminOverrides: AdminOverride[];
   adminTeamCorrections: AdminTeamCorrection[];
@@ -124,6 +132,9 @@ export function getStore() {
   }
   if (!globalForStore.golfStore.adminTeamCorrections) {
     globalForStore.golfStore.adminTeamCorrections = [];
+  }
+  if (!globalForStore.golfStore.providerLeaderboardCache) {
+    globalForStore.golfStore.providerLeaderboardCache = [];
   }
   return globalForStore.golfStore;
 }
@@ -690,6 +701,84 @@ export function importGolfersFromCsv(tournamentId: string, csv: string) {
   return { ok: true, message: `Imported ${imported} golfers.` };
 }
 
+export function importScoresFromCsv(tournamentId: string, csv: string) {
+  const store = getStore();
+  mustFind(store.tournaments, tournamentId, "Tournament");
+  const parsed = Papa.parse<Record<string, string>>(csv, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header) => header.trim().toLowerCase(),
+  });
+
+  if (parsed.errors.length) {
+    return { ok: false, message: parsed.errors[0].message };
+  }
+
+  let imported = 0;
+  const timestamp = nowIso();
+  for (const row of parsed.data) {
+    const name = row.name?.trim() || row.player?.trim() || row.golfer?.trim();
+    if (!name) continue;
+
+    const providerPlayerId =
+      row.providerplayerid?.trim() ||
+      row.playerid?.trim() ||
+      `manual-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    const status = parseGolferStatus(row.status);
+    const round = parseRoundNumber(row.round);
+    const todayScore = parseNullableScore(row.today ?? row.todayscore ?? row.roundscore);
+    const totalScore = parseNullableScore(row.total ?? row.totalscore ?? row.score);
+    const thru = normalizeManualThru(row.thru ?? row.holesthru ?? row.holesthrough, todayScore);
+
+    const golfer = findOrCreateGolferForManualRow(store, providerPlayerId, name, row.country?.trim() || null);
+    const tournamentGolfer = findOrCreateTournamentGolferForManualRow(store, tournamentId, golfer);
+
+    tournamentGolfer.position = row.position?.trim() || row.pos?.trim() || tournamentGolfer.position;
+    tournamentGolfer.totalScore = totalScore;
+    tournamentGolfer.todayScore = todayScore;
+    tournamentGolfer.round = round;
+    tournamentGolfer.thru = thru;
+    tournamentGolfer.status = status;
+    tournamentGolfer.madeCut = parseMadeCut(row.madecut ?? row.cut, status, tournamentGolfer.position);
+    tournamentGolfer.lastSyncedAt = timestamp;
+    tournamentGolfer.updatedAt = timestamp;
+
+    for (const roundNumber of [1, 2, 3, 4] as const) {
+      const roundScore = parseNullableScore(
+        row[`r${roundNumber}`] ??
+          row[`round${roundNumber}`] ??
+          row[`round_${roundNumber}`],
+      );
+      if (roundScore === null && roundNumber !== round) continue;
+      upsertProviderRoundScores(store, tournamentGolfer, [
+        {
+          roundNumber,
+          scoreToPar: roundNumber === round && roundScore === null ? todayScore : roundScore,
+          strokes: parseNullableNumber(row[`r${roundNumber}strokes`] ?? row[`round${roundNumber}strokes`]),
+          thru: roundNumber === round ? thru : roundScore !== null ? "18" : null,
+          status,
+        },
+      ]);
+    }
+
+    if (!store.golferRoundScores.some((score) => score.tournamentGolferId === tournamentGolfer.id)) {
+      upsertLatestRoundScore(store, tournamentGolfer);
+    }
+    imported += 1;
+  }
+
+  store.scoreSyncLogs.unshift({
+    id: id("sync"),
+    tournamentId,
+    provider: "manual-csv",
+    success: true,
+    message: `Imported manual scores for ${imported} golfers. No API calls used.`,
+    syncedAt: timestamp,
+  });
+  recalculateTournament(tournamentId, true);
+  return { ok: true, message: `Imported scores for ${imported} golfers.` };
+}
+
 export function syncMockLeaderboard(tournamentId: string, provider = "mock") {
   const store = getStore();
   const golfers = store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId);
@@ -712,8 +801,8 @@ export function syncMockLeaderboard(tournamentId: string, provider = "mock") {
 
 export async function syncProviderLeaderboard(
   tournamentId: string,
-  provider = process.env.GOLF_DATA_PROVIDER ?? "mock",
-  options?: { roundId?: string; applyCut?: boolean },
+  provider = scoreSyncProvider(),
+  options?: { roundId?: string; applyCut?: boolean; force?: boolean },
 ) {
   const store = getStore();
   const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
@@ -725,11 +814,27 @@ export async function syncProviderLeaderboard(
 
   try {
     const dataProvider = getGolfDataProvider(provider);
-    const leaderboard = await dataProvider.getTournamentLeaderboard(tournament, options);
+    const cacheKey = providerCacheKey(tournamentId, provider, options?.roundId);
+    const cached = !options?.force ? store.providerLeaderboardCache.find((item) => item.key === cacheKey) : null;
+    const leaderboard =
+      cached?.leaderboard ?? (await dataProvider.getTournamentLeaderboard(tournament, options));
+    if (!cached) {
+      store.providerLeaderboardCache = [
+        {
+          key: cacheKey,
+          provider,
+          tournamentId,
+          leaderboard,
+          cachedAt: timestamp,
+        },
+        ...store.providerLeaderboardCache.filter((item) => item.key !== cacheKey),
+      ].slice(0, 20);
+    }
     const rows = leaderboard.players;
     let matched = 0;
     let scorecards = 0;
     const pickedProviderPlayerIds = pickedProviderIdsForTournament(store, tournamentId);
+    const scorecardSyncEnabled = process.env.SCORECARD_SYNC_ENABLED === "true";
 
     for (const row of rows) {
       const golfer = findOrCreateTournamentGolferForProviderRow(store, tournamentId, row);
@@ -750,6 +855,7 @@ export async function syncProviderLeaderboard(
       }
       if (
         options?.roundId &&
+        scorecardSyncEnabled &&
         dataProvider.getPlayerRoundScorecard &&
         pickedProviderPlayerIds.has(row.providerPlayerId)
       ) {
@@ -773,6 +879,8 @@ export async function syncProviderLeaderboard(
       success: true,
       message: [
         `Synced ${matched} of ${rows.length} provider rows.`,
+        cached ? "Used cached provider response." : "Fetched fresh provider response.",
+        options?.roundId && !scorecardSyncEnabled ? "Scorecard API calls skipped." : null,
         scorecards ? `${scorecards} picked-player scorecards.` : null,
         leaderboard.roundId ? `Round ${leaderboard.roundId}.` : null,
         leaderboard.cutScore !== null ? `Cut score: ${formatProviderScore(leaderboard.cutScore)}.` : null,
@@ -783,7 +891,10 @@ export async function syncProviderLeaderboard(
       tournamentId,
       options?.applyCut ?? ["drop_open", "round_3", "round_4", "final"].includes(tournament.status),
     );
-    return { ok: true, message: `Synced ${matched} of ${rows.length} provider rows.` };
+    return {
+      ok: true,
+      message: `${cached ? "Used cached scores" : "Synced scores"} for ${matched} of ${rows.length} provider rows.`,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown provider sync error.";
     store.scoreSyncLogs.unshift({
@@ -900,7 +1011,7 @@ export function advanceWeekendStep(
 export async function advanceWeekendStepFromProvider(
   tournamentId: string,
   step: Parameters<typeof advanceWeekendStep>[1],
-  provider = process.env.GOLF_DATA_PROVIDER ?? "mock",
+  provider = scoreSyncProvider(),
 ) {
   if (provider === "mock" || provider === "manual") {
     advanceWeekendStep(tournamentId, step);
@@ -1131,6 +1242,14 @@ function formatProviderScore(score: number) {
   return score > 0 ? `+${score}` : String(score);
 }
 
+function providerCacheKey(tournamentId: string, provider: string, roundId?: string) {
+  return [provider, tournamentId, roundId ?? "leaderboard"].join(":");
+}
+
+function scoreSyncProvider() {
+  return process.env.SCORE_SYNC_MODE === "mock" ? "mock" : process.env.GOLF_DATA_PROVIDER ?? "mock";
+}
+
 export function recalculateTournament(tournamentId: string, applyCut = false) {
   const store = getStore();
   const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
@@ -1172,6 +1291,107 @@ function parseScoreValue(field: string, value: string) {
     return value.trim() === "" ? null : Number(value);
   }
   return value.trim() || null;
+}
+
+function parseNullableScore(value: unknown) {
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (!normalized || normalized === "-" || normalized === "NULL") return null;
+  if (normalized === "E" || normalized === "EVEN") return 0;
+  const parsed = Number(normalized.replace("+", ""));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseNullableNumber(value: unknown) {
+  const parsed = Number(String(value ?? "").trim());
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseRoundNumber(value: unknown) {
+  const parsed = parseNullableNumber(value);
+  return [1, 2, 3, 4].includes(parsed ?? 0) ? parsed : null;
+}
+
+function parseGolferStatus(value: unknown): GolferStatus {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized.includes("wd") || normalized.includes("withdraw")) return "wd";
+  if (normalized.includes("dq") || normalized.includes("disqual")) return "dq";
+  if (normalized.includes("cut")) return "cut";
+  if (normalized.includes("finish") || normalized.includes("complete")) return "finished";
+  return "active";
+}
+
+function parseMadeCut(value: unknown, status: GolferStatus, position?: string | null) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (["true", "1", "yes", "made", "made cut"].includes(normalized)) return true;
+  if (["false", "0", "no", "cut", "missed", "missed cut"].includes(normalized)) return false;
+  if (status === "cut" || status === "wd" || status === "dq" || position === "CUT") return false;
+  return null;
+}
+
+function normalizeManualThru(value: unknown, todayScore: number | null) {
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (normalized.startsWith("F")) return "18";
+  if (normalized && normalized !== "-") return normalized;
+  return todayScore !== null ? "18" : null;
+}
+
+function findOrCreateGolferForManualRow(
+  store: Store,
+  providerPlayerId: string,
+  name: string,
+  country: string | null,
+) {
+  const normalized = normalizeName(name);
+  let golfer = store.golfers.find(
+    (item) => item.providerPlayerId === providerPlayerId || normalizeName(item.name) === normalized,
+  );
+  if (!golfer) {
+    golfer = {
+      id: id("golfer"),
+      providerPlayerId,
+      name,
+      country,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    store.golfers.push(golfer);
+  } else {
+    golfer.providerPlayerId = providerPlayerId;
+    golfer.name = name;
+    golfer.country = country ?? golfer.country;
+    golfer.updatedAt = nowIso();
+  }
+  return golfer;
+}
+
+function findOrCreateTournamentGolferForManualRow(
+  store: Store,
+  tournamentId: string,
+  golfer: Golfer,
+) {
+  let tournamentGolfer = store.tournamentGolfers.find(
+    (item) => item.tournamentId === tournamentId && item.golferId === golfer.id,
+  );
+  if (!tournamentGolfer) {
+    tournamentGolfer = {
+      id: id("tg"),
+      tournamentId,
+      golferId: golfer.id,
+      pointValue: null,
+      position: null,
+      totalScore: null,
+      todayScore: null,
+      round: null,
+      thru: null,
+      madeCut: null,
+      status: "active",
+      lastSyncedAt: null,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    store.tournamentGolfers.push(tournamentGolfer);
+  }
+  return tournamentGolfer;
 }
 
 function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
@@ -1484,6 +1704,7 @@ function createSeedStore(): Store {
     entries,
     entryPicks,
     scoreSyncLogs: [],
+    providerLeaderboardCache: [],
     adminOverrides: [],
     adminTeamCorrections: [],
     credentials,

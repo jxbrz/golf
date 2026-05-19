@@ -25,11 +25,11 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
             <h1 className="text-3xl font-black">Pick your team</h1>
             <p className="mt-1 text-muted">
-              Pick exactly 4 golfers under the 90 point cap. Once submitted, your team is locked.
+              Pick exactly 4 golfers under the 90 point cap. This is the only thing you need to do before the tournament starts.
             </p>
             {locked ? (
-              <p className="mt-3 rounded-md bg-amber-50 p-3 font-bold text-amber-900">
-                Your team has been submitted. Submitted teams cannot be changed by players.
+              <p className="mt-3 rounded-md bg-emerald-50 p-3 font-bold text-emerald-900">
+                Thanks for your picks. Come back after round one to see how you are doing.
               </p>
             ) : null}
           </section>
@@ -39,14 +39,16 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
               <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
                 <h2 className="text-lg font-black">Team locked</h2>
                 <p className="mt-1 text-sm text-muted">
-                  Your submitted team is saved. The leaderboard is the main screen from here.
+                  Your submitted team is saved. You can review it here any time.
                 </p>
-                <Link
-                  href={`/tournaments/${tournament.id}/leaderboard`}
-                  className="mt-4 flex h-12 items-center justify-center rounded-md bg-primary px-4 font-black text-white"
-                >
-                  View Current Standings
-                </Link>
+                {["round_1", "round_2", "drop_open", "round_3", "round_4", "final"].includes(tournament.status) ? (
+                  <Link
+                    href={`/tournaments/${tournament.id}/leaderboard`}
+                    className="mt-4 flex h-12 items-center justify-center rounded-md bg-primary px-4 font-black text-white"
+                  >
+                    View standings
+                  </Link>
+                ) : null}
               </section>
             </div>
           ) : (
