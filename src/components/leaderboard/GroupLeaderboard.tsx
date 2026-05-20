@@ -34,11 +34,12 @@ export function GroupLeaderboard({
   };
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
-      <div className="flex items-center justify-between gap-3 border-b border-border paper-panel p-4">
+    <section className="app-panel">
+      <div className="app-panel-header flex items-center justify-between gap-3 p-4">
         <div>
-          <h2 className="text-xl font-black">{title}</h2>
-          <p className="text-sm text-muted">
+          <p className="sport-label">Group Standings</p>
+          <h2 className="mt-1 text-2xl font-black">{title}</h2>
+          <p className="mt-1 text-sm font-semibold text-muted">
             {["drop_open", "round_3", "round_4", "final"].includes(tournament.status)
               ? "Best 3 scores count after the cut"
               : "Best 3 available scores count"}
@@ -47,7 +48,7 @@ export function GroupLeaderboard({
         {preview ? (
           <Link
             href={`/tournaments/${tournament.id}/leaderboard`}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
+            className="app-button"
           >
             View all
           </Link>
@@ -66,10 +67,10 @@ export function GroupLeaderboard({
         {visibleRows.map((row) => (
           <details
             key={row.entry.id}
-            className={row.entry.userId === currentUserId ? "group bg-emerald-50/55" : "group"}
+            className={row.entry.userId === currentUserId ? "group bg-emerald-50/60" : "group bg-white"}
           >
-            <summary className="grid cursor-pointer list-none grid-cols-[2.75rem_1fr_auto_1.5rem] items-center gap-2 p-4 transition hover:bg-slate-50">
-              <span className="flex size-10 items-center justify-center rounded-md border border-border bg-white font-mono text-lg font-black text-primary">
+            <summary className="grid cursor-pointer list-none grid-cols-[2.75rem_1fr_auto_1.5rem] items-center gap-3 p-4 transition hover:bg-slate-50">
+              <span className="flex size-10 items-center justify-center rounded-md bg-[var(--rough)] font-mono text-lg font-black text-primary metric-number">
                 {row.rank}
               </span>
               <span>
@@ -85,7 +86,7 @@ export function GroupLeaderboard({
                   <CutStatusBadge status={row.needsDrop ? "drop_required" : row.status} />
                 </span>
               </span>
-              <span className="font-mono text-2xl font-black tabular-nums">
+              <span className="font-mono text-2xl font-black tabular-nums text-primary metric-number">
                 {scoreText(row)}
               </span>
               <ChevronDown className="text-muted transition group-open:rotate-180" size={18} />

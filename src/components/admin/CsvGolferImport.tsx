@@ -2,9 +2,10 @@ import { importGolfersAction } from "@/app/actions";
 
 export function CsvGolferImport({ tournamentId }: { tournamentId: string }) {
   return (
-    <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-      <h2 className="text-xl font-black">Import golfers</h2>
-      <p className="mt-1 text-sm text-muted">
+    <section className="app-panel p-4">
+      <p className="sport-label">Field setup</p>
+      <h2 className="mt-1 text-xl font-black">Import golfers</h2>
+      <p className="mt-1 text-sm font-semibold text-muted">
         Paste CSV with columns: name, points. Optional: country, providerPlayerId.
       </p>
       <form action={importGolfersAction} className="mt-4 space-y-3">
@@ -12,10 +13,10 @@ export function CsvGolferImport({ tournamentId }: { tournamentId: string }) {
         <textarea
           name="csv"
           rows={8}
-          className="w-full rounded-md border border-border p-3 font-mono text-sm"
+          className="w-full rounded-md border border-border bg-white p-3 font-mono text-sm outline-none focus:border-primary"
           defaultValue={"name,points,country\nExample Player,12,USA"}
         />
-        <button className="h-11 rounded-md bg-primary px-4 font-black text-white">
+        <button className="app-button">
           Import CSV
         </button>
       </form>

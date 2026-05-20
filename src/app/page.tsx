@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2, MapPin, ShieldCheck } from "lucide-react";
+import { CalendarDays, CheckCircle2, MapPin, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { MajorMark } from "@/components/theme/MajorMark";
@@ -28,27 +28,28 @@ export default async function Home() {
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament}>
-        <main className="space-y-5">
+        <div className="space-y-5">
           <WelcomeHero
             entrySubmitted={Boolean(entry?.submittedAt)}
             locked={tournament.status === "picks_locked"}
             tournament={tournament}
           />
           {entry?.submittedAt ? (
-            <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
-              <section className="paper-panel rounded-lg border border-border p-5 scorecard-shadow">
+            <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
+              <section className="app-panel p-5">
                 <div className="flex items-start gap-3">
                   <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-800">
                     <CheckCircle2 />
                   </span>
                   <div>
-                    <h2 className="text-2xl font-black">Thanks for your picks.</h2>
+                    <p className="sport-label">Team status</p>
+                    <h2 className="mt-1 text-2xl font-black">Thanks for your picks.</h2>
                     <p className="mt-2 text-muted">
                       Your team is saved. Come back after round one to see how you are doing.
                     </p>
                     <Link
                       href={`/tournaments/${tournament.id}/pick`}
-                      className="mt-4 inline-flex h-11 items-center rounded-md bg-primary px-4 font-black text-white"
+                      className="app-button mt-4"
                     >
                       Review team
                     </Link>
@@ -58,8 +59,9 @@ export default async function Home() {
               <EntryTeamCard entry={entry} />
             </div>
           ) : (
-            <section className="paper-panel rounded-lg border border-border p-5 scorecard-shadow">
-              <h2 className="text-xl font-black">How it works</h2>
+            <section className="app-panel p-5">
+              <p className="sport-label">Rules</p>
+              <h2 className="mt-1 text-xl font-black">How it works</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <Rule number="1" title="Pick 4 golfers" text="Choose your team before picks lock." />
                 <Rule number="2" title="Stay under 90" text="Each golfer has a cost from 55 down to 1." />
@@ -67,7 +69,7 @@ export default async function Home() {
               </div>
             </section>
           )}
-        </main>
+        </div>
       </AppShell>
     </MajorThemeProvider>
   );
@@ -95,56 +97,53 @@ function WelcomeHero({
       : "Pick 4 golfers under the 90 point cap. Once you submit, your team is locked.";
 
   return (
-    <section className="event-hero overflow-hidden rounded-xl text-white scorecard-shadow">
-      <div className="grid gap-6 p-5 sm:p-7 lg:grid-cols-[1fr_18rem] lg:items-end">
-        <div>
+    <section className="event-hero overflow-hidden rounded-lg text-white scorecard-shadow">
+      <div className="grid gap-0 lg:grid-cols-[1fr_24rem]">
+        <div className="p-5 sm:p-7 lg:p-8">
           <div className="flex items-center gap-3">
             <MajorMark majorKey={tournament.majorKey} size="lg" />
             <div>
-              <p className="text-sm font-black uppercase tracking-wide" style={{ color: theme.secondary }}>
-                {theme.label}
-              </p>
-              <p className="text-sm font-semibold text-white/75">{tournament.year} private sweepstake</p>
+              <h2 className="text-lg font-black leading-5">{tournament.name}</h2>
+              <p className="text-sm font-semibold text-white/68">{theme.label} {tournament.year}</p>
             </div>
           </div>
-          <h1 className="mt-7 max-w-2xl text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+          <h1 className="mt-8 max-w-2xl text-4xl font-black leading-tight sm:text-6xl">
             {title}
           </h1>
-          <p className="mt-3 max-w-xl text-base font-medium leading-7 text-white/82">
+          <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/78">
             {body}
           </p>
           {!entrySubmitted && !locked ? (
             <Link
               href={`/tournaments/${tournament.id}/pick`}
-              className="mt-6 inline-flex h-12 items-center rounded-md px-5 text-base font-black text-primary"
+              className="mt-7 inline-flex h-12 items-center rounded-md px-5 text-base font-black text-primary"
               style={{ backgroundColor: theme.secondary }}
             >
               Select your picks
             </Link>
           ) : null}
+          <div className="mt-8 grid max-w-2xl gap-2 sm:grid-cols-3">
+            <HeroStat icon={<MapPin size={17} />} label="Venue" value={tournament.venue.split(",")[0]} />
+            <HeroStat icon={<CalendarDays size={17} />} label="Picks lock" value={formatDateTime(tournament.pickDeadline)} />
+            <HeroStat icon={<Trophy size={17} />} label="Format" value="Four picks, best three" />
+          </div>
         </div>
 
-        <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur">
-          <div className="relative mb-4 aspect-[4/3] overflow-hidden rounded-md border border-white/15">
-            <Image
-              src="/images/aronimink-clubhouse.jpg"
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 18rem, 100vw"
-              className="object-cover"
-              priority
-            />
-          </div>
-          <div className="space-y-3 text-sm font-semibold text-white/85">
-            <span className="flex items-center gap-2">
-              <MapPin size={16} /> {tournament.venue}
-            </span>
-            <span className="flex items-center gap-2">
-              <CalendarDays size={16} /> Picks lock {formatDateTime(tournament.pickDeadline)}
-            </span>
-            <span className="flex items-center gap-2">
-              <ShieldCheck size={16} /> Four golfers, best three scores
-            </span>
+        <div className="relative min-h-72 border-t border-white/10 lg:border-l lg:border-t-0">
+          <Image
+            src="/images/aronimink-clubhouse.jpg"
+            alt=""
+            fill
+            sizes="(min-width: 1024px) 24rem, 100vw"
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgb(9_37_29_/_0.82)] via-transparent to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 rounded-md border border-white/16 bg-[rgb(9_37_29_/_0.7)] p-3 backdrop-blur">
+            <p className="text-sm font-black">Live-event rehearsal</p>
+            <p className="mt-1 text-xs font-semibold leading-5 text-white/72">
+              Use admin controls to move the tournament through rounds with mock live data.
+            </p>
           </div>
         </div>
       </div>
@@ -152,10 +151,22 @@ function WelcomeHero({
   );
 }
 
+function HeroStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-white/12 bg-white/8 p-3">
+      <div className="flex items-center gap-2 text-white/68">
+        {icon}
+        <span className="text-xs font-black uppercase">{label}</span>
+      </div>
+      <p className="mt-2 line-clamp-2 text-sm font-black text-white">{value}</p>
+    </div>
+  );
+}
+
 function Rule({ number, title, text }: { number: string; title: string; text: string }) {
   return (
-    <div className="rounded-lg border border-border bg-white p-4">
-      <span className="flex size-9 items-center justify-center rounded-md bg-primary font-mono font-black text-white">
+    <div className="rounded-md border border-border bg-white p-4">
+      <span className="flex size-9 items-center justify-center rounded-md bg-[var(--rough)] font-mono font-black text-primary">
         {number}
       </span>
       <h3 className="mt-3 font-black">{title}</h3>

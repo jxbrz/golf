@@ -4,13 +4,14 @@ import { formatScoreOrLabel } from "@/lib/utils";
 
 export function EntryTeamCard({ entry }: { entry: EntryWithDetails }) {
   return (
-    <section className="paper-panel rounded-lg border border-border p-4 scorecard-shadow">
+    <section className="app-panel p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black">Your team</h2>
+          <p className="sport-label">Entry</p>
+          <h2 className="mt-1 text-lg font-black">Your team</h2>
           <p className="text-sm font-semibold text-muted">{entry.totalPoints} points used</p>
         </div>
-        <p className="font-mono text-2xl font-bold">
+        <p className="font-mono text-2xl font-black metric-number text-primary">
           {formatScoreOrLabel(entry.liveScore, "Not started")}
         </p>
       </div>

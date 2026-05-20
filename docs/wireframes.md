@@ -1,58 +1,83 @@
 # Major Picks Wireframes
 
-Low-fidelity wireframes for organiser review. These describe the intended screens, navigation, and tournament states rather than exact visual styling.
+Low-fidelity wireframes for organiser review. These describe the intended screens, navigation, tournament states, and admin operations rather than exact visual styling.
 
 ## Product Shape
 
 Major Picks is a private golf major sweepstake app.
 
 Players:
-- Pick 4 golfers under the 90 point cap before play starts.
-- Track standings during the weekend.
-- Drop one golfer if all 4 make the cut.
-- View final results after the tournament.
+- Sign in with organiser-provided account details.
+- Pick exactly 4 golfers under the 90 point cap before picks lock.
+- Review a submitted team while the tournament has not started.
+- Track live standings once play begins.
+- Drop one golfer only when all 4 picked golfers make the cut.
+- View final results and field results after the tournament is finalised.
 
 Admins:
+- View all tournaments and quick admin tasks.
 - Import/sync the tournament field.
 - Generate player costs from outright odds.
-- Lock picks and progress the tournament round by round.
-- Sync leaderboard/scorecard data from the API.
-- Correct entries or scores if needed.
+- Lock picks and progress the tournament through each weekend state.
+- Sync leaderboard and scorecard data from the configured provider.
+- Manually import/edit scores if the provider data is wrong or unavailable.
+- Correct submitted entries with an audit reason.
 
 ## Navigation States
 
-### Before Final
+The app uses a desktop header nav and a mobile bottom nav. Admin users always keep access to the Admin area.
+
+### Pre-Play, Non-Admin
+
+Before play begins, non-admin users have a deliberately small navigation surface.
 
 ```text
-Header
 +------------------------------------------------+
-| [Major Picks]          Home Pick Standings Field |
-|                                      [Admin] [↗] |
-+------------------------------------------------+
-
-Bottom nav
-+------------------------------------------------+
-| Home | Team/Pick | Standings | Field | Admin*    |
-+------------------------------------------------+
-* Admin only
-```
-
-### After Final, Non-Admin
-
-```text
-Header
-+------------------------------------------------+
-| [Major Picks]             Results Field Results |
-|                                             [↗] |
+| [Major Picks] PGA 2026                 [User] |
+|                                        [Log]  |
 +------------------------------------------------+
 
-Bottom nav
+Mobile bottom nav
 +------------------------------------------------+
-|              Results | Field Results            |
+|                 Welcome / Team                 |
 +------------------------------------------------+
 ```
 
-Admin users keep full navigation after finalisation.
+Rules:
+- If the player has not submitted, the nav item is Welcome and routes to the home screen.
+- If the player has submitted, the nav item is Team and routes to the locked team view.
+- Standings are hidden until play starts.
+
+### Live Tournament, Non-Admin
+
+```text
++------------------------------------------------+
+| [Major Picks] PGA 2026                         |
+|             Team  Standings  Drop*  Field [Log]|
++------------------------------------------------+
+
+Mobile bottom nav
++------------------------------------------------+
+|        Team | Standings | Drop* | Field         |
++------------------------------------------------+
+* Drop appears only for entries with status drop_required.
+```
+
+### Final, Non-Admin
+
+```text
++------------------------------------------------+
+| [Major Picks] PGA 2026                         |
+|                   Results  Field Results [Log] |
++------------------------------------------------+
+
+Mobile bottom nav
++------------------------------------------------+
+|             Results | Field Results            |
++------------------------------------------------+
+```
+
+Admin users keep full tournament navigation after finalisation, with Results added.
 
 ## Player Screens
 
@@ -75,34 +100,65 @@ Admin users keep full navigation after finalisation.
 ```
 
 Purpose:
-- Simple access gate for private game.
+- Simple access gate for a private game.
 - No public marketing page.
 
 ### 2. Home - No Team Submitted
 
 ```text
 +------------------------------------------------+
-| PGA Championship 2026                          |
-| Aronimink Golf Club                            |
-| Picks lock: date/time                          |
+| [Major mark] PGA Championship                  |
+| 2026 private sweepstake                        |
 |                                                |
-| [ Pick Team ] [ Current Standings ] [ Field ]  |
+| Welcome. Select your picks.                    |
+| Pick 4 golfers under the 90 point cap.         |
+|                                                |
+| [ Select your picks ]                          |
+|                                                |
+|                      +-----------------------+ |
+|                      | Venue image           | |
+|                      | Aronimink Golf Club   | |
+|                      | Picks lock date/time  | |
+|                      | Four golfers, best 3  | |
+|                      +-----------------------+ |
 +------------------------------------------------+
 
-+--------------------------+ +-------------------+
-| Current standings        | | Simple rules      |
-| Top 3 only on home       | | - Pick 4 golfers  |
-|                          | | - Max 90 points   |
-| Empty state if no teams  | | - Teams lock      |
-|                          | | - Best 3 count    |
-+--------------------------+ +-------------------+
++------------------------------------------------+
+| How it works                                   |
+| +------------+ +------------+ +-------------+  |
+| | 1 Pick 4   | | 2 Under 90 | | 3 Best 3   |  |
+| | golfers    | | points     | | count      |  |
+| +------------+ +------------+ +-------------+  |
++------------------------------------------------+
 ```
 
 Rules:
-- Home standings preview shows top 3 only.
-- Full standings live on the Standings page.
+- This is the first screen for players before play starts.
+- If picks are locked before a player submits, the hero changes to "Picks are locked."
 
-### 3. Pick Team
+### 3. Home - Team Submitted
+
+```text
++------------------------------------------------+
+| [Major mark] PGA Championship                  |
+|                                                |
+| Your team is in.                               |
+| Nothing else to do yet. Standings open after   |
+| round one is in.                               |
++------------------------------------------------+
+
++-------------------------------+ +--------------+
+| Thanks for your picks.        | | Team card    |
+| Your team is saved.           | |              |
+|                               | | 90 points    |
+| [ Review team ]               | | Golfer A     |
++-------------------------------+ | Golfer B     |
+                                  | Golfer C     |
+                                  | Golfer D     |
+                                  +--------------+
+```
+
+### 4. Pick Team
 
 ```text
 +------------------------------------------------+
@@ -111,63 +167,69 @@ Rules:
 +------------------------------------------------+
 
 +-------------------------------+ +--------------+
-| Search golfers                | | Selected     |
+| Available golfers             | | Team sheet   |
+| Only priced players selectable| | Four names.  |
+| +---------------------------+ | | 90 points.  |
+| | Search golfers            | | |              |
 | +---------------------------+ | | Budget 0/90  |
 |                               | |              |
-| [ ] Golfer name       Cost 55 | | Player 1  -- |
-|     Country / score           | | Player 2  -- |
+| [ ] Golfer name          55   | | Player 1  -- |
+|     Not started - Country     | | Player 2  -- |
 |                               | | Player 3  -- |
-| [ ] Golfer name       Cost 54 | | Player 4  -- |
-|                               | |              |
-| Only numeric-cost golfers     | | [Submit]     |
-| are selectable. N/A field     | +--------------+
-| players do not appear here.   |
+| [ ] Golfer name          54   | | Player 4  -- |
+|     T12 - -2 - Country        | |              |
+|                               | | [Submit      |
+| Unaffordable or fifth picks   | |  locked team]|
+| are disabled.                 | +--------------+
 +-------------------------------+
 ```
 
-Rules:
-- Only players with a numeric cost can be selected.
-- Four golfers required.
-- Total must be 90 or less.
-- Submitted team is locked.
+Mobile behaviour:
+- A floating budget bar appears while picks are selected and the team sheet is off-screen.
 
-### 4. Submitted Team
+Rules:
+- Only golfers with a numeric point value are selectable.
+- Four golfers are required.
+- Total must be 90 or less.
+- Submitted teams are locked.
+
+### 5. Submitted Team
 
 ```text
 +------------------------------------------------+
 | Pick your team                                 |
-| Your team has been submitted.                  |
+| Thanks for your picks. Come back after round 1.|
 +------------------------------------------------+
 
 +-------------------------------+ +--------------+
-| Your team                     | | Team locked  |
+| Team card                     | | Team locked  |
 | 90 points used        Score   | |              |
-|                               | | [Standings]  |
-| Golfer A  score/status/cost   | +--------------+
-| Golfer B  score/status/cost   |
-| Golfer C  score/status/cost   |
-| Golfer D  score/status/cost   |
-+-------------------------------+
+|                               | | Saved team   |
+| Golfer A  score/status/cost   | | can be       |
+| Golfer B  score/status/cost   | | reviewed.    |
+| Golfer C  score/status/cost   | |              |
+| Golfer D  score/status/cost   | | [Standings]* |
++-------------------------------+ +--------------+
+* Shown once standings are available.
 ```
 
-### 5. Standings
+### 6. Standings
 
 ```text
 +------------------------------------------------+
-| Current standings                              |
-| Tap a name to see the full team.               |
-| [View Field Leaderboard]                       |
+| Standings                                      |
+| The live sweepstake table.                     |
+| [View field results]                           |
 +------------------------------------------------+
 
 +------------------------------------------------+
 | Current standings                              |
 | Best 3 available scores count                  |
 |                                                |
-| 1  Player name                  -3      [v]    |
+| 1  Player name                  -3      [show] |
 |    Status badge                                |
 |                                                |
-| 2  Player name                  +1      [v]    |
-|                                                |
+| 2  Player name                  +1      [show] |
 +------------------------------------------------+
 ```
 
@@ -175,7 +237,7 @@ Expanded row:
 
 ```text
 +------------------------------------------------+
-| 1  Player name                  -3      [^]    |
+| 1  Player name                  -3      [hide] |
 |    Qualified / Eliminated / Drop required      |
 |------------------------------------------------|
 | Golfer A       total/today/thru/cost   Counting|
@@ -186,12 +248,14 @@ Expanded row:
 ```
 
 Rules:
-- Before cut: best 3 available scores count.
-- After cut: only made-cut golfers can count.
-- If 4 golfers make the cut, status becomes Drop required.
-- Team dropdown does not show "3 made cut"; the entry status badge is enough.
+- Non-admin players are redirected here once play begins.
+- Before the cut, best 3 available scores count.
+- After the cut, only made-cut golfers can count.
+- If 4 picked golfers make the cut, status becomes Drop required and Drop appears in nav.
 
-### 6. Drop Player
+### 7. Drop Player
+
+Drop required state:
 
 ```text
 +------------------------------------------------+
@@ -219,19 +283,32 @@ Rules:
 +------------------------------------------------+
 ```
 
-Rules:
-- Only appears when all 4 selected golfers made the cut.
-- Exactly one golfer is dropped.
-- Remaining 3 count.
-
-### 7. Field Results / Field Leaderboard
-
-Before cut:
+No drop needed state:
 
 ```text
 +------------------------------------------------+
-| Field leaderboard                              |
-| PGA Championship                               |
+| No manual drop needed                          |
+| The standings now count the best 3 available   |
+| scores automatically.                          |
++------------------------------------------------+
+```
+
+Rules:
+- Drop only appears when the entry status is drop_required.
+- Exactly one golfer is dropped.
+- Remaining 3 count.
+
+### 8. Field Leaderboard / Field Results
+
+```text
++------------------------------------------------+
+| [Back]                                         |
++------------------------------------------------+
+
++------------------------------------------------+
+| [Major mark] Field leaderboard                 |
+| Tournament leaderboard. Cut players are removed|
+| after the cut, but remain visible in teams.    |
 +------------------------------------------------+
 
 +------------------------------------------------+
@@ -241,17 +318,24 @@ Before cut:
 +------------------------------------------------+
 ```
 
-After cut:
-- Cut players are removed from Field Results.
-- Cut players still appear inside team dropdowns if picked.
+Rules:
+- Title is Field leaderboard before final.
+- Title is Field results after final.
+- Cut players are removed from the field list after the cut.
+- Cut players still appear inside team rows if they were picked.
+- Player names link to the scorecard.
 
-### 8. Player Scorecard
+### 9. Player Scorecard
 
 ```text
 +------------------------------------------------+
+| [Back to field leaderboard]                    |
++------------------------------------------------+
+
++------------------------------------------------+
 | Player scorecard                               |
 | Golfer name                                    |
-| Country · Tournament                           |
+| Country - Tournament year                      |
 +------------------------------------------------+
 
 +-----------+-----------+-----------+-----------+
@@ -260,22 +344,28 @@ After cut:
 +-----------+-----------+-----------+-----------+
 
 +------------------------------------------------+
-| Rounds                                         |
+| Rounds                                  [badge]|
 | Round | Score | Strokes | Thru                 |
 | R1    | -2    | 68      | 18                   |
 | R2    | +2    | 72      | 18                   |
 | R3    | -     | -       | -                    |
 | R4    | -     | -       | -                    |
+|                                                |
+| Last updated date/time                         |
 +------------------------------------------------+
 ```
 
 Rules:
-- API `F` or `F*` is shown as `18`.
+- Provider `F` or `F*` is shown as `18`.
 - Full field scorecards exist for synced players.
 
-### 9. Final Results
+### 10. Final Results
 
 ```text
++------------------------------------------------+
+| [Current Standings / Field Results]            |
++------------------------------------------------+
+
 +------------------------------------------------+
 | Final results                                  |
 | PGA Championship 2026                          |
@@ -283,7 +373,7 @@ Rules:
 +------------------------------------------------+
 
 +------------------------------------------------+
-| Lowest round                                   |
+| [Trophy] Lowest round                          |
 | Picked Golfer shot -5 in round 3.              |
 | Picked by Player A, Player C.                  |
 | If tied: winning on B3/B6/B9/B18 countback.    |
@@ -291,42 +381,52 @@ Rules:
 
 +------------------------------------------------+
 | Final leaderboard                              |
-| 1  Player name                  -8      [v]    |
+| Lowest combined score wins.                    |
+|                                                |
+| 1  Player name                  -8      [show] |
 |    Final                                      |
-| 2  Player name                  -4      [v]    |
+| 2  Player name                  -4      [show] |
 +------------------------------------------------+
 ```
 
 Rules:
 - Non-admin users only see Results and Field Results after finalisation.
+- Admin users can navigate back to Current Standings.
 - Rows expand to show selected golfers.
 - Lowest round only considers golfers who were picked.
 - Countback order: B3, B6, B9, B18.
 
 ## Admin Screens
 
-### 10. Admin Dashboard
+### 11. Admin Dashboard
 
 ```text
 +------------------------------------------------+
 | Admin                                          |
-| Active tournament summary                      |
+| Simple controls for running the competition.   |
 +------------------------------------------------+
 
++------------------------+ +---------------------+
+| Tournament card        | | Tournament card     |
+| status                 | | status              |
+| Major/year             | | Major/year          |
+| Venue                  | | Venue               |
++------------------------+ +---------------------+
+
 +------------------------------------------------+
-| Tournament card                                |
-| Status / year / provider ID                    |
-| [Manage tournament] [Entries] [Scores]         |
+| Quick tasks                                    |
+| [Entries] [Scores] [Final Results*]            |
 +------------------------------------------------+
+* Final Results appears only when the active tournament is final.
 ```
 
-### 11. Admin Tournament Control
+### 12. Admin Tournament Control
 
 ```text
 +------------------------------------------------+
 | Admin tournament                               |
 | PGA Championship 2026                          |
-| 55+ golfers loaded · Status: picks_open        |
+| 55 golfers loaded - Status: picks_open         |
 +------------------------------------------------+
 
 +------------------------------------------------+
@@ -334,7 +434,9 @@ Rules:
 | Current stage title                            |
 | Helper text                                    |
 |                                                |
-| Teams | Scored | Made cut                      |
+| +----------+ +----------+ +----------+         |
+| | Teams 12 | | Scored 0 | | Made cut |         |
+| +----------+ +----------+ +----------+         |
 |                                                |
 | Next sensible action                           |
 | [Lock Picks / Start Thursday / Process Cut]    |
@@ -344,9 +446,15 @@ Rules:
 | Weekend timeline                               |
 | Tuesday | Lock | Thu | Fri | Sat | Sun | Final |
 +------------------------------------------------+
+
++------------------------------------------------+
+| Admin tasks                                    |
+| [Entries] [Scores] [Import] [Odds] [Advanced] |
+| [Final Results]                                |
++------------------------------------------------+
 ```
 
-### 12. Admin Odds Pricing
+### 13. Admin Odds Pricing
 
 ```text
 +------------------------------------------------+
@@ -382,7 +490,7 @@ Rules:
 - Costs should be applied before picks open/lock.
 - Existing submitted entries keep their point value at pick time.
 
-### 13. Admin CSV Import
+### 14. Admin CSV Import
 
 ```text
 +------------------------------------------------+
@@ -401,12 +509,58 @@ Purpose:
 - Manual fallback for pricing/field setup.
 - Useful if odds API names fail or no odds key is available.
 
-### 14. Admin Entries
+### 15. Admin Score Sync
 
 ```text
 +------------------------------------------------+
-| Manage entries                                 |
-| Change picks for any player.                   |
+| Score sync                                     |
+| live provider / mock simulator                 |
+| Tournament ID: provider id                     |
+|                                                |
+| Success - provider                             |
+| Message and synced date/time                   |
+|                                                |
+| Failed - provider                              |
+| Error message and synced date/time             |
++------------------------------------------------+
+```
+
+Rules:
+- Mock mode makes no live score API calls.
+- Live mode can sync leaderboard data.
+- Scorecard API calls can be separately enabled or skipped.
+
+### 16. Admin Advanced Controls
+
+```text
++------------------------------------------------+
+| Advanced controls                              |
+| Use these only for corrections or recovery.    |
++------------------------------------------------+
+
++------------------------------------------------+
+| Raw tournament status                          |
+| [status select] [Update]                       |
+|                                                |
+| [Process cut] [Recalculate] [Sync scores]      |
+| [Finalise]    [Edit scores]                    |
++------------------------------------------------+
+```
+
+Purpose:
+- Recovery panel for direct status changes and repair actions.
+- Hidden inside a details/accordion surface by default.
+
+### 17. Admin Entries
+
+```text
++------------------------------------------------+
+| [Back to Admin]                                |
++------------------------------------------------+
+
++------------------------------------------------+
+| Entries                                        |
+| Review and correct submitted teams.            |
 +------------------------------------------------+
 
 +------------------------------------------------+
@@ -423,14 +577,23 @@ Purpose:
 Rules:
 - Admin can correct teams.
 - Numeric-cost golfers only.
-- Reason required for audit trail.
+- Reason is required for audit trail.
 
-### 15. Admin Scores
+### 18. Admin Scores
 
 ```text
 +------------------------------------------------+
-| Edit scores                                    |
-| Every change is logged as an admin override.   |
+| Scores                                         |
+| Edit scores, cut status, WD/DQ, and positions. |
++------------------------------------------------+
+
++------------------------------------------------+
+| Manual score import                            |
+| Paste leaderboard/score CSV                    |
+| +--------------------------------------------+ |
+| | CSV textarea                               | |
+| +--------------------------------------------+ |
+| [Import scores]                                |
 +------------------------------------------------+
 
 +------------------------------------------------+
@@ -447,24 +610,30 @@ Rules:
 
 Purpose:
 - Manual correction if API data is wrong or missing.
+- Imported scores do not require API calls.
+- Every edit should be treated as a deliberate admin override.
 
 ## Weekend State Machine
 
 ```text
+draft
+  -> Open picks / load field
 picks_open
-  ↓ Lock Picks
+  -> Lock Picks
 picks_locked
-  ↓ Start Thursday
+  -> Start Thursday
 round_1
-  ↓ Start Friday
+  -> Start Friday
 round_2
-  ↓ Process Cut
+  -> Process Cut
+cut_pending
+  -> Process Cut
 drop_open
-  ↓ Start Saturday
+  -> Start Saturday
 round_3
-  ↓ Start Sunday
+  -> Start Sunday
 round_4
-  ↓ Finalise Results
+  -> Finalise Results
 final
 ```
 
@@ -501,3 +670,4 @@ Odds API:
 3. Should final standings need a tie-break beyond shared rank?
 4. Should organisers be able to export final results to CSV?
 5. Should player accounts be pre-created only, or should players self-register?
+6. Should admins be able to reopen picks after locking, or should that stay an advanced/manual recovery action?

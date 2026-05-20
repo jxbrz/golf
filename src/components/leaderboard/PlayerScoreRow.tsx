@@ -27,13 +27,13 @@ export function PlayerScoreRow({
           {pick?.isDropped ? <CutStatusBadge status="dropped" /> : null}
           {pick?.isCounting && !pick.isDropped ? <CutStatusBadge status="counting" /> : null}
         </div>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm font-semibold text-muted">
           {row.position ?? "Not started"} - Today {formatScore(row.todayScore)} -{" "}
           {row.thru ?? "-"} - Cost {formatCost(pick?.pointValueAtPick ?? row.pointValue)}
         </p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-xl font-bold">
+        <p className="font-mono text-xl font-black text-primary metric-number">
           {formatScoreOrLabel(row.totalScore, "Not started")}
         </p>
         <div className="mt-1">

@@ -18,18 +18,18 @@ export function FieldLeaderboard({
   const theme = majorThemes[majorKey];
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
-      <div className="border-b border-border bg-white p-4">
+    <section className="app-panel">
+      <div className="app-panel-header p-4">
         <div className="flex items-center gap-3">
           <MajorMark majorKey={majorKey} size="sm" />
           <div>
-            <p className="text-xs font-black uppercase tracking-wide text-muted">
+            <p className="sport-label">
               {theme.shortLabel}
             </p>
-            <h2 className="text-xl font-black">{title}</h2>
+            <h2 className="mt-1 text-2xl font-black">{title}</h2>
           </div>
         </div>
-        <div className="mt-4 hidden grid-cols-[4.5rem_1fr_4rem_4.5rem_4.5rem_4.5rem] gap-3 rounded-md bg-slate-50 px-3 py-2 text-xs font-black uppercase text-muted sm:grid">
+        <div className="mt-4 hidden grid-cols-[4.5rem_1fr_4rem_4.5rem_4.5rem_4.5rem] gap-3 rounded-md bg-[var(--rough)] px-3 py-2 text-xs font-black uppercase text-muted sm:grid">
           <span>Pos</span>
           <span>Player</span>
           <span className="text-right">Cost</span>
@@ -52,9 +52,9 @@ export function FieldLeaderboard({
             <Link
               key={golfer.id}
               href={`/tournaments/${golfer.tournamentId}/golfers/${golfer.id}`}
-              className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-3 p-4 transition hover:bg-slate-50 sm:grid-cols-[4.5rem_1fr_4rem_4.5rem_4.5rem_4.5rem]"
+              className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-3 bg-white p-4 transition hover:bg-slate-50 sm:grid-cols-[4.5rem_1fr_4rem_4.5rem_4.5rem_4.5rem]"
             >
-              <span className="flex min-h-10 items-center justify-center rounded-md border border-border bg-white px-1 font-mono text-sm font-black text-primary sm:text-base">
+              <span className="flex min-h-10 items-center justify-center rounded-md bg-[var(--rough)] px-1 font-mono text-sm font-black text-primary metric-number sm:text-base">
                 {golfer.position ?? index + 1}
               </span>
               <span className="min-w-0">
@@ -69,13 +69,13 @@ export function FieldLeaderboard({
                   <CutStatusBadge status={madeCut ? "made_cut" : golfer.status} />
                 </span>
               </span>
-              <span className="hidden text-right font-mono text-lg font-black tabular-nums text-primary sm:block">
+              <span className="hidden text-right font-mono text-lg font-black tabular-nums text-primary metric-number sm:block">
                 {formatCost(golfer.pointValue)}
               </span>
-              <span className="text-right font-mono text-2xl font-black tabular-nums text-primary">
+              <span className="text-right font-mono text-2xl font-black tabular-nums text-primary metric-number">
                 {formatScoreOrLabel(golfer.totalScore, "-")}
               </span>
-              <span className="hidden text-right font-mono text-xl font-black tabular-nums text-primary sm:block">
+              <span className="hidden text-right font-mono text-xl font-black tabular-nums text-primary metric-number sm:block">
                 {formatScore(golfer.todayScore)}
               </span>
               <span className="hidden text-right text-sm font-black text-muted sm:block">

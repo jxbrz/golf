@@ -5,7 +5,6 @@ import {
   pgTable,
   text,
   timestamp,
-  uuid,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "player"]);
@@ -49,7 +48,7 @@ const timestamps = {
 };
 
 export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   role: userRoleEnum("role").notNull().default("player"),
@@ -57,7 +56,7 @@ export const users = pgTable("users", {
 });
 
 export const tournaments = pgTable("tournaments", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   name: text("name").notNull(),
   majorKey: majorKeyEnum("major_key").notNull(),
   year: integer("year").notNull(),
@@ -72,7 +71,7 @@ export const tournaments = pgTable("tournaments", {
 });
 
 export const golfers = pgTable("golfers", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: text("id").primaryKey(),
   providerPlayerId: text("provider_player_id").notNull().unique(),
   name: text("name").notNull(),
   country: text("country"),
@@ -80,9 +79,9 @@ export const golfers = pgTable("golfers", {
 });
 
 export const tournamentGolfers = pgTable("tournament_golfers", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tournamentId: uuid("tournament_id").notNull().references(() => tournaments.id),
-  golferId: uuid("golfer_id").notNull().references(() => golfers.id),
+  id: text("id").primaryKey(),
+  tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
+  golferId: text("golfer_id").notNull().references(() => golfers.id),
   pointValue: integer("point_value"),
   position: text("position"),
   totalScore: integer("total_score"),
@@ -96,8 +95,8 @@ export const tournamentGolfers = pgTable("tournament_golfers", {
 });
 
 export const golferRoundScores = pgTable("golfer_round_scores", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tournamentGolferId: uuid("tournament_golfer_id")
+  id: text("id").primaryKey(),
+  tournamentGolferId: text("tournament_golfer_id")
     .notNull()
     .references(() => tournamentGolfers.id),
   roundNumber: integer("round_number").notNull(),
@@ -110,9 +109,9 @@ export const golferRoundScores = pgTable("golfer_round_scores", {
 });
 
 export const entries = pgTable("entries", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tournamentId: uuid("tournament_id").notNull().references(() => tournaments.id),
-  userId: uuid("user_id").notNull().references(() => users.id),
+  id: text("id").primaryKey(),
+  tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
+  userId: text("user_id").notNull().references(() => users.id),
   status: entryStatusEnum("status").notNull().default("draft"),
   totalPoints: integer("total_points").notNull().default(0),
   liveScore: integer("live_score"),
@@ -122,9 +121,9 @@ export const entries = pgTable("entries", {
 });
 
 export const entryPicks = pgTable("entry_picks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  entryId: uuid("entry_id").notNull().references(() => entries.id),
-  tournamentGolferId: uuid("tournament_golfer_id")
+  id: text("id").primaryKey(),
+  entryId: text("entry_id").notNull().references(() => entries.id),
+  tournamentGolferId: text("tournament_golfer_id")
     .notNull()
     .references(() => tournamentGolfers.id),
   pointValueAtPick: integer("point_value_at_pick").notNull(),
@@ -134,8 +133,8 @@ export const entryPicks = pgTable("entry_picks", {
 });
 
 export const scoreSyncLogs = pgTable("score_sync_logs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tournamentId: uuid("tournament_id").notNull().references(() => tournaments.id),
+  id: text("id").primaryKey(),
+  tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
   provider: text("provider").notNull(),
   success: boolean("success").notNull(),
   message: text("message").notNull(),
@@ -143,24 +142,24 @@ export const scoreSyncLogs = pgTable("score_sync_logs", {
 });
 
 export const adminOverrides = pgTable("admin_overrides", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tournamentGolferId: uuid("tournament_golfer_id")
+  id: text("id").primaryKey(),
+  tournamentGolferId: text("tournament_golfer_id")
     .notNull()
     .references(() => tournamentGolfers.id),
   field: text("field").notNull(),
   oldValue: text("old_value"),
   newValue: text("new_value"),
   reason: text("reason").notNull(),
-  createdByUserId: uuid("created_by_user_id").notNull().references(() => users.id),
+  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
 export const adminTeamCorrections = pgTable("admin_team_corrections", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  entryId: uuid("entry_id").notNull().references(() => entries.id),
+  id: text("id").primaryKey(),
+  entryId: text("entry_id").notNull().references(() => entries.id),
   oldPickIds: text("old_pick_ids").notNull(),
   newPickIds: text("new_pick_ids").notNull(),
   reason: text("reason").notNull(),
-  createdByUserId: uuid("created_by_user_id").notNull().references(() => users.id),
+  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });

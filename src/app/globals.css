@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #eef3f0;
-  --foreground: #071526;
+  --background: #f3f7f5;
+  --foreground: #102019;
   --surface: #ffffff;
-  --primary: #0a3161;
-  --secondary: #d4af37;
-  --accent: #0f5132;
-  --muted: #5d6f83;
-  --border: #d7dfdc;
-  --paper: #f8fbf8;
-  --fairway: #5a9367;
-  --rough: #d9e7d2;
+  --primary: #0e3a2c;
+  --secondary: #c8a24a;
+  --accent: #168052;
+  --muted: #6f7f78;
+  --border: #dbe5df;
+  --paper: #f8faf8;
+  --fairway: #2f7b55;
+  --rough: #e2ece6;
+  --nav: #09251d;
+  --ink-soft: #30413a;
+  --danger: #b4233a;
 }
 
 @theme inline {
@@ -29,16 +32,13 @@
 
 .app-backdrop,
 body {
-  background:
-    radial-gradient(circle at 86% -8%, color-mix(in srgb, var(--secondary) 18%, transparent), transparent 28rem),
-    radial-gradient(circle at 0% 20%, color-mix(in srgb, var(--fairway) 18%, transparent), transparent 30rem),
-    linear-gradient(135deg, #dfeae2 0%, var(--background) 44%, #f6f8f4 100%);
-  background-attachment: fixed;
+  background: var(--background);
 }
 
 body {
   color: var(--foreground);
   font-family: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
 }
 
 button,
@@ -54,24 +54,88 @@ a {
 }
 
 .scorecard-shadow {
-  box-shadow: 0 18px 45px rgb(7 21 38 / 0.1);
+  box-shadow: 0 18px 44px rgb(12 39 29 / 0.08);
 }
 
 .event-hero {
   background:
-    linear-gradient(110deg, rgb(7 21 38 / 0.94), rgb(7 21 38 / 0.74) 48%, rgb(7 21 38 / 0.18)),
-    repeating-linear-gradient(115deg, rgb(255 255 255 / 0.08) 0 1px, transparent 1px 26px),
+    linear-gradient(110deg, rgb(9 37 29 / 0.96), rgb(9 37 29 / 0.82) 45%, rgb(9 37 29 / 0.28)),
     linear-gradient(135deg, var(--fairway), var(--primary));
 }
 
 .fairway-panel {
   background:
-    radial-gradient(ellipse at 22% 18%, rgb(255 255 255 / 0.42), transparent 22%),
-    repeating-linear-gradient(102deg, rgb(255 255 255 / 0.12) 0 13px, transparent 13px 26px),
+    linear-gradient(110deg, rgb(255 255 255 / 0.12), transparent 45%),
     linear-gradient(135deg, var(--fairway), var(--accent));
 }
 
 .paper-panel {
+  background: var(--surface);
+}
+
+.app-panel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 18px 44px rgb(12 39 29 / 0.08);
+}
+
+.app-panel-header {
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #f8faf8);
+}
+
+.app-button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 6px;
+  background: var(--primary);
+  padding: 0 1rem;
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 850;
+}
+
+.app-button-secondary {
+  background: #e9f2ed;
+  color: var(--primary);
+}
+
+.metric-number {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.sport-label {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.app-sidebar {
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--paper) 80%, white), var(--surface));
+    linear-gradient(180deg, rgb(10 54 41 / 0.96), rgb(7 31 24)),
+    var(--nav);
+}
+
+.app-sidebar-link {
+  color: rgb(255 255 255 / 0.76);
+}
+
+.app-sidebar-link:hover {
+  background: rgb(255 255 255 / 0.09);
+  color: white;
+}
+
+@media (max-width: 640px) {
+  .scorecard-shadow,
+  .app-panel {
+    box-shadow: 0 10px 24px rgb(12 39 29 / 0.08);
+  }
 }

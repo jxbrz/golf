@@ -21,16 +21,16 @@ export default async function LoginPage({
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <main className="flex min-h-screen w-full items-center px-4 py-8">
-        <div className="mx-auto grid w-full max-w-5xl gap-5 lg:grid-cols-[1fr_25rem] lg:items-stretch">
-          <section className="event-hero hidden overflow-hidden rounded-xl p-7 text-white scorecard-shadow lg:flex lg:flex-col lg:justify-between">
+        <div className="mx-auto grid w-full max-w-6xl gap-5 lg:grid-cols-[1fr_26rem] lg:items-stretch">
+          <section className="event-hero hidden overflow-hidden rounded-lg p-7 text-white scorecard-shadow lg:flex lg:flex-col lg:justify-between">
             <div>
               <MajorMark majorKey={tournament.majorKey} size="lg" />
-              <h1 className="mt-8 max-w-xl text-5xl font-black leading-tight">Major Picks</h1>
-              <p className="mt-4 max-w-md text-lg font-semibold leading-8 text-white/82">
+              <h1 className="mt-8 max-w-xl text-6xl font-black leading-tight">Major Picks</h1>
+              <p className="mt-4 max-w-md text-lg font-semibold leading-8 text-white/78">
                 {theme.label} {tournament.year}, built for one private sweepstake.
               </p>
             </div>
-            <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-lg border border-white/15">
+            <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-md border border-white/15">
               <Image
                 src="/images/aronimink-clubhouse.jpg"
                 alt=""
@@ -42,13 +42,11 @@ export default async function LoginPage({
             </div>
           </section>
           <div className="flex flex-col justify-center">
-        <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
-          <div className="bg-primary p-5 text-white">
-            <p className="text-sm font-bold uppercase tracking-wide" style={{ color: theme.secondary }}>
-              Private competition
-            </p>
-            <h1 className="mt-1 text-3xl font-black">Major Picks</h1>
-            <p className="mt-2 text-white/85">Sign in to pick your team and follow the scores.</p>
+        <section className="app-panel">
+          <div className="app-panel-header p-5">
+            <p className="sport-label">Private competition</p>
+            <h1 className="mt-1 text-3xl font-black">Sign in</h1>
+            <p className="mt-2 font-semibold text-muted">Pick your team and follow the scores.</p>
           </div>
           <form action={loginAction} className="space-y-4 p-5">
             {error ? (
@@ -63,7 +61,7 @@ export default async function LoginPage({
                 type="email"
                 required
                 autoComplete="email"
-                className="mt-1 h-12 w-full rounded-md border border-border px-3 text-base font-semibold"
+                className="mt-1 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
               />
             </label>
             <label className="block">
@@ -73,7 +71,7 @@ export default async function LoginPage({
                 type="password"
                 required
                 autoComplete="current-password"
-                className="mt-1 h-12 w-full rounded-md border border-border px-3 text-base font-semibold"
+                className="mt-1 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
               />
             </label>
             <button className="h-12 w-full rounded-md bg-primary px-4 text-base font-black text-white">
@@ -81,8 +79,8 @@ export default async function LoginPage({
             </button>
           </form>
         </section>
-        <section className="mt-4 rounded-lg border border-border bg-surface p-4 text-sm scorecard-shadow">
-          <p className="font-black">Starter accounts</p>
+        <section className="app-panel mt-4 p-4 text-sm">
+          <p className="sport-label">Starter accounts</p>
           <p className="mt-2 text-muted">Admin: admin@majorpicks.local / Admin123!</p>
           <p className="mt-1 text-muted">Players: player1@majorpicks.local or player2@majorpicks.local / Player123!</p>
         </section>

@@ -1,5 +1,3 @@
-import "server-only";
-
 import Papa from "papaparse";
 import {
   calculateCutStatus,
@@ -807,6 +805,20 @@ export async function syncProviderLeaderboard(
   const store = getStore();
   const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
   const timestamp = nowIso();
+
+  if (tournament.status === "final") {
+    const message = "Tournament is final; score sync skipped.";
+    store.scoreSyncLogs.unshift({
+      id: id("sync"),
+      tournamentId,
+      provider,
+      success: true,
+      message,
+      syncedAt: timestamp,
+    });
+    return { ok: true, message };
+  }
+
   if (provider === "mock" || provider === "manual") {
     syncMockLeaderboard(tournamentId, provider);
     return { ok: true, message: "Mock scores synced." };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Search } from "lucide-react";
+import { CheckCircle2, Search, X } from "lucide-react";
 import { submitEntryAction } from "@/app/actions";
 import { BudgetBar } from "@/components/picks/BudgetBar";
 import { FloatingBudgetBar } from "@/components/picks/FloatingBudgetBar";
@@ -62,15 +62,23 @@ export function PickBuilder({
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
       <FloatingBudgetBar used={used} visible={showFloatingBudget} />
-      <section className="overflow-hidden rounded-lg border border-border bg-surface scorecard-shadow">
-        <div className="border-b border-border bg-primary p-4 text-white">
-          <h2 className="text-xl font-black">Available golfers</h2>
-          <p className="mt-1 text-sm font-semibold text-white/75">Only priced sweepstake players can be selected.</p>
+      <section className="app-panel">
+        <div className="app-panel-header p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="sport-label">Pick Team</p>
+              <h2 className="mt-1 text-2xl font-black">Available golfers</h2>
+              <p className="mt-1 text-sm font-semibold text-muted">Only priced sweepstake players can be selected.</p>
+            </div>
+            <div className="rounded-md bg-[var(--rough)] px-3 py-2 text-sm font-black text-primary">
+              {selected.length}/4 selected
+            </div>
+          </div>
         </div>
         <div className="p-4">
-        <label className="mb-3 flex h-12 items-center gap-2 rounded-md border border-border bg-white px-3">
+        <label className="mb-3 flex h-12 items-center gap-2 rounded-md border border-border bg-white px-3 shadow-sm">
           <Search size={20} className="text-muted" />
           <input
             value={query}
@@ -79,7 +87,7 @@ export function PickBuilder({
             className="w-full bg-transparent text-base outline-none"
           />
         </label>
-        <div className="divide-y divide-border">
+        <div className="overflow-hidden rounded-md border border-border">
           {filtered.length === 0 ? (
             <p className="px-2 py-8 text-center text-sm font-semibold text-muted">
               No priced sweepstake golfers match that search.
@@ -95,9 +103,9 @@ export function PickBuilder({
                 onClick={() => toggle(golfer.id)}
                 disabled={locked || unaffordable || (!chosen && selected.length === 4)}
                 className={cn(
-                  "grid w-full grid-cols-[1fr_auto] gap-3 rounded-md px-2 py-3 text-left transition",
+                  "grid w-full grid-cols-[1fr_auto] gap-3 border-b border-border bg-white px-3 py-3 text-left transition last:border-b-0 hover:bg-slate-50",
                   chosen &&
-                    "border border-emerald-500 bg-emerald-100 text-emerald-950 ring-2 ring-emerald-500/25",
+                    "bg-emerald-50 text-emerald-950 ring-1 ring-inset ring-emerald-500",
                   unaffordable && "opacity-45",
                 )}
               >
@@ -113,7 +121,7 @@ export function PickBuilder({
                     - {golfer.golfer.country}
                   </span>
                 </span>
-                <span className="flex size-11 items-center justify-center rounded-md border border-border font-mono text-lg font-black">
+                <span className="flex size-11 items-center justify-center rounded-md bg-[var(--rough)] font-mono text-lg font-black text-primary">
                   {golfer.pointValue}
                 </span>
               </button>
@@ -125,17 +133,28 @@ export function PickBuilder({
 
       <aside
         ref={summaryRef}
-        className="paper-panel rounded-lg border border-border p-4 scorecard-shadow lg:sticky lg:top-4 lg:self-start"
+        className="app-panel p-4 lg:sticky lg:top-7 lg:self-start"
       >
-        <h2 className="text-xl font-black">Team sheet</h2>
-        <p className="mb-4 mt-1 text-sm text-muted">Four names. Ninety points. No changes after submission.</p>
+        <p className="sport-label">Budget</p>
+        <h2 className="mt-1 text-xl font-black">Team sheet</h2>
+        <p className="mb-4 mt-1 text-sm font-semibold text-muted">Four names. Ninety points. No changes after submission.</p>
         <BudgetBar used={used} />
-        <div className="my-4 min-h-40 divide-y divide-border">
+        <div className="my-4 min-h-40 overflow-hidden rounded-md border border-border">
           {selectedGolfers.length ? (
             selectedGolfers.map((golfer) => (
-              <div key={golfer.id} className="flex items-center justify-between gap-3 py-3">
-                <span className="font-bold">{golfer.golfer.name}</span>
-                <span className="font-mono font-black">{golfer.pointValue}</span>
+              <div key={golfer.id} className="flex items-center justify-between gap-3 border-b border-border bg-white px-3 py-3 last:border-b-0">
+                <span className="min-w-0">
+                  <span className="block truncate font-black">{golfer.golfer.name}</span>
+                  <span className="mt-0.5 block text-xs font-semibold text-muted">{golfer.golfer.country ?? "INT"}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => toggle(golfer.id)}
+                  className="flex items-center gap-2 rounded-md bg-slate-100 px-2 py-1 text-sm font-black text-primary"
+                >
+                  <span className="font-mono">{golfer.pointValue}</span>
+                  <X size={14} />
+                </button>
               </div>
             ))
           ) : (

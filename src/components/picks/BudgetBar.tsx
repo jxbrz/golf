@@ -9,7 +9,7 @@ export function BudgetBar({ used }: { used: number }) {
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-slate-200">
         <div
-          className={remaining >= 0 ? "h-full rounded-full bg-primary" : "h-full rounded-full bg-rose-600"}
+          className={remaining >= 0 ? "h-full rounded-full bg-[var(--accent)]" : "h-full rounded-full bg-rose-600"}
           style={{ width: `${percentage}%` }}
         />
       </div>

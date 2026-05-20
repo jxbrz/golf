@@ -10,18 +10,18 @@ export function OddsPricingPanel({
   preview?: OddsPricingPreview;
 }) {
   return (
-    <section id="odds" className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+    <section id="odds" className="app-panel p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-bold uppercase text-muted">Sweepstake pricing</p>
-          <h2 className="text-xl font-black">Odds-based costs</h2>
-          <p className="mt-1 text-sm text-muted">
+          <p className="sport-label">Sweepstake pricing</p>
+          <h2 className="mt-1 text-xl font-black">Odds-based costs</h2>
+          <p className="mt-1 text-sm font-semibold text-muted">
             Rank outright winner odds into costs: favourite 55, 55th favourite 1.
           </p>
         </div>
         <Link
           href={`/admin/tournaments/${tournamentId}?odds=preview#odds`}
-          className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-4 font-black text-white"
+          className="app-button"
         >
           Preview Odds Pricing
         </Link>
@@ -51,8 +51,8 @@ export function OddsPricingPanel({
             </div>
           ) : null}
 
-          <div className="overflow-hidden rounded-lg border border-border">
-            <div className="grid grid-cols-[3rem_3.5rem_1fr_1fr_4rem] gap-2 bg-slate-50 px-3 py-2 text-xs font-black uppercase text-muted">
+          <div className="overflow-hidden rounded-md border border-border">
+            <div className="grid grid-cols-[3rem_3.5rem_1fr_1fr_4rem] gap-2 bg-[var(--rough)] px-3 py-2 text-xs font-black uppercase text-muted">
               <span>Rank</span>
               <span>Cost</span>
               <span>Odds runner</span>
@@ -81,7 +81,7 @@ export function OddsPricingPanel({
 
           <form action={applyOddsPricingAction}>
             <input type="hidden" name="tournamentId" value={tournamentId} />
-            <button className="h-11 rounded-md bg-primary px-4 font-black text-white">
+            <button className="app-button">
               Apply Matched Top 55 Costs
             </button>
           </form>
@@ -95,7 +95,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <span className="rounded-md bg-slate-50 p-3">
       <span className="block text-xs font-black uppercase text-muted">{label}</span>
-      <span className="mt-1 block truncate font-mono font-black text-primary">{value}</span>
+      <span className="mt-1 block truncate font-mono font-black text-primary metric-number">{value}</span>
     </span>
   );
 }
