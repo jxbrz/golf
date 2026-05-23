@@ -1,14 +1,22 @@
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowRight, CalendarDays, CheckCircle2, LockKeyhole, MapPin, Trophy, UsersRound } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Circle,
+  Clock,
+  Flag,
+  LockKeyhole,
+  Trophy,
+  UsersRound,
+} from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
-import { MajorMark } from "@/components/theme/MajorMark";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
 import { getActiveTournament, getEntry } from "@/lib/mock-data/store";
-import { majorThemes } from "@/lib/theme/major-themes";
+import type { TournamentStatus } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
 export default async function Home() {
@@ -27,7 +35,7 @@ export default async function Home() {
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
-      <AppShell tournament={tournament}>
+      <AppShell tournament={tournament} activeNav="home">
         <div className="space-y-5">
           <WelcomeHero
             entrySubmitted={Boolean(entry?.submittedAt)}
@@ -56,17 +64,7 @@ export default async function Home() {
               </section>
               <EntryTeamCard entry={entry} />
             </div>
-          ) : (
-            <section className="app-panel p-5">
-              <p className="sport-label">Rules</p>
-              <h2 className="mt-1 text-xl font-black">How it works</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <Rule number="1" title="Pick 4 golfers" text="Choose your team before picks lock." />
-                <Rule number="2" title="Stay under 90" text="Each golfer has a cost from 55 down to 1." />
-                <Rule number="3" title="Best 3 count" text="After the cut, you may need to drop one." />
-              </div>
-            </section>
-          )}
+          ) : null}
         </div>
       </AppShell>
     </MajorThemeProvider>
@@ -82,116 +80,130 @@ function WelcomeHero({
   entrySubmitted: boolean;
   locked: boolean;
 }) {
-  const theme = majorThemes[tournament.majorKey];
-  const title = entrySubmitted
-    ? "Team submitted"
+  const statusTitle = entrySubmitted ? "Submitted" : locked ? "Picks Locked" : "Not Submitted";
+  const statusCopy = entrySubmitted
+    ? "Your team is saved. Check standings once play starts."
     : locked
-      ? "Picks locked"
-      : "Pick your team";
-  const body = entrySubmitted
-    ? "You are in. Standings open once play starts."
-    : locked
-      ? "The game is closed and ready for round one."
-      : "Choose 4 golfers. Stay under 90 points. Submit once.";
+      ? "Picks are locked for this test weekend."
+      : "You have 90 points to build your team of 4.";
 
   return (
-    <section className="event-hero overflow-hidden rounded-lg text-white scorecard-shadow">
-      <div className="p-4 sm:p-6 lg:p-7">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <MajorMark majorKey={tournament.majorKey} size="lg" />
-            <div>
-              <h2 className="app-display text-2xl font-bold leading-6">{theme.shortLabel}</h2>
-              <p className="text-xs font-bold uppercase text-white/62">{tournament.name} {tournament.year}</p>
-            </div>
+    <section className="home-mock-screen overflow-hidden rounded-lg bg-white scorecard-shadow">
+      <div className="relative h-[14.25rem] overflow-hidden text-white sm:h-[18rem] lg:h-[20rem]">
+        <Image
+          src="/images/aronimink-clubhouse.jpg"
+          alt=""
+          fill
+          sizes="(min-width: 1024px) 72rem, 100vw"
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[rgb(0_22_49_/_0.9)] via-[rgb(0_22_49_/_0.36)] to-[rgb(0_22_49_/_0.72)]" />
+        <div className="absolute inset-x-0 top-3 px-4 text-center sm:top-5">
+          <div className="mx-auto h-px max-w-xs bg-white/16" />
+          <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-black uppercase text-[var(--secondary)]">
+            <LockKeyhole size={13} strokeWidth={2.4} /> Lock Picks
+          </p>
+          <div className="mt-1 flex items-end justify-center gap-1 font-mono font-black tabular-nums">
+            <span className="text-[2rem] leading-none text-[var(--secondary)] sm:text-5xl">2d</span>
+            <span className="text-[2rem] leading-none text-white/78 sm:text-5xl">14h</span>
+            <span className="text-[2rem] leading-none text-white/78 sm:text-5xl">23m</span>
           </div>
-          <span className="game-chip">{tournament.status.replaceAll("_", " ")}</span>
+          <p className="mt-2 text-xs font-black text-white sm:text-sm">{formatDateTime(tournament.pickDeadline)}</p>
         </div>
+      </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_22rem] lg:items-stretch">
-          <div className="relative min-h-52 overflow-hidden rounded-lg border border-white/12">
-            <Image
-              src="/images/aronimink-clubhouse.jpg"
-              alt=""
-              fill
-              sizes="(min-width: 1024px) 48rem, 100vw"
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[rgb(0_28_61_/_0.82)] via-[rgb(0_28_61_/_0.2)] to-transparent" />
-            <div className="absolute bottom-4 left-4 right-4">
-              <h1 className="app-display text-4xl font-bold leading-none sm:text-5xl">{title}</h1>
-              <p className="mt-2 max-w-xl text-sm font-bold leading-6 text-white/82">{body}</p>
-            </div>
+      <div className="relative -mt-12 space-y-2.5 px-3 pb-3 sm:px-5 sm:pb-5">
+        <section className="mock-card relative overflow-hidden p-4">
+          <div className="relative z-[1]">
+            <p className="sport-label">Your Status</p>
+            <h2 className="mt-1 text-2xl font-bold text-primary">{statusTitle}</h2>
+            <p className="mt-2 max-w-[16rem] text-sm font-semibold leading-5 text-primary/78">{statusCopy}</p>
           </div>
+          <Flag className="absolute -bottom-2 right-2 text-slate-200" size={94} strokeWidth={1.2} />
+        </section>
 
-          <div className="rounded-lg border border-white/12 bg-white p-4 text-primary shadow-2xl">
-            <p className="sport-label">Your status</p>
-            <h3 className="mt-1 text-3xl font-bold">{entrySubmitted ? "Locked in" : locked ? "Closed" : "Not submitted"}</h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-              {entrySubmitted
-                ? "Your 4 golfers are saved. Watch the standings once play starts."
-                : locked
-                  ? "Picks are locked for this test weekend."
-                  : "You have 90 points to build a team of 4."}
-            </p>
-            {!entrySubmitted && !locked ? (
-              <Link
-                href={`/tournaments/${tournament.id}/pick`}
-                className="app-button mt-4 w-full"
-              >
-                Pick Team
-                <ArrowRight size={18} />
-              </Link>
-            ) : null}
-            <div className="mt-4 grid gap-2">
-              <HeroStat icon={<UsersRound size={17} />} label="Roster" value="4 golfers" />
-              <HeroStat icon={<Trophy size={17} />} label="Scoring" value="Best 3 count" />
-              <HeroStat icon={<LockKeyhole size={17} />} label="Lock" value={formatDateTime(tournament.pickDeadline)} />
-            </div>
+        <section className="mock-card p-4">
+          <p className="sport-label">Tournament Progress</p>
+          <div className="mt-4">
+            <TournamentProgress status={tournament.status} />
           </div>
-        </div>
+        </section>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <HeroStat icon={<MapPin size={17} />} label="Venue" value={tournament.venue.split(",")[0]} dark />
-          <HeroStat icon={<CalendarDays size={17} />} label="Weekend" value="Thu to Sun" dark />
-          <HeroStat icon={<Trophy size={17} />} label="Drop rule" value="Drop 1 if all 4 make cut" dark />
-        </div>
+        <section className="mock-card p-4">
+          <p className="sport-label">Game Details</p>
+          <div className="mt-3 grid gap-2">
+            <DetailRow icon={<UsersRound size={15} />} label="Roster Size" value="4 Golfers" />
+            <DetailRow icon={<Trophy size={15} />} label="Budget" value="90 Points" />
+            <DetailRow icon={<Clock size={15} />} label="Scoring" value="Best 3 of 4" />
+            <DetailRow icon={<LockKeyhole size={15} />} label="Cut Rule" value="Drop 1 if all 4 make cut" />
+          </div>
+        </section>
+
+        {!entrySubmitted && !locked ? (
+          <Link href={`/tournaments/${tournament.id}/pick`} className="app-button h-12 w-full text-base">
+            Pick Team
+          </Link>
+        ) : null}
       </div>
     </section>
   );
 }
 
-function HeroStat({
-  icon,
-  label,
-  value,
-  dark = false,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  dark?: boolean;
-}) {
+function TournamentProgress({ status }: { status: TournamentStatus }) {
+  const steps: Array<{ label: string; statuses: TournamentStatus[] }> = [
+    { label: "Lock Picks", statuses: ["draft", "picks_open", "picks_locked"] },
+    { label: "Thu", statuses: ["round_1"] },
+    { label: "Fri", statuses: ["round_2", "cut_pending"] },
+    { label: "Cut", statuses: ["drop_open"] },
+    { label: "Sat", statuses: ["round_3"] },
+    { label: "Sun", statuses: ["round_4"] },
+    { label: "Final", statuses: ["final"] },
+  ];
+  const current = Math.max(0, steps.findIndex((step) => step.statuses.includes(status)));
+
   return (
-    <div className={dark ? "rounded-md border border-white/12 bg-white/8 p-3" : "rounded-md border border-border bg-[var(--rough)] p-3"}>
-      <div className={dark ? "flex items-center gap-2 text-white/68" : "flex items-center gap-2 text-muted"}>
-        {icon}
-        <span className="text-xs font-black uppercase">{label}</span>
-      </div>
-      <p className={dark ? "mt-2 line-clamp-2 text-sm font-black text-white" : "mt-2 line-clamp-2 text-sm font-black text-primary"}>{value}</p>
+    <div className="grid grid-cols-7 items-start text-center">
+      {steps.map((step, index) => {
+        const complete = index < current;
+        const active = index === current;
+        return (
+          <div key={step.label} className="relative flex flex-col items-center gap-2">
+            {index > 0 ? <span className="absolute left-0 top-[0.72rem] h-px w-1/2 bg-slate-300" /> : null}
+            {index < steps.length - 1 ? <span className="absolute right-0 top-[0.72rem] h-px w-1/2 bg-slate-300" /> : null}
+            <span
+              className={`relative z-[1] flex size-6 items-center justify-center rounded-full border bg-white ${
+                active
+                  ? "border-[var(--secondary)] bg-[var(--secondary)] text-white"
+                  : complete
+                    ? "border-[var(--fairway)] bg-[var(--fairway)] text-white"
+                    : "border-slate-300 text-slate-400"
+              }`}
+            >
+              {active ? <LockKeyhole size={13} /> : complete ? <CheckCircle2 size={14} /> : <Circle size={8} fill="currentColor" />}
+            </span>
+            <span className="min-w-0 text-[10px] font-semibold leading-3 text-primary">{step.label}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function Rule({ number, title, text }: { number: string; title: string; text: string }) {
+function DetailRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="rounded-md border border-border bg-white p-4">
-      <span className="flex size-9 items-center justify-center rounded-md bg-[var(--rough)] font-mono font-black text-primary">
-        {number}
-      </span>
-      <h3 className="mt-3 font-black">{title}</h3>
-      <p className="mt-1 text-sm text-muted">{text}</p>
+    <div className="grid grid-cols-[1.25rem_1fr_auto] items-center gap-2 text-sm">
+      <span className="text-[var(--secondary)]">{icon}</span>
+      <span className="font-semibold text-primary/78">{label}</span>
+      <span className="text-right font-semibold text-primary">{value}</span>
     </div>
   );
 }

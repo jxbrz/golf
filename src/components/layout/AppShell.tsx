@@ -1,14 +1,20 @@
 import Link from "next/link";
 import {
+  ArrowLeft,
+  Bell,
   Flag,
   Home,
+  Info,
   ListChecks,
   LogOut,
   Medal,
+  MoreHorizontal,
   Shield,
+  Settings,
   Trophy,
   Users,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { logoutAction } from "@/app/actions";
 import { MajorMark } from "@/components/theme/MajorMark";
 import { requireCurrentUser } from "@/lib/auth";
@@ -16,12 +22,24 @@ import { getEntry } from "@/lib/mock-data/store";
 import { majorThemes } from "@/lib/theme/major-themes";
 import type { Tournament } from "@/lib/types";
 
+type MobileNavKey = "home" | "standings" | "field" | "more" | "admin" | "team";
+
 export async function AppShell({
   tournament,
   children,
+  screenTitle,
+  screenSubtitle,
+  backHref,
+  activeNav = "home",
+  rightSlot,
 }: {
   tournament: Tournament;
-  children: React.ReactNode;
+  children: ReactNode;
+  screenTitle?: string;
+  screenSubtitle?: string;
+  backHref?: string;
+  activeNav?: MobileNavKey;
+  rightSlot?: ReactNode;
 }) {
   const user = await requireCurrentUser();
   const entry = getEntry(tournament.id, user.id);
@@ -33,41 +51,48 @@ export async function AppShell({
   const fieldNavLabel = showResults ? "Field Results" : "Field";
   const showDropNav = entry?.status === "drop_required" && !finalReadOnly;
   const stageLabel = tournament.status.replaceAll("_", " ");
-  const navItems =
+  const desktopNavItems =
     user.role !== "admin" && finalReadOnly
       ? [
-          { href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal },
-          { href: `/tournaments/${tournament.id}/players`, label: "Field Results", icon: Users },
+          { href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "standings" as const },
+          { href: `/tournaments/${tournament.id}/players`, label: "Field Results", icon: Users, key: "field" as const },
         ]
       : user.role !== "admin" && prePlay
-        ? [{ href: entry?.submittedAt ? `/tournaments/${tournament.id}/pick` : "/", label: entry?.submittedAt ? "Team" : "Welcome", icon: entry?.submittedAt ? ListChecks : Home }]
+        ? [
+            { href: "/", label: "Home", icon: Home, key: "home" as const },
+            { href: `/tournaments/${tournament.id}/pick`, label: entry?.submittedAt ? "Team" : "Pick Team", icon: ListChecks, key: "team" as const },
+            { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
+          ]
         : user.role !== "admin"
           ? [
-              { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks },
-              { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy },
-              ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag }] : []),
-              { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users },
+              { href: "/", label: "Home", icon: Home, key: "home" as const },
+              { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const },
+              { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
+              ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag, key: "more" as const }] : []),
+              { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
             ]
           : [
-              { href: "/", label: "Home", icon: Home },
-              { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel, icon: ListChecks },
-              { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy },
-              ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag }] : []),
-              { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users },
-              ...(showResults ? [{ href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal }] : []),
+              { href: "/", label: "Home", icon: Home, key: "home" as const },
+              { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel, icon: ListChecks, key: "team" as const },
+              { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
+              ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag, key: "more" as const }] : []),
+              { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
+              ...(showResults ? [{ href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "standings" as const }] : []),
             ];
-  const mobileNavColumns =
-    navItems.length + (user.role === "admin" ? 1 : 0) >= 6
-      ? "grid-cols-6"
-      : navItems.length + (user.role === "admin" ? 1 : 0) === 5
-        ? "grid-cols-5"
-        : navItems.length + (user.role === "admin" ? 1 : 0) === 4
-          ? "grid-cols-4"
-        : navItems.length + (user.role === "admin" ? 1 : 0) === 3
-            ? "grid-cols-3"
-            : navItems.length + (user.role === "admin" ? 1 : 0) === 2
-              ? "grid-cols-2"
-              : "grid-cols-1";
+  const mobileNavItems =
+    user.role === "admin"
+      ? [
+          { href: "/", label: "Home", icon: Home, key: "home" as const },
+          { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
+          { href: `/tournaments/${tournament.id}/players`, label: "Field", icon: Users, key: "field" as const },
+          { href: `/admin/tournaments/${tournament.id}`, label: "Admin", icon: Shield, key: "admin" as const },
+        ]
+      : [
+          { href: "/", label: "Home", icon: Home, key: "home" as const },
+          { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
+          { href: `/tournaments/${tournament.id}/players`, label: "Field", icon: Users, key: "field" as const },
+          { href: `/tournaments/${tournament.id}/pick`, label: "More", icon: MoreHorizontal, key: "more" as const },
+        ];
 
   return (
     <div className="min-h-screen w-full pb-24 lg:grid lg:grid-cols-[16rem_1fr] lg:pb-0">
@@ -82,12 +107,14 @@ export async function AppShell({
           </span>
         </Link>
         <nav className="flex flex-1 flex-col gap-1 px-3 py-5">
-          {navItems.map((item) => {
+          {desktopNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.href}
-                className="app-sidebar-link flex h-11 items-center gap-3 rounded-md px-3 text-sm font-extrabold transition"
+                className={`app-sidebar-link flex h-11 items-center gap-3 rounded-md px-3 text-sm font-extrabold transition ${
+                  item.key === activeNav ? "bg-white/12 text-white" : ""
+                }`}
                 href={item.href}
               >
                 <Icon size={18} strokeWidth={2.2} />
@@ -118,46 +145,89 @@ export async function AppShell({
       </aside>
 
       <div className="min-w-0">
-        <header className="game-topbar sticky top-0 z-10 border-b border-white/10 px-4 py-3 text-white shadow-sm backdrop-blur lg:hidden">
-          <div className="flex items-center justify-between gap-3">
-            <Link href="/" className="flex items-center gap-2 text-white">
-              <MajorMark majorKey={tournament.majorKey} size="sm" />
-              <span>
-                <span className="app-display block text-lg font-bold leading-5">Major Picks</span>
-                <span className="block text-xs font-semibold capitalize text-white/62">
-                  {theme.shortLabel} - {stageLabel}
+        <header className="game-topbar sticky top-0 z-10 border-b border-white/10 px-4 pb-3 pt-4 text-white shadow-sm backdrop-blur lg:hidden">
+          <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
+            <div className="flex justify-start">
+              {backHref ? (
+                <Link
+                  href={backHref}
+                  className="flex size-10 items-center justify-center text-white"
+                  aria-label="Go back"
+                >
+                  <ArrowLeft size={24} strokeWidth={2.2} />
+                </Link>
+              ) : (
+                <Link href="/" aria-label="Home">
+                  <MajorMark majorKey={tournament.majorKey} size="sm" />
+                </Link>
+              )}
+            </div>
+            <div className="min-w-0 text-center">
+              {screenTitle ? (
+                <>
+                  <h1 className="app-display truncate text-xl font-bold leading-5">{screenTitle}</h1>
+                  {screenSubtitle ? (
+                    <p className="mt-1 truncate text-[11px] font-black uppercase tracking-wide text-white">
+                      {screenSubtitle}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <h1 className="app-display truncate text-3xl font-bold leading-8">{theme.shortLabel}</h1>
+                  <p className="truncate text-xs font-black uppercase text-white">
+                    {theme.label.replace(theme.shortLabel, "").trim() || stageLabel}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex justify-end">
+              {rightSlot ?? (
+                <span
+                  className="flex size-10 items-center justify-center rounded-full border border-white/16 bg-white/6 text-white"
+                  aria-hidden="true"
+                >
+                  <Bell size={18} />
                 </span>
-              </span>
-            </Link>
-            <form action={logoutAction}>
-              <button
-                className="flex size-10 items-center justify-center rounded-md border border-white/12 bg-white/8 text-white"
-                title="Log out"
-              >
-                <LogOut size={17} />
-              </button>
-            </form>
+              )}
+            </div>
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[86rem] px-3 py-4 sm:px-6 lg:px-8 lg:py-7">{children}</div>
+        <div className="mx-auto w-full max-w-[86rem] px-3 py-3 sm:px-6 lg:px-8 lg:py-7">{children}</div>
       </div>
-      <nav className="game-bottom-nav fixed inset-x-0 bottom-0 z-20 border-t border-white/10 px-2 pb-3 pt-2 backdrop-blur sm:hidden">
-        <div className={`mx-auto grid max-w-md ${mobileNavColumns} gap-1 text-center text-xs font-semibold`}>
-          {navItems.map((item) => (
-            <Link key={item.href} className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5" href={item.href}>
-              <item.icon size={17} />
+      <nav className="game-bottom-nav fixed inset-x-0 bottom-0 z-20 border-t border-white/10 px-3 pb-3 pt-2 backdrop-blur sm:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-4 gap-1 text-center text-[11px] font-semibold">
+          {mobileNavItems.map((item) => (
+            <Link
+              key={item.href}
+              className={`flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 ${
+                activeNav === item.key ? "nav-active" : ""
+              }`}
+              href={item.href}
+            >
+              <item.icon size={18} strokeWidth={2} />
               <span className="max-w-full truncate">{item.label}</span>
             </Link>
           ))}
-          {user.role === "admin" ? (
-            <Link className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 text-[var(--secondary)]" href="/admin">
-              <Shield size={17} />
-              <span>Admin</span>
-            </Link>
-          ) : null}
         </div>
       </nav>
     </div>
+  );
+}
+
+export function HeaderInfoButton() {
+  return (
+    <span className="flex size-10 items-center justify-center text-white" aria-hidden="true">
+      <Info size={22} strokeWidth={2.1} />
+    </span>
+  );
+}
+
+export function HeaderSettingsButton() {
+  return (
+    <span className="flex size-10 items-center justify-center text-white" aria-hidden="true">
+      <Settings size={22} strokeWidth={2.1} />
+    </span>
   );
 }

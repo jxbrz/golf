@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, HeaderInfoButton } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { PickBuilder } from "@/components/picks/PickBuilder";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
@@ -20,19 +20,15 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
-      <AppShell tournament={tournament}>
+      <AppShell
+        tournament={tournament}
+        screenTitle="Pick Team"
+        screenSubtitle="4 picks • 90 points"
+        backHref="/"
+        activeNav="more"
+        rightSlot={<HeaderInfoButton />}
+      >
         <main className="space-y-4">
-          <section className="event-hero rounded-lg p-5 text-white scorecard-shadow">
-            <h1 className="text-4xl font-bold leading-none">Pick Team</h1>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/78">
-              Pick exactly 4 golfers under the 90 point cap. This is the only thing you need to do before the tournament starts.
-            </p>
-            {locked ? (
-              <p className="mt-3 rounded-md bg-white/10 p-3 font-bold text-white">
-                Thanks for your picks. Come back after round one to see how you are doing.
-              </p>
-            ) : null}
-          </section>
           {entry?.submittedAt ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <EntryTeamCard entry={entry} />

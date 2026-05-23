@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GolferHeadshot } from "@/components/golfers/GolferHeadshot";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import type { EntryWithDetails, TournamentGolfer } from "@/lib/types";
 import { formatCost, formatScore, formatScoreOrLabel } from "@/lib/utils";
@@ -15,7 +16,8 @@ export function PlayerScoreRow({
   const madeCut = row.madeCut === true && row.status !== "cut";
 
   return (
-    <div className="grid grid-cols-[1fr_auto] gap-3 border-b border-border py-3 last:border-b-0">
+    <div className="grid grid-cols-[2rem_1fr_auto] gap-3 border-b border-border py-3 last:border-b-0">
+      <GolferHeadshot name={row.golfer.name} size="sm" />
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
@@ -28,8 +30,8 @@ export function PlayerScoreRow({
           {pick?.isCounting && !pick.isDropped ? <CutStatusBadge status="counting" /> : null}
         </div>
         <p className="mt-1 text-xs font-bold uppercase text-muted">
-          {row.position ?? "Not started"} · Today {formatScore(row.todayScore)} ·{" "}
-          {row.thru ?? "-"} · Cost {formatCost(pick?.pointValueAtPick ?? row.pointValue)}
+          {row.position ?? "Not started"} - Today {formatScore(row.todayScore)} - {row.thru ?? "-"} - Cost{" "}
+          {formatCost(pick?.pointValueAtPick ?? row.pointValue)}
         </p>
       </div>
       <div className="text-right">

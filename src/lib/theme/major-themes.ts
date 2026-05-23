@@ -41,7 +41,7 @@ export const majorThemes: Record<
   pga: {
     label: "PGA Championship",
     shortLabel: "PGA",
-    monogram: "PGA",
+    monogram: "MP",
     primary: "#08264A",
     secondary: "#D8A93B",
     background: "#EEF3F0",

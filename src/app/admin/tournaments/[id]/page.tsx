@@ -8,8 +8,10 @@ import {
   ClipboardList,
   Eye,
   Flag,
+  LockKeyhole,
   Medal,
   RefreshCw,
+  Scissors,
   SlidersHorizontal,
 } from "lucide-react";
 import {
@@ -22,7 +24,7 @@ import {
 } from "@/app/actions";
 import { CsvGolferImport } from "@/components/admin/CsvGolferImport";
 import { OddsPricingPanel } from "@/components/admin/OddsPricingPanel";
-import { AppShell } from "@/components/layout/AppShell";
+import { AppShell, HeaderSettingsButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireAdminUser } from "@/lib/auth";
@@ -76,70 +78,32 @@ export default async function AdminTournamentPage({
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
-      <AppShell tournament={tournament}>
+      <AppShell
+        tournament={tournament}
+        screenTitle="Admin"
+        screenSubtitle="Weekend Control"
+        activeNav="admin"
+        rightSlot={<HeaderSettingsButton />}
+      >
         <main className="space-y-5">
-          <section className="event-hero overflow-hidden rounded-lg text-white scorecard-shadow">
-            <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-end lg:p-6">
-              <div>
-                <div className="flex flex-wrap items-center gap-2 text-sm font-black text-white/70">
-                  <span className="game-chip">Admin</span>
-                  <span>Tournament ID {tournament.providerTournamentId}</span>
-                  <span className="capitalize">{tournament.status.replaceAll("_", " ")}</span>
-                </div>
-                <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
-                  {tournament.name} {tournament.year}
-                </h1>
-                <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/76">
-                  {weekendStageHelp(tournament.status)}
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <AdminMetric label="teams" value={String(entries.length)} />
-                <AdminMetric label="scored" value={`${scoredGolfers}/${golfers.length}`} />
-                <AdminMetric label="made cut" value={madeCutGolfers ? String(madeCutGolfers) : "-"} />
-              </div>
+          <section className="standings-status-card overflow-hidden rounded-lg border border-white/16 bg-[var(--nav)] p-4 text-white scorecard-shadow">
+            <div className="flex items-center gap-3 rounded-md border border-white/14 bg-white/5 p-3">
+              <span className="size-2.5 rounded-full bg-[var(--fairway)]" />
+              <span>
+                <span className="block text-[11px] font-black uppercase text-[var(--fairway)]">Game Active</span>
+                <span className="block text-base font-black">{weekendStageLabel(tournament.status)}</span>
+              </span>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <AdminMetric label="teams" value={String(entries.length)} />
+              <AdminMetric label="scored" value={`${scoredGolfers}/${golfers.length}`} />
+              <AdminMetric label="made cut" value={madeCutGolfers ? String(madeCutGolfers) : "-"} />
             </div>
           </section>
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_24rem]">
-            <section className="app-panel">
-              <div className="app-panel-header p-4">
-                <p className="sport-label">Tournament Control</p>
-                <h2 className="mt-1 text-3xl font-bold">{weekendStageLabel(tournament.status)}</h2>
-              </div>
-              <div className="space-y-4 p-4">
-                <div className="rounded-lg border border-border bg-[var(--rough)] p-4">
-                  {nextStep ? (
-                    <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
-                      <div>
-                        <p className="sport-label">Next recommended action</p>
-                        <h3 className="mt-1 text-3xl font-bold">{nextStep.title}</h3>
-                        <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
-                          {nextStep.confirmation}
-                        </p>
-                      </div>
-                      <form action={advanceWeekendStepAction}>
-                        <input type="hidden" name="tournamentId" value={tournament.id} />
-                        <input type="hidden" name="step" value={nextStep.step} />
-                        <button className="app-button h-12 w-full px-5 sm:w-auto">
-                          {nextStep.buttonLabel}
-                          <ArrowRight size={18} />
-                        </button>
-                      </form>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="sport-label">Tournament complete</p>
-                      <h3 className="mt-1 text-3xl font-bold">No next action needed</h3>
-                      <p className="mt-2 text-sm font-semibold text-muted">
-                        Results are final. Use recovery controls only if you need to correct something.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                <TournamentTimeline status={tournament.status} />
-              </div>
+            <section className="mock-card overflow-hidden">
+              <TournamentTimeline status={tournament.status} tournamentId={tournament.id} nextStep={nextStep} />
             </section>
 
             <aside className="space-y-5">
@@ -289,54 +253,69 @@ function AdminMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TournamentTimeline({ status }: { status: TournamentStatus }) {
+function TournamentTimeline({
+  status,
+  tournamentId,
+  nextStep,
+}: {
+  status: TournamentStatus;
+  tournamentId: string;
+  nextStep: ReturnType<typeof getNextWeekendStep>;
+}) {
   const currentIndex = timelineSteps.findIndex((step) => step.statuses.includes(status));
 
   return (
-    <section className="rounded-lg border border-border bg-white p-4">
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="sport-label">Event Timeline</p>
-          <h3 className="mt-1 text-2xl font-bold">Weekend flow</h3>
-        </div>
-        <p className="text-sm font-semibold text-muted">Use the recommended action to move safely.</p>
-      </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+    <section>
+      <div className="divide-y divide-border px-4 py-2">
         {timelineSteps.map((step, index) => {
           const complete = currentIndex > index;
           const current = currentIndex === index;
+          const upcoming = currentIndex < index;
           return (
             <div
               key={step.label}
-              className={`rounded-md border p-3 ${
-                current
-                  ? "border-primary bg-primary text-white"
-                  : complete
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-950"
-                    : "border-border bg-slate-50 text-primary"
-              }`}
+              className="relative grid grid-cols-[2.75rem_1fr_auto] items-center gap-3 py-3"
             >
-              <div className="flex items-center gap-2">
-                <span
-                  className={`flex size-7 items-center justify-center rounded-full text-xs font-black ${
-                    current
-                      ? "bg-white text-primary"
-                      : complete
-                        ? "bg-emerald-700 text-white"
-                        : "bg-white text-muted"
-                  }`}
-                >
-                  {complete ? <CheckCircle2 size={16} /> : index + 1}
+              {index < timelineSteps.length - 1 ? (
+                <span className="absolute bottom-0 left-[1.34rem] top-9 w-px bg-border" />
+              ) : null}
+              <span
+                className={`relative z-[1] flex size-9 items-center justify-center rounded-full border text-xs font-black ${
+                  current
+                    ? "border-[var(--secondary)] bg-[var(--secondary)] text-white"
+                    : complete
+                      ? "border-[var(--fairway)] bg-[var(--fairway)] text-white"
+                      : "border-slate-300 bg-slate-50 text-muted"
+                }`}
+              >
+                {complete ? <CheckCircle2 size={20} /> : current ? step.icon : upcoming ? step.lockedIcon : index + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="block font-black text-primary">{step.label}</span>
+                <span className="mt-0.5 block text-sm font-semibold text-muted">
+                  {current ? "Current Step" : complete ? "Completed" : "Upcoming"}
                 </span>
-                <span className="font-black">{step.label}</span>
-              </div>
-              <p className={`mt-2 text-sm font-semibold ${current ? "text-white/80" : "text-muted"}`}>
-                {step.detail}
-              </p>
+              </span>
+              <span className="min-w-[6.5rem] text-right">
+                {current && nextStep ? (
+                  <form action={advanceWeekendStepAction}>
+                    <input type="hidden" name="tournamentId" value={tournamentId} />
+                    <input type="hidden" name="step" value={nextStep.step} />
+                    <button className="rounded-md bg-[var(--secondary)] px-3 py-2 text-xs font-black uppercase text-primary shadow-sm">
+                      {nextStep.buttonLabel}
+                    </button>
+                  </form>
+                ) : (
+                  <span className="text-xs font-semibold text-muted">{step.time}</span>
+                )}
+              </span>
             </div>
           );
         })}
       </div>
+      <p className="border-t border-border px-4 py-3 text-center text-[11px] font-semibold text-muted">
+        Steps unlock in order. Complete the current step to continue.
+      </p>
     </section>
   );
 }
@@ -345,41 +324,65 @@ const timelineSteps: Array<{
   label: string;
   detail: string;
   statuses: TournamentStatus[];
+  time: string;
+  icon: ReactNode;
+  lockedIcon: ReactNode;
 }> = [
   {
-    label: "Tuesday",
+    label: "Lock Picks",
     detail: "Players pick.",
     statuses: ["draft", "picks_open"],
+    time: "May 11 · 7:00 PM",
+    icon: <LockKeyhole size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Lock",
+    label: "Start Thursday",
     detail: "Teams close.",
     statuses: ["picks_locked"],
+    time: "May 15 · 7:00 AM",
+    icon: <Flag size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Thu",
+    label: "Start Friday",
     detail: "Round 1.",
     statuses: ["round_1"],
+    time: "May 16 · 7:00 AM",
+    icon: <Flag size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Fri",
+    label: "Process Cut",
     detail: "Round 2.",
     statuses: ["round_2", "cut_pending"],
+    time: "Current",
+    icon: <Scissors size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Cut",
+    label: "Start Saturday",
     detail: "Best 3.",
     statuses: ["drop_open"],
+    time: "Upcoming",
+    icon: <Flag size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Sat",
+    label: "Start Sunday",
     detail: "Round 3.",
     statuses: ["round_3"],
+    time: "Upcoming",
+    icon: <Flag size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Final",
+    label: "Finalise",
     detail: "Publish.",
     statuses: ["round_4", "final"],
+    time: "Upcoming",
+    icon: <Medal size={18} />,
+    lockedIcon: <LockKeyhole size={15} />,
   },
 ];
 
@@ -468,22 +471,6 @@ function weekendStageLabel(status: TournamentStatus) {
     final: "Final results are ready",
   };
   return labels[status];
-}
-
-function weekendStageHelp(status: TournamentStatus) {
-  const copy: Record<TournamentStatus, string> = {
-    draft: "Create the tournament and load players before opening picks.",
-    picks_open: "Players can submit their teams. Scores should still show as not started.",
-    picks_locked: "Teams are locked. Next, start Thursday to add the first mock scores.",
-    round_1: "The leaderboard is live using the best 3 available scores. Next, start Friday.",
-    round_2: "Round 2 scores are loaded. Next, process the cut.",
-    cut_pending: "Round 2 is complete. Process the cut when you are ready.",
-    drop_open: "Entries with at least 3 golfers through the cut are scored using their best 3.",
-    round_3: "Only counting golfers should matter now. Next, start Sunday.",
-    round_4: "Sunday scores are loaded. Finalise when the tournament is complete.",
-    final: "The results page shows the podium and lowest-round banner.",
-  };
-  return copy[status];
 }
 
 function TaskLink({
