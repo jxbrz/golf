@@ -87,35 +87,53 @@ const STORE_PATH = path.join(process.cwd(), ".data", "golf-store.json");
 const COURSE_PAR = 70;
 const CUT_LINE_AFTER_ROUND_TWO = 4;
 
+// PGA Championship 2026 scores are sourced from CBS/Golf Channel final leaderboards.
+// For missed-cut players, R3/R4 are par placeholders and are never counted.
 const pgaRoundFixtures = new Map<string, readonly [number, number, number, number]>([
   ["g01", [67, 71, 71, 69]], // Scottie Scheffler, -2
   ["g02", [74, 67, 66, 69]], // Rory McIlroy, -4
   ["g03", [71, 67, 72, 70]], // Cameron Young, E
   ["g04", [69, 70, 67, 68]], // Jon Rahm, -6
+  ["g05", [76, 71, 70, 70]], // Bryson DeChambeau, CUT +7
   ["g06", [68, 73, 66, 69]], // Xander Schauffele, -4
   ["g07", [72, 66, 68, 69]], // Ludvig Aberg, -5
   ["g08", [70, 72, 71, 65]], // Matt Fitzpatrick, -2
+  ["g09", [72, 73, 70, 70]], // Tommy Fleetwood, CUT +5
   ["g10", [69, 69, 72, 65]], // Justin Thomas, -5
   ["g11", [69, 72, 74, 68]], // Collin Morikawa, +3
   ["g12", [70, 73, 65, 69]], // Justin Rose, -3
   ["g13", [69, 72, 68, 74]], // Brooks Koepka, +3
   ["g14", [72, 65, 71, 69]], // Chris Gotterup, -3
   ["g15", [70, 67, 71, 72]], // Hideki Matsuyama, E
+  ["g16", [72, 74, 70, 70]], // Tyrrell Hatton, CUT +6
   ["g17", [69, 73, 66, 71]], // Joaquin Niemann, -1
   ["g18", [70, 69, 74, 68]], // Patrick Cantlay, +1
   ["g19", [71, 70, 67, 70]], // Ben Griffin, -2
+  ["g20", [74, 72, 70, 70]], // Viktor Hovland, CUT +6
+  ["g21", [70, 75, 70, 70]], // Robert MacIntyre, CUT +5
+  ["g22", [72, 73, 70, 70]], // Russell Henley, CUT +5
   ["g23", [68, 73, 72, 70]], // Corey Conners, +3
   ["g24", [70, 72, 67, 71]], // Sam Burns, E
+  ["g25", [73, 73, 70, 70]], // Sepp Straka, CUT +6
   ["g26", [69, 72, 70, 68]], // Jordan Spieth, -1
   ["g27", [68, 76, 70, 68]], // Shane Lowry, +2
   ["g28", [68, 72, 67, 70]], // Patrick Reed, -3
   ["g29", [69, 71, 68, 68]], // Cameron Smith, -4
   ["g31", [74, 70, 69, 68]], // Daniel Berger, +1
   ["g32", [69, 70, 75, 72]], // Jason Day, +6
+  ["g33", [75, 77, 70, 70]], // Max Homa, CUT +12
+  ["g34", [71, 74, 70, 70]], // Akshay Bhatia, CUT +5
+  ["g35", [73, 72, 70, 70]], // Sungjae Im, CUT +5
+  ["g36", [75, 77, 70, 70]], // Marco Penge, CUT +12
+  ["g37", [72, 76, 70, 70]], // Adam Scott, CUT +8
   ["g39", [71, 67, 72, 71]], // Si Woo Kim, +1
   ["g40", [67, 70, 71, 71]], // Min Woo Lee, -1
   ["g41", [69, 67, 71, 72]], // Maverick McNealy, -1
+  ["g42", [72, 74, 70, 70]], // Gary Woodland, CUT +6
+  ["g43", [75, 70, 70, 70]], // Wyndham Clark, CUT +5
   ["g45", [72, 70, 68, 72]], // Dustin Johnson, +2
+  ["g46", [70, 76, 70, 70]], // J.J. Spaun, CUT +6
+  ["g47", [74, 74, 70, 70]], // Jacob Bridgeman, CUT +8
   ["g48", [70, 71, 68, 75]], // Rickie Fowler, +4
   ["g49", [71, 67, 71, 70]], // Harris English, -1
   ["g50", [70, 73, 66, 75]], // Brian Harman, +4
@@ -170,6 +188,64 @@ const pgaRoundFixtures = new Map<string, readonly [number, number, number, numbe
   ["g99", [74, 67, 77, 72]], // Ben Kern, +10
   ["g100", [72, 72, 69, 78]], // Michael Brennan, +11
   ["g101", [72, 72, 82, 72]], // Brian Campbell, +18
+  ["g102", [72, 73, 70, 70]], // Thomas Detry, CUT +5
+  ["g103", [69, 76, 70, 70]], // Garrick Higgo, CUT +5
+  ["g104", [71, 74, 70, 70]], // Jimmy Walker, CUT +5
+  ["g105", [71, 74, 70, 70]], // J.T. Poston, CUT +5
+  ["g106", [72, 73, 70, 70]], // Andy Sullivan, CUT +5
+  ["g107", [73, 72, 70, 70]], // Kota Kaneko, CUT +5
+  ["g108", [70, 75, 70, 70]], // Michael Block, CUT +5
+  ["g109", [75, 71, 70, 70]], // Tyler Collet, CUT +6
+  ["g110", [72, 74, 70, 70]], // Angel Ayora, CUT +6
+  ["g111", [71, 75, 70, 70]], // Pierceson Coody, CUT +6
+  ["g112", [75, 71, 70, 70]], // Adam Schenk, CUT +6
+  ["g113", [73, 73, 70, 70]], // Jordan Gumberg, CUT +6
+  ["g114", [76, 70, 70, 70]], // Max McGreevy, CUT +6
+  ["g115", [72, 74, 70, 70]], // Brandt Snedeker, CUT +6
+  ["g116", [74, 72, 70, 70]], // Stewart Cink, CUT +6
+  ["g117", [73, 73, 70, 70]], // Ben Polland, CUT +6
+  ["g118", [74, 72, 70, 70]], // David Lipsky, CUT +6
+  ["g119", [74, 72, 70, 70]], // Keegan Bradley, CUT +6
+  ["g120", [74, 73, 70, 70]], // Tom McKibbin, CUT +7
+  ["g121", [72, 75, 70, 70]], // Austin Smotherman, CUT +7
+  ["g122", [74, 73, 70, 70]], // Travis Smyth, CUT +7
+  ["g123", [77, 70, 70, 70]], // Patrick Rodgers, CUT +7
+  ["g124", [72, 75, 70, 70]], // Harry Hall, CUT +7
+  ["g125", [74, 73, 70, 70]], // Ricky Castillo, CUT +7
+  ["g126", [74, 74, 70, 70]], // Billy Horschel, CUT +8
+  ["g127", [75, 73, 70, 70]], // Jason Dufner, CUT +8
+  ["g128", [76, 72, 70, 70]], // Steven Fisk, CUT +8
+  ["g129", [73, 75, 70, 70]], // Joe Highsmith, CUT +8
+  ["g130", [72, 76, 70, 70]], // Bernd Wiesberger, CUT +8
+  ["g131", [76, 72, 70, 70]], // Emiliano Grillo, CUT +8
+  ["g132", [72, 77, 70, 70]], // Y.E. Yang, CUT +9
+  ["g133", [75, 74, 70, 70]], // Garrett Sapp, CUT +9
+  ["g134", [76, 73, 70, 70]], // Lucas Glover, CUT +9
+  ["g135", [75, 75, 70, 70]], // Nico Echavarria, CUT +10
+  ["g136", [77, 73, 70, 70]], // Shaun Micheel, CUT +10
+  ["g137", [75, 75, 70, 70]], // Sudarshan Yellamaraju, CUT +10
+  ["g138", [75, 75, 70, 70]], // Jayden Schaper, CUT +10
+  ["g139", [78, 73, 70, 70]], // Davis Riley, CUT +11
+  ["g140", [75, 76, 70, 70]], // Paul McClure, CUT +11
+  ["g141", [77, 74, 70, 70]], // Michael Thorbjornsen, CUT +11
+  ["g142", [77, 74, 70, 70]], // Matt McCarty, CUT +11
+  ["g143", [74, 78, 70, 70]], // Ian Holt, CUT +12
+  ["g144", [75, 77, 70, 70]], // Jordan Smith, CUT +12
+  ["g145", [75, 77, 70, 70]], // Adrien Saddier, CUT +12
+  ["g146", [76, 78, 70, 70]], // Zach Haynes, CUT +14
+  ["g147", [80, 74, 70, 70]], // Jared Jones, CUT +14
+  ["g148", [77, 77, 70, 70]], // Chris Gabriele, CUT +14
+  ["g149", [76, 79, 70, 70]], // Francisco Bide, CUT +15
+  ["g150", [79, 76, 70, 70]], // Austin Hurt, CUT +15
+  ["g151", [75, 80, 70, 70]], // Ryan Lenahan, CUT +15
+  ["g152", [75, 80, 70, 70]], // Timothy Wiseman, CUT +15
+  ["g153", [81, 75, 70, 70]], // Braden Shattuck, CUT +16
+  ["g154", [78, 78, 70, 70]], // Derek Berg, CUT +16
+  ["g155", [77, 80, 70, 70]], // Ryan Vermeer, CUT +17
+  ["g156", [77, 81, 70, 70]], // Jesse Droemer, CUT +18
+  ["g157", [79, 79, 70, 70]], // Michael Kartrude, CUT +18
+  ["g158", [81, 80, 70, 70]], // Mark Geddes, CUT +21
+  ["g159", [79, 83, 70, 70]], // Bryce Fisher, CUT +22
 ]);
 
 export function getStore() {
@@ -1159,13 +1235,18 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
   const timestamp = nowIso();
   const golfers = store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId);
 
-  for (const [index, golfer] of golfers.entries()) {
-    const rounds = pgaRoundFixtures.get(golfer.golferId) ?? fallbackMissedCutRounds(index);
+  for (const golfer of golfers) {
+    const rounds = pgaRoundFixtures.get(golfer.golferId);
+    if (!rounds) {
+      markMissingFixtureGolfer(store, golfer, timestamp);
+      continue;
+    }
+
     const roundScore = scoreToPar(rounds[roundNumber - 1]);
     const cumulative = rounds
       .slice(0, roundNumber)
       .reduce((total, strokes) => total + scoreToPar(strokes), 0);
-    const madeCut = pgaRoundFixtures.has(golfer.golferId) && rounds
+    const madeCut = rounds
       .slice(0, 2)
       .reduce((total, strokes) => total + scoreToPar(strokes), 0) <= CUT_LINE_AFTER_ROUND_TWO;
     const missedCut = roundNumber >= 3 && !madeCut;
@@ -1220,10 +1301,15 @@ function applyMockCutResults(tournamentId: string) {
   const timestamp = nowIso();
   const golfers = store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId);
 
-  for (const [index, golfer] of golfers.entries()) {
-    const rounds = pgaRoundFixtures.get(golfer.golferId) ?? fallbackMissedCutRounds(index);
+  for (const golfer of golfers) {
+    const rounds = pgaRoundFixtures.get(golfer.golferId);
+    if (!rounds) {
+      markMissingFixtureGolfer(store, golfer, timestamp);
+      continue;
+    }
+
     const roundTwoTotal = rounds.slice(0, 2).reduce((total, strokes) => total + scoreToPar(strokes), 0);
-    const madeCut = pgaRoundFixtures.has(golfer.golferId) && roundTwoTotal <= CUT_LINE_AFTER_ROUND_TWO;
+    const madeCut = roundTwoTotal <= CUT_LINE_AFTER_ROUND_TWO;
 
     golfer.todayScore = scoreToPar(rounds[1]);
     golfer.totalScore = roundTwoTotal;
@@ -1239,10 +1325,19 @@ function applyMockCutResults(tournamentId: string) {
   assignMockPositions(golfers, true);
 }
 
-function fallbackMissedCutRounds(index: number): readonly [number, number, number, number] {
-  const firstRound = 71 + (index % 4);
-  const secondRound = 74 + (index % 3);
-  return [firstRound, secondRound, COURSE_PAR, COURSE_PAR];
+function markMissingFixtureGolfer(store: Store, golfer: TournamentGolfer, timestamp: string) {
+  golfer.todayScore = null;
+  golfer.totalScore = null;
+  golfer.round = null;
+  golfer.thru = null;
+  golfer.madeCut = false;
+  golfer.status = "wd";
+  golfer.position = "WD";
+  golfer.lastSyncedAt = timestamp;
+  golfer.updatedAt = timestamp;
+  store.golferRoundScores = store.golferRoundScores.filter(
+    (score) => score.tournamentGolferId !== golfer.id,
+  );
 }
 
 function scoreToPar(strokes: number) {
@@ -1271,8 +1366,18 @@ function assignMockPositions(golfers: TournamentGolfer[], cutFinalized = false) 
     golfer.position = tied ? `T${lastPosition}` : String(lastPosition);
   }
 
+  for (const golfer of golfers.filter((item) => item.status === "wd" || item.status === "dq")) {
+    golfer.position = golfer.status.toUpperCase();
+    golfer.madeCut = false;
+  }
+
   if (cutFinalized) {
-    for (const golfer of golfers.filter((item) => item.madeCut === false || item.status === "cut")) {
+    const cutGolfers = golfers.filter(
+      (item) =>
+        item.status === "cut" ||
+        (item.madeCut === false && item.status !== "wd" && item.status !== "dq"),
+    );
+    for (const golfer of cutGolfers) {
       golfer.position = "CUT";
       golfer.status = "cut";
       golfer.madeCut = false;
@@ -1810,6 +1915,64 @@ function createSeedStore(): Store {
     ["g99", "Ben Kern", "INT", null],
     ["g100", "Michael Brennan", "INT", null],
     ["g101", "Brian Campbell", "INT", null],
+    ["g102", "Thomas Detry", "INT", null],
+    ["g103", "Garrick Higgo", "INT", null],
+    ["g104", "Jimmy Walker", "INT", null],
+    ["g105", "J.T. Poston", "INT", null],
+    ["g106", "Andy Sullivan", "INT", null],
+    ["g107", "Kota Kaneko", "INT", null],
+    ["g108", "Michael Block", "INT", null],
+    ["g109", "Tyler Collet", "INT", null],
+    ["g110", "Angel Ayora", "INT", null],
+    ["g111", "Pierceson Coody", "INT", null],
+    ["g112", "Adam Schenk", "INT", null],
+    ["g113", "Jordan Gumberg", "INT", null],
+    ["g114", "Max McGreevy", "INT", null],
+    ["g115", "Brandt Snedeker", "INT", null],
+    ["g116", "Stewart Cink", "INT", null],
+    ["g117", "Ben Polland", "INT", null],
+    ["g118", "David Lipsky", "INT", null],
+    ["g119", "Keegan Bradley", "INT", null],
+    ["g120", "Tom McKibbin", "INT", null],
+    ["g121", "Austin Smotherman", "INT", null],
+    ["g122", "Travis Smyth", "INT", null],
+    ["g123", "Patrick Rodgers", "INT", null],
+    ["g124", "Harry Hall", "INT", null],
+    ["g125", "Ricky Castillo", "INT", null],
+    ["g126", "Billy Horschel", "INT", null],
+    ["g127", "Jason Dufner", "INT", null],
+    ["g128", "Steven Fisk", "INT", null],
+    ["g129", "Joe Highsmith", "INT", null],
+    ["g130", "Bernd Wiesberger", "INT", null],
+    ["g131", "Emiliano Grillo", "INT", null],
+    ["g132", "Y.E. Yang", "INT", null],
+    ["g133", "Garrett Sapp", "INT", null],
+    ["g134", "Lucas Glover", "INT", null],
+    ["g135", "Nico Echavarria", "INT", null],
+    ["g136", "Shaun Micheel", "INT", null],
+    ["g137", "Sudarshan Yellamaraju", "INT", null],
+    ["g138", "Jayden Schaper", "INT", null],
+    ["g139", "Davis Riley", "INT", null],
+    ["g140", "Paul McClure", "INT", null],
+    ["g141", "Michael Thorbjornsen", "INT", null],
+    ["g142", "Matt McCarty", "INT", null],
+    ["g143", "Ian Holt", "INT", null],
+    ["g144", "Jordan Smith", "INT", null],
+    ["g145", "Adrien Saddier", "INT", null],
+    ["g146", "Zach Haynes", "INT", null],
+    ["g147", "Jared Jones", "INT", null],
+    ["g148", "Chris Gabriele", "INT", null],
+    ["g149", "Francisco Bide", "INT", null],
+    ["g150", "Austin Hurt", "INT", null],
+    ["g151", "Ryan Lenahan", "INT", null],
+    ["g152", "Timothy Wiseman", "INT", null],
+    ["g153", "Braden Shattuck", "INT", null],
+    ["g154", "Derek Berg", "INT", null],
+    ["g155", "Ryan Vermeer", "INT", null],
+    ["g156", "Jesse Droemer", "INT", null],
+    ["g157", "Michael Kartrude", "INT", null],
+    ["g158", "Mark Geddes", "INT", null],
+    ["g159", "Bryce Fisher", "INT", null],
   ];
 
   const golfers: Golfer[] = golferRows.map(([golferId, name, country]) => ({
