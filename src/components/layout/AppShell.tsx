@@ -96,8 +96,8 @@ export async function AppShell({
         ];
 
   return (
-    <div className="min-h-screen w-full pb-24 lg:grid lg:grid-cols-[16rem_1fr] lg:pb-0">
-      <aside className="app-sidebar hidden border-r border-white/10 text-white lg:flex lg:min-h-screen lg:flex-col">
+    <div className="min-h-screen w-full pb-24 lg:pb-0">
+      <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-white/10 text-white lg:flex lg:flex-col">
         <Link href="/" className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
           <MajorMark majorKey={tournament.majorKey} size="sm" />
           <span>
@@ -145,7 +145,7 @@ export async function AppShell({
         </div>
       </aside>
 
-      <div className="min-w-0">
+      <div className="min-w-0 lg:pl-64">
         <header className="game-topbar sticky top-0 z-10 border-b border-white/10 px-4 pb-3 pt-4 text-white shadow-sm backdrop-blur lg:hidden">
           <div className="grid grid-cols-[3.5rem_1fr_3.5rem] items-center gap-2">
             <div className="flex justify-start">

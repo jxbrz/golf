@@ -125,6 +125,11 @@ const pgaRoundFixtures = new Map<string, readonly [number, number, number, numbe
   ["g53", [70, 70, 72, 69]], // Ryan Fox, +1
   ["g54", [68, 73, 72, 71]], // Sahith Theegala, +4
   ["g55", [69, 75, 66, 72]], // Nicolai Hojgaard, +2
+  ["g56", [70, 70, 69, 70]], // Alex Noren, -1, field-only
+  ["g57", [71, 69, 70, 72]], // Thriston Lawrence, +2, field-only
+  ["g58", [72, 70, 69, 70]], // J.T. Poston, +1, field-only
+  ["g59", [73, 69, 71, 69]], // Rasmus Hojgaard, +2, field-only
+  ["g60", [69, 73, 70, 71]], // Mackenzie Hughes, +3, field-only
 ]);
 
 export function getStore() {
@@ -1663,7 +1668,7 @@ function createSeedStore(): Store {
     },
   ];
 
-  const golferRows = [
+  const golferRows: Array<readonly [string, string, string, number | null]> = [
     ["g01", "Scottie Scheffler", "INT", 55],
     ["g02", "Rory McIlroy", "INT", 54],
     ["g03", "Cameron Young", "INT", 53],
@@ -1719,7 +1724,12 @@ function createSeedStore(): Store {
     ["g53", "Ryan Fox", "INT", 3],
     ["g54", "Sahith Theegala", "INT", 2],
     ["g55", "Nicolai Hojgaard", "INT", 1],
-  ] as const;
+    ["g56", "Alex Noren", "INT", null],
+    ["g57", "Thriston Lawrence", "INT", null],
+    ["g58", "J.T. Poston", "INT", null],
+    ["g59", "Rasmus Hojgaard", "INT", null],
+    ["g60", "Mackenzie Hughes", "INT", null],
+  ];
 
   const golfers: Golfer[] = golferRows.map(([golferId, name, country]) => ({
     id: golferId,
