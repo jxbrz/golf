@@ -70,7 +70,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 title="Current standings"
               />
               <div className="space-y-4">
-                <EntryTeamCard entry={entry} />
+                <EntryTeamCard entry={entry} tournament={tournament} />
                 {entry.status === "drop_required" ? (
                   <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
                     <h2 className="text-lg font-black">Cut being processed</h2>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, ClipboardList } from "lucide-react";
 import { PlayerScoreRow } from "@/components/leaderboard/PlayerScoreRow";
+import { isCutFinalizedStatus } from "@/lib/tournament-status";
 import type { LeaderboardRow, Tournament } from "@/lib/types";
 import { formatScoreOrLabel } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export function GroupLeaderboard({
   title?: string;
 }) {
   const visibleRows = preview ? rows.slice(0, 4) : rows;
+  const cutFinalized = isCutFinalizedStatus(tournament.status);
   const picksRevealed =
     new Date() > new Date(tournament.pickDeadline) ||
     !["draft", "picks_open"].includes(tournament.status);
@@ -67,7 +69,11 @@ export function GroupLeaderboard({
         {visibleRows.map((row) => {
           const isCurrentUser = row.entry.userId === currentUserId;
           return (
-            <details key={row.entry.id} className={isCurrentUser ? "group bg-emerald-50/70" : "group bg-white"}>
+            <details
+              key={row.entry.id}
+              id={`entry-${row.entry.userId}`}
+              className={isCurrentUser ? "group scroll-mt-24 bg-emerald-50/70" : "group scroll-mt-24 bg-white"}
+            >
               <summary className="grid cursor-pointer list-none grid-cols-[3.5rem_1fr_4.5rem_3.5rem_1rem] items-center gap-2 px-3 py-3 transition hover:bg-slate-50">
                 <span className="flex items-center gap-1.5 font-mono text-sm font-black text-primary metric-number">
                   {row.rank}
@@ -93,7 +99,9 @@ export function GroupLeaderboard({
               </summary>
               <div className="bg-white px-3 pb-3">
                 {picksRevealed || revealAll || isCurrentUser ? (
-                  row.entry.picks.map((pick) => <PlayerScoreRow key={pick.id} pick={pick} />)
+                  row.entry.picks.map((pick) => (
+                    <PlayerScoreRow key={pick.id} pick={pick} cutFinalized={cutFinalized} />
+                  ))
                 ) : (
                   <p className="rounded-md bg-slate-50 p-3 text-sm font-semibold text-muted">
                     This team is hidden until the pick deadline has passed.

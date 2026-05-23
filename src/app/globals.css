@@ -113,8 +113,12 @@ a {
   background: #ffffff;
 }
 
-.mock-tabs button {
+.mock-tabs :is(a, button) {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
   min-height: 3rem;
   color: var(--primary);
   font-size: 0.78rem;
@@ -122,7 +126,7 @@ a {
   text-transform: uppercase;
 }
 
-.mock-tabs button::after {
+.mock-tabs :is(a, button)::after {
   position: absolute;
   right: 0.75rem;
   bottom: -1px;
@@ -133,7 +137,7 @@ a {
   content: "";
 }
 
-.mock-tabs button.active::after {
+.mock-tabs :is(a, button).active::after {
   background: var(--secondary);
 }
 

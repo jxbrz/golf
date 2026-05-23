@@ -17,6 +17,7 @@ import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDbEntry } from "@/lib/db-data/entries";
 import { getActiveTournament, getEntry } from "@/lib/mock-data/store";
+import { isPrePlayStatus, tournamentStageCopy } from "@/lib/tournament-status";
 import type { TournamentStatus } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -24,7 +25,8 @@ export default async function Home() {
   const tournament = getActiveTournament();
   const user = await requireCurrentUser();
   const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
-  const prePlay = ["draft", "picks_open", "picks_locked"].includes(tournament.status);
+  const prePlay = isPrePlayStatus(tournament.status);
+  const stage = tournamentStageCopy(tournament);
 
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
@@ -50,9 +52,7 @@ export default async function Home() {
                   <div>
                     <p className="sport-label">Team status</p>
                     <h2 className="mt-1 text-2xl font-black">Thanks for your picks.</h2>
-                    <p className="mt-2 text-muted">
-                      Your team is saved. Come back after round one to see how you are doing.
-                    </p>
+                    <p className="mt-2 text-muted">{stage.team}</p>
                     <Link href={`/tournaments/${tournament.id}/pick`} className="app-button mt-4">
                       Review team
                       <ArrowRight size={17} />
@@ -60,7 +60,7 @@ export default async function Home() {
                   </div>
                 </div>
               </section>
-              <EntryTeamCard entry={entry} />
+              <EntryTeamCard entry={entry} tournament={tournament} />
             </div>
           ) : null}
         </div>
@@ -80,11 +80,10 @@ function WelcomeHero({
   locked: boolean;
   prePlay: boolean;
 }) {
-  const statusTitle = entrySubmitted ? "Submitted" : locked ? "Picks Locked" : "Not Submitted";
+  const stage = tournamentStageCopy(tournament);
+  const statusTitle = entrySubmitted ? stage.label : locked ? "Picks Locked" : "Not Submitted";
   const statusCopy = entrySubmitted
-    ? prePlay
-      ? "Your team is saved. Check standings once play starts."
-      : "Your team is live. Follow standings as the weekend moves."
+    ? stage.team
     : locked
       ? "Picks are locked for this test weekend."
       : "You have 90 points to build your team of 4.";

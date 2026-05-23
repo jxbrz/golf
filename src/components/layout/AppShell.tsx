@@ -8,7 +8,6 @@ import {
   ListChecks,
   LogOut,
   Medal,
-  MoreHorizontal,
   Shield,
   Settings,
   Trophy,
@@ -23,7 +22,7 @@ import { getEntry } from "@/lib/mock-data/store";
 import { majorThemes } from "@/lib/theme/major-themes";
 import type { Tournament } from "@/lib/types";
 
-type MobileNavKey = "home" | "standings" | "field" | "more" | "admin" | "team";
+type MobileNavKey = "home" | "standings" | "field" | "more" | "admin" | "team" | "results";
 
 export async function AppShell({
   tournament,
@@ -81,18 +80,34 @@ export async function AppShell({
               ...(showResults ? [{ href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "standings" as const }] : []),
             ];
   const mobileNavItems =
-    user.role === "admin"
+    showResults && user.role !== "admin"
+      ? [
+          { href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "results" as const },
+          { href: `/tournaments/${tournament.id}/players`, label: "Field Results", icon: Users, key: "field" as const },
+          { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const },
+          { href: "/", label: "Home", icon: Home, key: "home" as const },
+        ]
+      : user.role === "admin"
       ? [
           { href: "/", label: "Home", icon: Home, key: "home" as const },
           { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
-          { href: `/tournaments/${tournament.id}/players`, label: "Field", icon: Users, key: "field" as const },
+          { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
           { href: `/admin/tournaments/${tournament.id}`, label: "Admin", icon: Shield, key: "admin" as const },
         ]
+      : prePlay
+        ? [
+            { href: "/", label: "Home", icon: Home, key: "home" as const },
+            { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel, icon: ListChecks, key: "team" as const },
+            { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
+            { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
+          ]
       : [
           { href: "/", label: "Home", icon: Home, key: "home" as const },
           { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
-          { href: `/tournaments/${tournament.id}/players`, label: "Field", icon: Users, key: "field" as const },
-          { href: `/tournaments/${tournament.id}/pick`, label: "More", icon: MoreHorizontal, key: "more" as const },
+          { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
+          ...(showDropNav
+            ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag, key: "more" as const }]
+            : [{ href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const }]),
         ];
 
   return (

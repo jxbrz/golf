@@ -33,7 +33,7 @@ export default async function PickPage({
         screenTitle="Pick Team"
         screenSubtitle="4 picks • 90 points"
         backHref="/"
-        activeNav="more"
+        activeNav="team"
         rightSlot={<HeaderInfoButton />}
       >
         <main className="space-y-4">
@@ -44,7 +44,7 @@ export default async function PickPage({
           ) : null}
           {entry?.submittedAt ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
-              <EntryTeamCard entry={entry} />
+              <EntryTeamCard entry={entry} tournament={tournament} />
               <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
                 <h2 className="text-lg font-black">Team locked</h2>
                 <p className="mt-1 text-sm text-muted">

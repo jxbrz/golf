@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
-import { CheckCircle2, UserRoundCheck } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, LocateFixed, Users, UserRoundCheck } from "lucide-react";
 import { GolferHeadshot } from "@/components/golfers/GolferHeadshot";
 import { AppShell, HeaderInfoButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
@@ -7,6 +8,7 @@ import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDbEntry, getDbLeaderboard } from "@/lib/db-data/entries";
 import { getEntry, getLeaderboard, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
+import { isCutFinalizedStatus, tournamentStageCopy } from "@/lib/tournament-status";
 import { formatScoreOrLabel } from "@/lib/utils";
 
 export default async function LeaderboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -24,16 +26,18 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const dbRows = await getDbLeaderboard(tournament.id, tournament);
   const rows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
   const golfers = getTournamentGolfers(tournament.id);
-  const madeCutCount = golfers.filter((golfer) => golfer.madeCut === true).length || golfers.length;
+  const cutFinalized = isCutFinalizedStatus(tournament.status);
+  const madeCutCount = cutFinalized ? golfers.filter((golfer) => golfer.madeCut === true).length : null;
   const liveRound = Math.max(1, ...golfers.map((golfer) => golfer.round ?? 1));
-  const afterCut = ["drop_open", "round_3", "round_4", "final"].includes(tournament.status);
+  const stage = tournamentStageCopy(tournament);
+  const userRank = rows.find((row) => row.entry.userId === user.id)?.rank ?? null;
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell
         tournament={tournament}
         screenTitle="Standings"
-        screenSubtitle={afterCut ? "After Cut" : "Live"}
+        screenSubtitle={stage.label}
         backHref="/"
         activeNav="standings"
         rightSlot={<HeaderInfoButton />}
@@ -45,53 +49,72 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
                 <UserRoundCheck size={18} />
               </span>
               <span>
-                <span className="block text-[11px] font-black uppercase text-white/64">Cut Made</span>
-                <span className="block text-base font-black">{madeCutCount} Players</span>
+                <span className="block text-[11px] font-black uppercase text-white/64">
+                  {cutFinalized ? "Cut Made" : "Cut Status"}
+                </span>
+                <span className="block text-base font-black">
+                  {cutFinalized ? `${madeCutCount} Players` : "Pending"}
+                </span>
               </span>
             </div>
             <div className="flex items-center gap-3 p-4">
               <span className="size-2 rounded-full bg-red-500" />
               <span>
-                <span className="block text-[11px] font-black uppercase text-red-400">Live</span>
+                <span className="block text-[11px] font-black uppercase text-red-400">{stage.label}</span>
                 <span className="block text-base font-black">Round {liveRound}</span>
               </span>
             </div>
           </section>
           <div className="mock-tabs">
-            <button type="button" className="active">Overall</button>
-            <button type="button">My Position</button>
-            <button type="button">My Team</button>
+            <Link href="#standings-board" className="active">Overall</Link>
+            <Link href={userRank ? `#entry-${user.id}` : "#standings-board"}>
+              <LocateFixed size={14} /> My Position{userRank ? ` #${userRank}` : ""}
+            </Link>
+            <Link href="#your-team">
+              <Users size={14} /> My Team
+            </Link>
           </div>
-          <GroupLeaderboard
-            rows={rows}
-            tournament={tournament}
-            currentUserId={user.id}
-            revealAll={user.role === "admin"}
-            title="Current standings"
-          />
-          {entry ? <YourTeamPanel entry={entry} /> : null}
+          <div id="standings-board" className="scroll-mt-24">
+            <GroupLeaderboard
+              rows={rows}
+              tournament={tournament}
+              currentUserId={user.id}
+              revealAll={user.role === "admin"}
+              title="Current standings"
+            />
+          </div>
+          {entry ? <YourTeamPanel entry={entry} tournament={tournament} /> : null}
         </main>
       </AppShell>
     </MajorThemeProvider>
   );
 }
 
-function YourTeamPanel({ entry }: { entry: NonNullable<ReturnType<typeof getEntry>> }) {
-  const madeCut = entry.picks.filter((pick) => pick.tournamentGolfer.madeCut === true).length;
-  const dropCount = entry.status === "drop_required" ? Math.max(0, madeCut - 3) : 0;
+function YourTeamPanel({
+  entry,
+  tournament,
+}: {
+  entry: NonNullable<ReturnType<typeof getEntry>>;
+  tournament: NonNullable<ReturnType<typeof getTournament>>;
+}) {
+  const cutFinalized = isCutFinalizedStatus(tournament.status);
+  const madeCut = cutFinalized ? entry.picks.filter((pick) => pick.tournamentGolfer.madeCut === true).length : 0;
+  const dropCount = cutFinalized && entry.status === "drop_required" ? Math.max(0, madeCut - 3) : 0;
   const note =
-    entry.status === "drop_required"
+    !cutFinalized
+      ? "Cut status is pending. Scores shown are current tournament totals."
+      : entry.status === "drop_required"
       ? "Drop one golfer. Best 3 scores will count."
       : madeCut >= 3
         ? "Your counting players are set for the weekend."
         : "This team did not get 3 players through the cut.";
 
   return (
-    <section className="mock-card overflow-hidden">
+    <section id="your-team" className="mock-card scroll-mt-24 overflow-hidden">
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
         <p className="sport-label">Your Team</p>
         <span className="rounded bg-[var(--fairway)] px-2 py-1 text-[10px] font-black uppercase text-white">
-          {madeCut} make cut {dropCount ? `- drop ${dropCount}` : ""}
+          {cutFinalized ? `${madeCut} made cut ${dropCount ? `- drop ${dropCount}` : ""}` : "cut pending"}
         </span>
       </div>
       <div className="divide-y divide-border">

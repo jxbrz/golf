@@ -7,13 +7,17 @@ import { formatCost, formatScore, formatScoreOrLabel } from "@/lib/utils";
 export function PlayerScoreRow({
   pick,
   golfer,
+  cutFinalized = false,
 }: {
   pick?: EntryWithDetails["picks"][number];
   golfer?: TournamentGolfer & { golfer: { name: string; country: string | null } };
+  cutFinalized?: boolean;
 }) {
   const row = pick?.tournamentGolfer ?? golfer;
   if (!row) return null;
-  const madeCut = row.madeCut === true && row.status !== "cut";
+  const madeCut = cutFinalized && row.madeCut === true && row.status !== "cut";
+  const status = madeCut ? "made_cut" : row.status;
+  const score = row.totalScore === null && row.status === "wd" ? "WD" : formatScoreOrLabel(row.totalScore, "Not started");
 
   return (
     <div className="grid grid-cols-[2rem_1fr_auto] gap-3 border-b border-border py-3 last:border-b-0">
@@ -36,10 +40,10 @@ export function PlayerScoreRow({
       </div>
       <div className="text-right">
         <p className="font-mono text-xl font-black text-primary metric-number">
-          {formatScoreOrLabel(row.totalScore, "Not started")}
+          {score}
         </p>
         <div className="mt-1">
-          <CutStatusBadge status={madeCut ? "made_cut" : row.status} />
+          <CutStatusBadge status={status} />
         </div>
       </div>
     </div>

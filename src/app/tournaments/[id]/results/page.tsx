@@ -38,7 +38,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
-      <AppShell tournament={tournament}>
+      <AppShell tournament={tournament} activeNav="results">
         <main className="space-y-4">
           <Link
             href={backHref}
@@ -124,7 +124,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                   </summary>
                   <div className="border-t border-border bg-slate-50 px-4 py-2">
                     {row.entry.picks.map((pick) => (
-                      <PlayerScoreRow key={pick.id} pick={pick} />
+                      <PlayerScoreRow key={pick.id} pick={pick} cutFinalized />
                     ))}
                   </div>
                 </details>
