@@ -82,11 +82,11 @@ export default async function AdminTournamentPage({
             <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-end lg:p-6">
               <div>
                 <div className="flex flex-wrap items-center gap-2 text-sm font-black text-white/70">
-                  <span className="rounded-md bg-white/10 px-2.5 py-1 uppercase">Admin</span>
+                  <span className="game-chip">Admin</span>
                   <span>Tournament ID {tournament.providerTournamentId}</span>
-                  <span>{tournament.status.replaceAll("_", " ")}</span>
+                  <span className="capitalize">{tournament.status.replaceAll("_", " ")}</span>
                 </div>
-                <h1 className="mt-4 text-4xl font-black leading-tight sm:text-5xl">
+                <h1 className="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
                   {tournament.name} {tournament.year}
                 </h1>
                 <p className="mt-3 max-w-2xl text-base font-semibold leading-7 text-white/76">
@@ -105,15 +105,15 @@ export default async function AdminTournamentPage({
             <section className="app-panel">
               <div className="app-panel-header p-4">
                 <p className="sport-label">Tournament Control</p>
-                <h2 className="mt-1 text-2xl font-black">{weekendStageLabel(tournament.status)}</h2>
+                <h2 className="mt-1 text-3xl font-bold">{weekendStageLabel(tournament.status)}</h2>
               </div>
               <div className="space-y-4 p-4">
-                <div className="rounded-md border border-border bg-[var(--rough)] p-4">
+                <div className="rounded-lg border border-border bg-[var(--rough)] p-4">
                   {nextStep ? (
                     <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
                       <div>
                         <p className="sport-label">Next recommended action</p>
-                        <h3 className="mt-1 text-2xl font-black">{nextStep.title}</h3>
+                        <h3 className="mt-1 text-3xl font-bold">{nextStep.title}</h3>
                         <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
                           {nextStep.confirmation}
                         </p>
@@ -130,7 +130,7 @@ export default async function AdminTournamentPage({
                   ) : (
                     <div>
                       <p className="sport-label">Tournament complete</p>
-                      <h3 className="mt-1 text-2xl font-black">No next action needed</h3>
+                      <h3 className="mt-1 text-3xl font-bold">No next action needed</h3>
                       <p className="mt-2 text-sm font-semibold text-muted">
                         Results are final. Use recovery controls only if you need to correct something.
                       </p>
@@ -293,11 +293,11 @@ function TournamentTimeline({ status }: { status: TournamentStatus }) {
   const currentIndex = timelineSteps.findIndex((step) => step.statuses.includes(status));
 
   return (
-    <section className="rounded-md border border-border bg-white p-4">
+    <section className="rounded-lg border border-border bg-white p-4">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="sport-label">Event Timeline</p>
-          <h3 className="mt-1 text-xl font-black">Weekend flow</h3>
+          <h3 className="mt-1 text-2xl font-bold">Weekend flow</h3>
         </div>
         <p className="text-sm font-semibold text-muted">Use the recommended action to move safely.</p>
       </div>

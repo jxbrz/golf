@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Search, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, Plus, Search, X } from "lucide-react";
 import { submitEntryAction } from "@/app/actions";
 import { BudgetBar } from "@/components/picks/BudgetBar";
 import { FloatingBudgetBar } from "@/components/picks/FloatingBudgetBar";
@@ -36,6 +36,7 @@ export function PickBuilder({
   );
   const valid = selected.length === 4 && used <= 90 && !locked;
   const showFloatingBudget = !locked && selected.length > 0 && !summaryVisible;
+  const submitLabel = selected.length < 4 ? `Pick ${4 - selected.length} more` : used > 90 ? "Over budget" : "Submit team";
 
   useEffect(() => {
     const element = summaryRef.current;
@@ -64,6 +65,15 @@ export function PickBuilder({
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
       <FloatingBudgetBar used={used} visible={showFloatingBudget} />
+      <MobilePickDock
+        tournamentId={tournamentId}
+        selectedIds={selected}
+        selectedGolfers={selectedGolfers}
+        used={used}
+        valid={valid}
+        label={submitLabel}
+        visible={!locked && selected.length > 0 && !summaryVisible}
+      />
       <section className="app-panel">
         <div className="app-panel-header p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -72,7 +82,7 @@ export function PickBuilder({
               <h2 className="mt-1 text-2xl font-black">Available golfers</h2>
               <p className="mt-1 text-sm font-semibold text-muted">Only priced sweepstake players can be selected.</p>
             </div>
-            <div className="rounded-md bg-[var(--rough)] px-3 py-2 text-sm font-black text-primary">
+            <div className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white">
               {selected.length}/4 selected
             </div>
           </div>
@@ -121,8 +131,8 @@ export function PickBuilder({
                     - {golfer.golfer.country}
                   </span>
                 </span>
-                <span className="flex size-11 items-center justify-center rounded-md bg-[var(--rough)] font-mono text-lg font-black text-primary">
-                  {golfer.pointValue}
+                <span className="flex size-11 items-center justify-center rounded-md bg-primary font-mono text-lg font-black text-white">
+                  {chosen ? <CheckCircle2 size={18} /> : golfer.pointValue}
                 </span>
               </button>
             );
@@ -164,14 +174,75 @@ export function PickBuilder({
         <form action={submitEntryAction}>
           <input type="hidden" name="tournamentId" value={tournamentId} />
           <input type="hidden" name="pickIds" value={selected.join(",")} />
-          <button
-            disabled={!valid}
-            className="h-12 w-full rounded-md bg-primary px-4 text-base font-black text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-          >
-            Submit locked team
+          <button disabled={!valid} className="app-button h-12 w-full disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none">
+            Submit Team
+            <ArrowRight size={18} />
           </button>
         </form>
       </aside>
+    </div>
+  );
+}
+
+function MobilePickDock({
+  tournamentId,
+  selectedIds,
+  selectedGolfers,
+  used,
+  valid,
+  label,
+  visible,
+}: {
+  tournamentId: string;
+  selectedIds: string[];
+  selectedGolfers: Array<TournamentGolfer & { golfer: { name: string; country: string | null } }>;
+  used: number;
+  valid: boolean;
+  label: string;
+  visible: boolean;
+}) {
+  return (
+    <div
+      className={`fixed inset-x-3 bottom-20 z-30 rounded-lg border border-white/10 bg-[var(--nav)] p-3 text-white shadow-2xl transition-all duration-200 lg:hidden ${
+        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-4 opacity-0"
+      }`}
+    >
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-black uppercase text-white/60">My picks</p>
+          <p className="font-mono text-sm font-black">{used}/90 points</p>
+        </div>
+        <div className="flex -space-x-2">
+          {selectedGolfers.map((golfer) => (
+            <span
+              key={golfer.id}
+              className="flex size-8 items-center justify-center rounded-full border border-white/30 bg-[var(--secondary)] text-xs font-black text-primary"
+              title={golfer.golfer.name}
+            >
+              {golfer.golfer.name.slice(0, 1)}
+            </span>
+          ))}
+          {Array.from({ length: Math.max(0, 4 - selectedGolfers.length) }).map((_, index) => (
+            <span
+              key={index}
+              className="flex size-8 items-center justify-center rounded-full border border-dashed border-white/30 text-white/50"
+            >
+              <Plus size={14} />
+            </span>
+          ))}
+        </div>
+      </div>
+      <form action={submitEntryAction}>
+        <input type="hidden" name="tournamentId" value={tournamentId} />
+        <input type="hidden" name="pickIds" value={selectedIds.join(",")} />
+        <button
+          disabled={!valid}
+          className="app-button h-12 w-full disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+        >
+          {label}
+          <ArrowRight size={17} />
+        </button>
+      </form>
     </div>
   );
 }

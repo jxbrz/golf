@@ -44,12 +44,12 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
             <ArrowLeft size={16} /> {backLabel}
           </Link>
 
-          <section className="overflow-hidden rounded-xl text-white scorecard-shadow event-hero">
+          <section className="event-hero overflow-hidden rounded-lg text-white scorecard-shadow">
             <div className="p-5 sm:p-7">
               <p className="text-sm font-bold uppercase tracking-wide text-white/75">
                 Final results
               </p>
-              <h1 className="mt-1 text-3xl font-black">
+              <h1 className="mt-1 text-4xl font-bold leading-none">
                 {tournament.name} {tournament.year}
               </h1>
               <p className="mt-2 text-white/85">

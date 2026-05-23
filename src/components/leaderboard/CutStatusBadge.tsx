@@ -27,7 +27,7 @@ export function CutStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md px-2 py-1 text-xs font-bold uppercase tracking-wide",
+        "inline-flex items-center rounded-full px-2 py-1 text-[11px] font-black uppercase tracking-wide",
         ["qualified", "made_cut", "active", "final", "finished", "counting"].includes(status)
           ? "bg-emerald-50 text-emerald-800"
           : ["drop_required", "needs_drop"].includes(status)

@@ -23,7 +23,7 @@ export function TournamentHeader({
             <p className="text-sm font-bold uppercase tracking-wide" style={{ color: theme.secondary }}>
               {theme.label}
             </p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight sm:text-4xl">
+            <h1 className="mt-1 text-4xl font-bold leading-none sm:text-5xl">
               {tournament.name} {tournament.year}
             </h1>
           </div>

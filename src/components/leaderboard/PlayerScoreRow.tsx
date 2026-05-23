@@ -20,16 +20,16 @@ export function PlayerScoreRow({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/tournaments/${row.tournamentId}/golfers/${row.id}`}
-            className="font-semibold text-primary underline-offset-4 hover:underline"
+            className="font-black text-primary underline-offset-4 hover:underline"
           >
             {row.golfer.name}
           </Link>
           {pick?.isDropped ? <CutStatusBadge status="dropped" /> : null}
           {pick?.isCounting && !pick.isDropped ? <CutStatusBadge status="counting" /> : null}
         </div>
-        <p className="mt-1 text-sm font-semibold text-muted">
-          {row.position ?? "Not started"} - Today {formatScore(row.todayScore)} -{" "}
-          {row.thru ?? "-"} - Cost {formatCost(pick?.pointValueAtPick ?? row.pointValue)}
+        <p className="mt-1 text-xs font-bold uppercase text-muted">
+          {row.position ?? "Not started"} · Today {formatScore(row.todayScore)} ·{" "}
+          {row.thru ?? "-"} · Cost {formatCost(pick?.pointValueAtPick ?? row.pointValue)}
         </p>
       </div>
       <div className="text-right">

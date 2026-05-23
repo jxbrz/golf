@@ -22,8 +22,8 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament}>
         <main className="space-y-4">
-          <section className="event-hero rounded-xl p-5 text-white scorecard-shadow sm:p-6">
-            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Standings</h1>
+          <section className="event-hero rounded-lg p-5 text-white scorecard-shadow sm:p-6">
+            <h1 className="text-4xl font-bold leading-none sm:text-5xl">Standings</h1>
             <p className="mt-2 max-w-2xl text-white/80">
               The live sweepstake table. Tap a name to see the golfers counting for that team.
             </p>

@@ -10,18 +10,24 @@ export function MajorMark({
 }) {
   const theme = majorThemes[majorKey];
   const sizes = {
-    sm: "size-9 text-[10px]",
-    md: "size-11 text-xs",
-    lg: "size-16 text-sm",
+    sm: "size-10 text-[10px]",
+    md: "size-12 text-xs",
+    lg: "size-[4.5rem] text-sm",
   };
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center rounded-md border font-black tracking-wide text-white shadow-sm ${sizes[size]}`}
-      style={{ backgroundColor: theme.primary, borderColor: theme.secondary }}
+      className={`major-crest flex shrink-0 flex-col items-center justify-center border-2 font-black tracking-wide shadow-sm ${sizes[size]}`}
+      style={{
+        background: `linear-gradient(180deg, ${theme.primary}, ${theme.nav})`,
+        borderColor: theme.secondary,
+        color: theme.logoText,
+      }}
       aria-label={theme.label}
     >
-      {theme.monogram}
+      <span className="font-mono text-[0.55em] leading-none opacity-80">20</span>
+      <span className="app-display leading-none">{theme.monogram}</span>
+      <span className="font-mono text-[0.55em] leading-none opacity-80">26</span>
     </span>
   );
 }

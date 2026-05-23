@@ -32,6 +32,7 @@ export async function AppShell({
   const prePlay = ["draft", "picks_open", "picks_locked"].includes(tournament.status);
   const fieldNavLabel = showResults ? "Field Results" : "Field";
   const showDropNav = entry?.status === "drop_required" && !finalReadOnly;
+  const stageLabel = tournament.status.replaceAll("_", " ");
   const navItems =
     user.role !== "admin" && finalReadOnly
       ? [
@@ -69,12 +70,12 @@ export async function AppShell({
               : "grid-cols-1";
 
   return (
-    <div className="min-h-screen w-full pb-20 lg:grid lg:grid-cols-[17rem_1fr] lg:pb-0">
+    <div className="min-h-screen w-full pb-24 lg:grid lg:grid-cols-[16rem_1fr] lg:pb-0">
       <aside className="app-sidebar hidden border-r border-white/10 text-white lg:flex lg:min-h-screen lg:flex-col">
         <Link href="/" className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
           <MajorMark majorKey={tournament.majorKey} size="sm" />
           <span>
-            <span className="block text-lg font-black leading-5">Major Picks</span>
+            <span className="app-display block text-xl font-bold leading-5">Major Picks</span>
             <span className="block text-xs font-semibold text-white/58">
               {theme.shortLabel} {tournament.year}
             </span>
@@ -117,20 +118,20 @@ export async function AppShell({
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-10 border-b border-border bg-white/88 px-4 py-3 backdrop-blur lg:hidden">
+        <header className="game-topbar sticky top-0 z-10 border-b border-white/10 px-4 py-3 text-white shadow-sm backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-3">
-            <Link href="/" className="flex items-center gap-2 text-primary">
+            <Link href="/" className="flex items-center gap-2 text-white">
               <MajorMark majorKey={tournament.majorKey} size="sm" />
               <span>
-                <span className="block text-base font-black leading-5">Major Picks</span>
-                <span className="block text-xs font-semibold text-muted">
-                  {theme.shortLabel} {tournament.year}
+                <span className="app-display block text-lg font-bold leading-5">Major Picks</span>
+                <span className="block text-xs font-semibold capitalize text-white/62">
+                  {theme.shortLabel} - {stageLabel}
                 </span>
               </span>
             </Link>
             <form action={logoutAction}>
               <button
-                className="flex size-10 items-center justify-center rounded-md border border-border bg-surface text-primary"
+                className="flex size-10 items-center justify-center rounded-md border border-white/12 bg-white/8 text-white"
                 title="Log out"
               >
                 <LogOut size={17} />
@@ -139,18 +140,18 @@ export async function AppShell({
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-[86rem] px-4 py-5 sm:px-6 lg:px-8 lg:py-7">{children}</div>
+        <div className="mx-auto w-full max-w-[86rem] px-3 py-4 sm:px-6 lg:px-8 lg:py-7">{children}</div>
       </div>
-      <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur sm:hidden">
+      <nav className="game-bottom-nav fixed inset-x-0 bottom-0 z-20 border-t border-white/10 px-2 pb-3 pt-2 backdrop-blur sm:hidden">
         <div className={`mx-auto grid max-w-md ${mobileNavColumns} gap-1 text-center text-xs font-semibold`}>
           {navItems.map((item) => (
-            <Link key={item.href} className="flex flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 text-primary" href={item.href}>
+            <Link key={item.href} className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5" href={item.href}>
               <item.icon size={17} />
               <span className="max-w-full truncate">{item.label}</span>
             </Link>
           ))}
           {user.role === "admin" ? (
-            <Link className="flex flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 text-primary" href="/admin">
+            <Link className="flex min-h-12 flex-col items-center justify-center gap-1 rounded-md px-1 py-1.5 text-[var(--secondary)]" href="/admin">
               <Shield size={17} />
               <span>Admin</span>
             </Link>

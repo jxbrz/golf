@@ -22,13 +22,13 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament}>
         <main className="space-y-4">
-          <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-            <h1 className="text-3xl font-black">Pick your team</h1>
-            <p className="mt-1 text-muted">
+          <section className="event-hero rounded-lg p-5 text-white scorecard-shadow">
+            <h1 className="text-4xl font-bold leading-none">Pick Team</h1>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-white/78">
               Pick exactly 4 golfers under the 90 point cap. This is the only thing you need to do before the tournament starts.
             </p>
             {locked ? (
-              <p className="mt-3 rounded-md bg-emerald-50 p-3 font-bold text-emerald-900">
+              <p className="mt-3 rounded-md bg-white/10 p-3 font-bold text-white">
                 Thanks for your picks. Come back after round one to see how you are doing.
               </p>
             ) : null}

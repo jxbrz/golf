@@ -26,7 +26,7 @@ export function FieldLeaderboard({
             <p className="sport-label">
               {theme.shortLabel}
             </p>
-            <h2 className="mt-1 text-2xl font-black">{title}</h2>
+            <h2 className="mt-1 text-3xl font-bold">{title}</h2>
           </div>
         </div>
         <div className="mt-4 hidden grid-cols-[4.5rem_1fr_4rem_4.5rem_4.5rem_4.5rem] gap-3 rounded-md bg-[var(--rough)] px-3 py-2 text-xs font-black uppercase text-muted sm:grid">
@@ -54,7 +54,7 @@ export function FieldLeaderboard({
               href={`/tournaments/${golfer.tournamentId}/golfers/${golfer.id}`}
               className="grid grid-cols-[3.5rem_1fr_4rem] items-center gap-3 bg-white p-4 transition hover:bg-slate-50 sm:grid-cols-[4.5rem_1fr_4rem_4.5rem_4.5rem_4.5rem]"
             >
-              <span className="flex min-h-10 items-center justify-center rounded-md bg-[var(--rough)] px-1 font-mono text-sm font-black text-primary metric-number sm:text-base">
+              <span className="flex min-h-10 items-center justify-center rounded-md bg-primary px-1 font-mono text-sm font-black text-white metric-number sm:text-base">
                 {golfer.position ?? index + 1}
               </span>
               <span className="min-w-0">

@@ -38,7 +38,7 @@ export function GroupLeaderboard({
       <div className="app-panel-header flex items-center justify-between gap-3 p-4">
         <div>
           <p className="sport-label">Group Standings</p>
-          <h2 className="mt-1 text-2xl font-black">{title}</h2>
+          <h2 className="mt-1 text-3xl font-bold">{title}</h2>
           <p className="mt-1 text-sm font-semibold text-muted">
             {["drop_open", "round_3", "round_4", "final"].includes(tournament.status)
               ? "Best 3 scores count after the cut"
@@ -54,6 +54,11 @@ export function GroupLeaderboard({
           </Link>
         ) : null}
       </div>
+      <div className="grid grid-cols-[3rem_1fr_auto] gap-3 border-b border-border bg-[var(--rough)] px-4 py-2 text-[11px] font-black uppercase text-muted">
+        <span>Pos</span>
+        <span>Team</span>
+        <span className="text-right">Best 3</span>
+      </div>
       <div className="divide-y divide-border">
         {visibleRows.length === 0 ? (
           <div className="p-6 text-center">
@@ -67,19 +72,17 @@ export function GroupLeaderboard({
         {visibleRows.map((row) => (
           <details
             key={row.entry.id}
-            className={row.entry.userId === currentUserId ? "group bg-emerald-50/60" : "group bg-white"}
+            className={row.entry.userId === currentUserId ? "group bg-emerald-50/70" : "group bg-white"}
           >
-            <summary className="grid cursor-pointer list-none grid-cols-[2.75rem_1fr_auto_1.5rem] items-center gap-3 p-4 transition hover:bg-slate-50">
-              <span className="flex size-10 items-center justify-center rounded-md bg-[var(--rough)] font-mono text-lg font-black text-primary metric-number">
+            <summary className="grid cursor-pointer list-none grid-cols-[3rem_1fr_auto_1.25rem] items-center gap-3 p-4 transition hover:bg-slate-50">
+              <span className="flex size-10 items-center justify-center rounded-md bg-primary font-mono text-lg font-black text-white metric-number">
                 {row.rank}
               </span>
               <span>
-                <span className="block text-lg font-black leading-tight">
+                <span className="block text-base font-black leading-tight sm:text-lg">
                   {row.entry.user.name}
                   {row.entry.userId === currentUserId ? (
-                    <span className="ml-2 align-middle text-xs font-black uppercase text-emerald-800">
-                      You
-                    </span>
+                    <span className="ml-2 align-middle text-xs font-black uppercase text-emerald-800">Your Team</span>
                   ) : null}
                 </span>
                 <span className="mt-1 block">

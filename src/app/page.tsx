@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { CalendarDays, CheckCircle2, MapPin, Trophy } from "lucide-react";
+import { ArrowRight, CalendarDays, CheckCircle2, LockKeyhole, MapPin, Trophy, UsersRound } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { MajorMark } from "@/components/theme/MajorMark";
@@ -47,11 +47,9 @@ export default async function Home() {
                     <p className="mt-2 text-muted">
                       Your team is saved. Come back after round one to see how you are doing.
                     </p>
-                    <Link
-                      href={`/tournaments/${tournament.id}/pick`}
-                      className="app-button mt-4"
-                    >
+                    <Link href={`/tournaments/${tournament.id}/pick`} className="app-button mt-4">
                       Review team
+                      <ArrowRight size={17} />
                     </Link>
                   </div>
                 </div>
@@ -86,79 +84,102 @@ function WelcomeHero({
 }) {
   const theme = majorThemes[tournament.majorKey];
   const title = entrySubmitted
-    ? "Your team is in."
+    ? "Team submitted"
     : locked
-      ? "Picks are locked."
-      : "Welcome. Select your picks.";
+      ? "Picks locked"
+      : "Pick your team";
   const body = entrySubmitted
-    ? "Nothing else to do yet. We will open the standings once the first round is in."
+    ? "You are in. Standings open once play starts."
     : locked
-      ? "The field is closed and the tournament is ready to begin."
-      : "Pick 4 golfers under the 90 point cap. Once you submit, your team is locked.";
+      ? "The game is closed and ready for round one."
+      : "Choose 4 golfers. Stay under 90 points. Submit once.";
 
   return (
     <section className="event-hero overflow-hidden rounded-lg text-white scorecard-shadow">
-      <div className="grid gap-0 lg:grid-cols-[1fr_24rem]">
-        <div className="p-5 sm:p-7 lg:p-8">
+      <div className="p-4 sm:p-6 lg:p-7">
+        <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <MajorMark majorKey={tournament.majorKey} size="lg" />
             <div>
-              <h2 className="text-lg font-black leading-5">{tournament.name}</h2>
-              <p className="text-sm font-semibold text-white/68">{theme.label} {tournament.year}</p>
+              <h2 className="app-display text-2xl font-bold leading-6">{theme.shortLabel}</h2>
+              <p className="text-xs font-bold uppercase text-white/62">{tournament.name} {tournament.year}</p>
             </div>
           </div>
-          <h1 className="mt-8 max-w-2xl text-4xl font-black leading-tight sm:text-6xl">
-            {title}
-          </h1>
-          <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/78">
-            {body}
-          </p>
-          {!entrySubmitted && !locked ? (
-            <Link
-              href={`/tournaments/${tournament.id}/pick`}
-              className="mt-7 inline-flex h-12 items-center rounded-md px-5 text-base font-black text-primary"
-              style={{ backgroundColor: theme.secondary }}
-            >
-              Select your picks
-            </Link>
-          ) : null}
-          <div className="mt-8 grid max-w-2xl gap-2 sm:grid-cols-3">
-            <HeroStat icon={<MapPin size={17} />} label="Venue" value={tournament.venue.split(",")[0]} />
-            <HeroStat icon={<CalendarDays size={17} />} label="Picks lock" value={formatDateTime(tournament.pickDeadline)} />
-            <HeroStat icon={<Trophy size={17} />} label="Format" value="Four picks, best three" />
+          <span className="game-chip">{tournament.status.replaceAll("_", " ")}</span>
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_22rem] lg:items-stretch">
+          <div className="relative min-h-52 overflow-hidden rounded-lg border border-white/12">
+            <Image
+              src="/images/aronimink-clubhouse.jpg"
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 48rem, 100vw"
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[rgb(0_28_61_/_0.82)] via-[rgb(0_28_61_/_0.2)] to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4">
+              <h1 className="app-display text-4xl font-bold leading-none sm:text-5xl">{title}</h1>
+              <p className="mt-2 max-w-xl text-sm font-bold leading-6 text-white/82">{body}</p>
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-white/12 bg-white p-4 text-primary shadow-2xl">
+            <p className="sport-label">Your status</p>
+            <h3 className="mt-1 text-3xl font-bold">{entrySubmitted ? "Locked in" : locked ? "Closed" : "Not submitted"}</h3>
+            <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+              {entrySubmitted
+                ? "Your 4 golfers are saved. Watch the standings once play starts."
+                : locked
+                  ? "Picks are locked for this test weekend."
+                  : "You have 90 points to build a team of 4."}
+            </p>
+            {!entrySubmitted && !locked ? (
+              <Link
+                href={`/tournaments/${tournament.id}/pick`}
+                className="app-button mt-4 w-full"
+              >
+                Pick Team
+                <ArrowRight size={18} />
+              </Link>
+            ) : null}
+            <div className="mt-4 grid gap-2">
+              <HeroStat icon={<UsersRound size={17} />} label="Roster" value="4 golfers" />
+              <HeroStat icon={<Trophy size={17} />} label="Scoring" value="Best 3 count" />
+              <HeroStat icon={<LockKeyhole size={17} />} label="Lock" value={formatDateTime(tournament.pickDeadline)} />
+            </div>
           </div>
         </div>
 
-        <div className="relative min-h-72 border-t border-white/10 lg:border-l lg:border-t-0">
-          <Image
-            src="/images/aronimink-clubhouse.jpg"
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 24rem, 100vw"
-            className="object-cover"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgb(9_37_29_/_0.82)] via-transparent to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 rounded-md border border-white/16 bg-[rgb(9_37_29_/_0.7)] p-3 backdrop-blur">
-            <p className="text-sm font-black">Live-event rehearsal</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-white/72">
-              Use admin controls to move the tournament through rounds with mock live data.
-            </p>
-          </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <HeroStat icon={<MapPin size={17} />} label="Venue" value={tournament.venue.split(",")[0]} dark />
+          <HeroStat icon={<CalendarDays size={17} />} label="Weekend" value="Thu to Sun" dark />
+          <HeroStat icon={<Trophy size={17} />} label="Drop rule" value="Drop 1 if all 4 make cut" dark />
         </div>
       </div>
     </section>
   );
 }
 
-function HeroStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function HeroStat({
+  icon,
+  label,
+  value,
+  dark = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  dark?: boolean;
+}) {
   return (
-    <div className="rounded-md border border-white/12 bg-white/8 p-3">
-      <div className="flex items-center gap-2 text-white/68">
+    <div className={dark ? "rounded-md border border-white/12 bg-white/8 p-3" : "rounded-md border border-border bg-[var(--rough)] p-3"}>
+      <div className={dark ? "flex items-center gap-2 text-white/68" : "flex items-center gap-2 text-muted"}>
         {icon}
         <span className="text-xs font-black uppercase">{label}</span>
       </div>
-      <p className="mt-2 line-clamp-2 text-sm font-black text-white">{value}</p>
+      <p className={dark ? "mt-2 line-clamp-2 text-sm font-black text-white" : "mt-2 line-clamp-2 text-sm font-black text-primary"}>{value}</p>
     </div>
   );
 }
