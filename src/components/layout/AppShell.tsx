@@ -18,6 +18,7 @@ import type { ReactNode } from "react";
 import { logoutAction } from "@/app/actions";
 import { MajorMark } from "@/components/theme/MajorMark";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry } from "@/lib/db-data/entries";
 import { getEntry } from "@/lib/mock-data/store";
 import { majorThemes } from "@/lib/theme/major-themes";
 import type { Tournament } from "@/lib/types";
@@ -42,7 +43,7 @@ export async function AppShell({
   rightSlot?: ReactNode;
 }) {
   const user = await requireCurrentUser();
-  const entry = getEntry(tournament.id, user.id);
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   const teamNavLabel = entry?.submittedAt ? "Team" : "Pick";
   const theme = majorThemes[tournament.majorKey];
   const showResults = tournament.status === "final";

@@ -15,6 +15,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry } from "@/lib/db-data/entries";
 import { getActiveTournament, getEntry } from "@/lib/mock-data/store";
 import type { TournamentStatus } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
@@ -22,7 +23,7 @@ import { formatDateTime } from "@/lib/utils";
 export default async function Home() {
   const tournament = getActiveTournament();
   const user = await requireCurrentUser();
-  const entry = getEntry(tournament.id, user.id);
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   const prePlay = ["draft", "picks_open", "picks_locked"].includes(tournament.status);
 
   if (tournament.status === "final" && user.role !== "admin") {

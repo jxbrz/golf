@@ -5,17 +5,25 @@ import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { PickBuilder } from "@/components/picks/PickBuilder";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry } from "@/lib/db-data/entries";
 import { canSubmitPicks, getEntry, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
 
-export default async function PickPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function PickPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { id } = await params;
+  const { error } = await searchParams;
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const user = await requireCurrentUser();
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
   }
-  const entry = getEntry(tournament.id, user.id);
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   const locked = Boolean(entry?.submittedAt) || !canSubmitPicks(tournament);
 
   return (
@@ -29,6 +37,11 @@ export default async function PickPage({ params }: { params: Promise<{ id: strin
         rightSlot={<HeaderInfoButton />}
       >
         <main className="space-y-4">
+          {error ? (
+            <section className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm font-bold text-rose-800">
+              {error}
+            </section>
+          ) : null}
           {entry?.submittedAt ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <EntryTeamCard entry={entry} />

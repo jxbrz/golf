@@ -5,6 +5,7 @@ import { AppShell, HeaderInfoButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry, getDbLeaderboard } from "@/lib/db-data/entries";
 import { getEntry, getLeaderboard, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
 import { formatScoreOrLabel } from "@/lib/utils";
 
@@ -16,12 +17,13 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
   }
-  if (user.role !== "admin" && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
+  if (user.role !== "admin" && !entry?.submittedAt && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
     redirect("/");
   }
-  const rows = getLeaderboard(tournament.id);
+  const dbRows = await getDbLeaderboard(tournament.id, tournament);
+  const rows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
   const golfers = getTournamentGolfers(tournament.id);
-  const entry = getEntry(tournament.id, user.id);
   const madeCutCount = golfers.filter((golfer) => golfer.madeCut === true).length || golfers.length;
   const liveRound = Math.max(1, ...golfers.map((golfer) => golfer.round ?? 1));
   const afterCut = ["drop_open", "round_3", "round_4", "final"].includes(tournament.status);

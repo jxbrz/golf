@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
+import { submitDbEntry } from "@/lib/db-data/entries";
 import {
   advanceWeekendStep,
   advanceWeekendStepFromProvider,
@@ -27,7 +28,14 @@ export async function submitEntryAction(formData: FormData) {
   const pickIds = String(formData.get("pickIds"))
     .split(",")
     .filter(Boolean);
-  submitEntry(tournamentId, user.id, pickIds);
+  const result = await submitDbEntry(tournamentId, user.id, pickIds);
+  if (result && !result.ok) {
+    redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(result.message)}`);
+  }
+  const mockResult = submitEntry(tournamentId, user.id, pickIds);
+  if (!result && !mockResult.ok) {
+    redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(mockResult.message)}`);
+  }
   revalidatePath("/");
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}/leaderboard`);

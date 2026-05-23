@@ -7,6 +7,7 @@ import { MajorMark } from "@/components/theme/MajorMark";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { TournamentHeader } from "@/components/tournaments/TournamentHeader";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry, getDbLeaderboard } from "@/lib/db-data/entries";
 import { getEntry, getLeaderboard, getTournament } from "@/lib/mock-data/store";
 
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,13 +18,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
   }
-  if (user.role !== "admin" && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
+  if (user.role !== "admin" && !entry?.submittedAt && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
     redirect("/");
   }
   if (user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/leaderboard`);
   }
-  const entry = getEntry(tournament.id, user.id);
+  const dbRows = await getDbLeaderboard(tournament.id, tournament);
+  const leaderboardRows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -60,7 +63,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             </section>
             <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
               <GroupLeaderboard
-                rows={getLeaderboard(tournament.id)}
+                rows={leaderboardRows}
                 tournament={tournament}
                 currentUserId={user.id}
                 revealAll={user.role === "admin"}
@@ -84,7 +87,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
             <TournamentHeader tournament={tournament} entrySubmitted={false} />
             <main className="grid gap-4 lg:grid-cols-[1fr_22rem]">
               <GroupLeaderboard
-                rows={getLeaderboard(tournament.id)}
+                rows={leaderboardRows}
                 tournament={tournament}
                 currentUserId={user.id}
                 revealAll={user.role === "admin"}
