@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
-import { submitDbEntry } from "@/lib/db-data/entries";
+import { adminUpsertDbEntryPicks, dropDbPlayer, submitDbEntry } from "@/lib/db-data/entries";
 import {
   advanceWeekendStep,
   advanceWeekendStepFromProvider,
@@ -45,7 +45,10 @@ export async function submitEntryAction(formData: FormData) {
 export async function dropPlayerAction(formData: FormData) {
   await requireCurrentUser();
   const tournamentId = String(formData.get("tournamentId"));
-  dropPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
+  const result = await dropDbPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
+  if (!result) {
+    dropPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
+  }
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}/results`);
   redirect(`/tournaments/${tournamentId}/leaderboard`);
@@ -178,7 +181,13 @@ export async function adminUpdateEntryPicksAction(formData: FormData) {
     redirect(`/admin/tournaments/${tournamentId}/entries?error=reason`);
   }
 
-  const result = adminUpsertEntryPicks({
+  const result = await adminUpsertDbEntryPicks({
+    tournamentId,
+    userId,
+    tournamentGolferIds: pickIds,
+    adminUserId: admin.id,
+    reason,
+  }) ?? adminUpsertEntryPicks({
     tournamentId,
     userId,
     tournamentGolferIds: pickIds,

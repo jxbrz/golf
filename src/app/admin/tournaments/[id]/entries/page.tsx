@@ -5,6 +5,7 @@ import { AdminEntriesEditor } from "@/components/admin/AdminEntriesEditor";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireAdminUser } from "@/lib/auth";
+import { getDbAdminEntryRows } from "@/lib/db-data/entries";
 import {
   getAdminEntryRows,
   getTournament,
@@ -23,6 +24,7 @@ export default async function AdminEntriesPage({
   await requireAdminUser();
   const tournament = getTournament(id);
   if (!tournament) notFound();
+  const dbRows = await getDbAdminEntryRows(tournament.id);
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -42,7 +44,7 @@ export default async function AdminEntriesPage({
           </section>
           <AdminEntriesEditor
             tournamentId={tournament.id}
-            rows={getAdminEntryRows(tournament.id)}
+            rows={dbRows.length ? dbRows : getAdminEntryRows(tournament.id)}
             golfers={getTournamentGolfers(tournament.id)}
             error={error}
           />

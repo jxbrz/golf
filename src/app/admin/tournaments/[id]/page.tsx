@@ -28,6 +28,7 @@ import { AppShell, HeaderSettingsButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireAdminUser } from "@/lib/auth";
+import { getDbEntriesWithDetails, getDbLeaderboard } from "@/lib/db-data/entries";
 import {
   getEntriesWithDetails,
   getLeaderboard,
@@ -67,7 +68,10 @@ export default async function AdminTournamentPage({
   if (!tournament) notFound();
 
   const golfers = getTournamentGolfers(tournament.id);
-  const entries = getEntriesWithDetails(tournament.id);
+  const dbEntries = await getDbEntriesWithDetails(tournament.id);
+  const entries = dbEntries.length ? dbEntries : getEntriesWithDetails(tournament.id);
+  const dbRows = await getDbLeaderboard(tournament.id, tournament);
+  const leaderboardRows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
   const scoredGolfers = golfers.filter((golfer) => golfer.totalScore !== null).length;
   const madeCutGolfers = golfers.filter((golfer) => golfer.madeCut === true).length;
   const nextStep = getNextWeekendStep(tournament.status);
@@ -233,7 +237,7 @@ export default async function AdminTournamentPage({
           </details>
 
           <GroupLeaderboard
-            rows={getLeaderboard(tournament.id)}
+            rows={leaderboardRows}
             tournament={tournament}
             preview
             revealAll

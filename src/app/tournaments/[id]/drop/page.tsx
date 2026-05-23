@@ -3,6 +3,7 @@ import { DropPlayerForm } from "@/components/drop/DropPlayerForm";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry } from "@/lib/db-data/entries";
 import { getEntry, getTournament } from "@/lib/mock-data/store";
 
 export default async function DropPage({ params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +14,7 @@ export default async function DropPage({ params }: { params: Promise<{ id: strin
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
   }
-  const entry = getEntry(tournament.id, user.id);
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>

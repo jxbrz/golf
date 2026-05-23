@@ -78,7 +78,13 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
 
 function YourTeamPanel({ entry }: { entry: NonNullable<ReturnType<typeof getEntry>> }) {
   const madeCut = entry.picks.filter((pick) => pick.tournamentGolfer.madeCut === true).length;
-  const dropCount = Math.max(0, madeCut - 3);
+  const dropCount = entry.status === "drop_required" ? Math.max(0, madeCut - 3) : 0;
+  const note =
+    entry.status === "drop_required"
+      ? "Drop one golfer. Best 3 scores will count."
+      : madeCut >= 3
+        ? "Your counting players are set for the weekend."
+        : "This team did not get 3 players through the cut.";
 
   return (
     <section className="mock-card overflow-hidden">
@@ -108,7 +114,7 @@ function YourTeamPanel({ entry }: { entry: NonNullable<ReturnType<typeof getEntr
         ))}
       </div>
       <p className="border-t border-border px-3 py-2 text-center text-[11px] font-semibold text-muted">
-        Drop one golfer. Best 3 scores will count.
+        {note}
       </p>
     </section>
   );

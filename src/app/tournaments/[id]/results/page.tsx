@@ -6,6 +6,7 @@ import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import { PlayerScoreRow } from "@/components/leaderboard/PlayerScoreRow";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbLeaderboard, getDbLowestRoundSummary } from "@/lib/db-data/entries";
 import {
   getLeaderboard,
   getLowestRoundSummary,
@@ -25,8 +26,10 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   if (!tournament) notFound();
   if (tournament.status !== "final") redirect(`/tournaments/${tournament.id}/leaderboard`);
   const user = await requireCurrentUser();
-  const rows = getLeaderboard(tournament.id);
-  const lowestRound = getLowestRoundSummary(tournament.id);
+  const dbRows = await getDbLeaderboard(tournament.id, tournament);
+  const rows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
+  const dbLowestRound = await getDbLowestRoundSummary(tournament.id);
+  const lowestRound = dbLowestRound ?? getLowestRoundSummary(tournament.id);
   const backHref =
     user.role === "admin"
       ? `/tournaments/${tournament.id}/leaderboard`
