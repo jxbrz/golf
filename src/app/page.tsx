@@ -30,10 +30,6 @@ export default async function Home() {
     redirect(`/tournaments/${tournament.id}/results`);
   }
 
-  if (!prePlay && user.role !== "admin") {
-    redirect(`/tournaments/${tournament.id}/leaderboard`);
-  }
-
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament} activeNav="home">
@@ -41,6 +37,7 @@ export default async function Home() {
           <WelcomeHero
             entrySubmitted={Boolean(entry?.submittedAt)}
             locked={tournament.status === "picks_locked"}
+            prePlay={prePlay}
             tournament={tournament}
           />
           {entry?.submittedAt ? (
@@ -76,17 +73,35 @@ function WelcomeHero({
   tournament,
   entrySubmitted,
   locked,
+  prePlay,
 }: {
   tournament: ReturnType<typeof getActiveTournament>;
   entrySubmitted: boolean;
   locked: boolean;
+  prePlay: boolean;
 }) {
   const statusTitle = entrySubmitted ? "Submitted" : locked ? "Picks Locked" : "Not Submitted";
   const statusCopy = entrySubmitted
-    ? "Your team is saved. Check standings once play starts."
+    ? prePlay
+      ? "Your team is saved. Check standings once play starts."
+      : "Your team is live. Follow standings as the weekend moves."
     : locked
       ? "Picks are locked for this test weekend."
       : "You have 90 points to build your team of 4.";
+  const primaryHref =
+    tournament.status === "final"
+      ? `/tournaments/${tournament.id}/results`
+      : prePlay
+        ? `/tournaments/${tournament.id}/pick`
+        : `/tournaments/${tournament.id}/leaderboard`;
+  const primaryLabel =
+    tournament.status === "final"
+      ? "View Results"
+      : prePlay
+        ? entrySubmitted
+          ? "Review Team"
+          : "Pick Team"
+        : "View Standings";
 
   return (
     <section className="home-mock-screen overflow-hidden rounded-lg bg-white scorecard-shadow">
@@ -141,9 +156,9 @@ function WelcomeHero({
           </div>
         </section>
 
-        {!entrySubmitted && !locked ? (
-          <Link href={`/tournaments/${tournament.id}/pick`} className="app-button h-12 w-full text-base">
-            Pick Team
+        {(!entrySubmitted && !locked) || entrySubmitted || !prePlay ? (
+          <Link href={primaryHref} className="app-button h-12 w-full text-base">
+            {primaryLabel}
           </Link>
         ) : null}
       </div>

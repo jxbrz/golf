@@ -112,7 +112,6 @@ const pgaRoundFixtures = new Map<string, readonly [number, number, number, numbe
   ["g29", [69, 71, 68, 68]], // Cameron Smith, -4
   ["g31", [74, 70, 69, 68]], // Daniel Berger, +1
   ["g32", [69, 70, 75, 72]], // Jason Day, +6
-  ["g37", [72, 73, 71, 70]], // Adam Scott, made weekend in this fixture set
   ["g39", [71, 67, 72, 71]], // Si Woo Kim, +1
   ["g40", [67, 70, 71, 71]], // Min Woo Lee, -1
   ["g41", [69, 67, 71, 72]], // Maverick McNealy, -1
@@ -125,11 +124,52 @@ const pgaRoundFixtures = new Map<string, readonly [number, number, number, numbe
   ["g53", [70, 70, 72, 69]], // Ryan Fox, +1
   ["g54", [68, 73, 72, 71]], // Sahith Theegala, +4
   ["g55", [69, 75, 66, 72]], // Nicolai Hojgaard, +2
-  ["g56", [70, 70, 69, 70]], // Alex Noren, -1, field-only
-  ["g57", [71, 69, 70, 72]], // Thriston Lawrence, +2, field-only
-  ["g58", [72, 70, 69, 70]], // J.T. Poston, +1, field-only
-  ["g59", [73, 69, 71, 69]], // Rasmus Hojgaard, +2, field-only
-  ["g60", [69, 73, 70, 71]], // Mackenzie Hughes, +3, field-only
+  ["g56", [67, 69, 68, 70]], // Alex Smalley, -6
+  ["g57", [69, 72, 65, 69]], // Matthias Schmid, -5
+  ["g58", [70, 69, 75, 63]], // Kurt Kitayama, -3
+  ["g59", [68, 69, 71, 70]], // Max Greyserman, -2
+  ["g60", [71, 67, 71, 70]], // David Puig, -1
+  ["g61", [74, 69, 67, 69]], // Padraig Harrington, -1
+  ["g62", [67, 70, 73, 69]], // Stephan Jager, -1
+  ["g63", [71, 73, 70, 66]], // Alexander Noren, E
+  ["g64", [69, 70, 71, 70]], // Andrew Novak, E
+  ["g65", [69, 72, 67, 72]], // Bud Cauley, E
+  ["g66", [71, 69, 70, 70]], // Daniel Hillier, E
+  ["g67", [69, 72, 65, 74]], // Nick Taylor, E
+  ["g68", [72, 70, 68, 70]], // Tom Hoge, E
+  ["g69", [67, 70, 73, 71]], // Aldrich Potgieter, +1
+  ["g70", [72, 72, 70, 67]], // Christiaan Bezuidenhout, +1
+  ["g71", [71, 69, 71, 70]], // Haotong Li, +1
+  ["g72", [67, 75, 66, 73]], // Martin Kaymer, +1
+  ["g73", [67, 73, 73, 68]], // Ryo Hisatsune, +1
+  ["g74", [69, 73, 70, 70]], // Chandler Blanchet, +2
+  ["g75", [73, 70, 65, 74]], // Chris Kirk, +2
+  ["g76", [73, 71, 69, 69]], // Jhonattan Vegas, +2
+  ["g77", [71, 72, 65, 74]], // Kristoffer Reitan, +2
+  ["g78", [71, 71, 72, 68]], // Matt Wallace, +2
+  ["g79", [73, 70, 67, 72]], // Michael Kim, +2
+  ["g80", [72, 72, 67, 71]], // Taylor Pendrith, +2
+  ["g81", [69, 71, 70, 73]], // Andrew Putnam, +3
+  ["g82", [71, 71, 67, 74]], // Mikael Lindberg, +3
+  ["g83", [70, 70, 71, 73]], // Rico Hoey, +4
+  ["g84", [73, 70, 71, 70]], // Sami Valimaki, +4
+  ["g85", [70, 72, 78, 66]], // Casey Jarvis, +6
+  ["g86", [73, 69, 71, 73]], // Keith Mitchell, +6
+  ["g87", [72, 71, 71, 72]], // Rasmus Hojgaard, +6
+  ["g88", [69, 73, 71, 73]], // Samuel Stevens, +6
+  ["g89", [73, 71, 70, 73]], // John Parry, +7
+  ["g90", [71, 71, 70, 75]], // Kazuki Higa, +7
+  ["g91", [71, 73, 74, 69]], // Luke Donald, +7
+  ["g92", [69, 72, 73, 73]], // Ryan Gerard, +7
+  ["g93", [74, 70, 70, 73]], // William Mouw, +7
+  ["g94", [72, 70, 72, 74]], // Alex Fitzpatrick, +8
+  ["g95", [68, 75, 70, 75]], // Daniel Brown, +8
+  ["g96", [72, 72, 73, 71]], // Elvis Smylie, +8
+  ["g97", [72, 72, 71, 73]], // Rasmus Neergaard-Petersen, +8
+  ["g98", [72, 72, 69, 76]], // Johnny Keefer, +9
+  ["g99", [74, 67, 77, 72]], // Ben Kern, +10
+  ["g100", [72, 72, 69, 78]], // Michael Brennan, +11
+  ["g101", [72, 72, 82, 72]], // Brian Campbell, +18
 ]);
 
 export function getStore() {
@@ -1724,11 +1764,52 @@ function createSeedStore(): Store {
     ["g53", "Ryan Fox", "INT", 3],
     ["g54", "Sahith Theegala", "INT", 2],
     ["g55", "Nicolai Hojgaard", "INT", 1],
-    ["g56", "Alex Noren", "INT", null],
-    ["g57", "Thriston Lawrence", "INT", null],
-    ["g58", "J.T. Poston", "INT", null],
-    ["g59", "Rasmus Hojgaard", "INT", null],
-    ["g60", "Mackenzie Hughes", "INT", null],
+    ["g56", "Alex Smalley", "INT", null],
+    ["g57", "Matthias Schmid", "INT", null],
+    ["g58", "Kurt Kitayama", "INT", null],
+    ["g59", "Max Greyserman", "INT", null],
+    ["g60", "David Puig", "INT", null],
+    ["g61", "Padraig Harrington", "INT", null],
+    ["g62", "Stephan Jager", "INT", null],
+    ["g63", "Alexander Noren", "INT", null],
+    ["g64", "Andrew Novak", "INT", null],
+    ["g65", "Bud Cauley", "INT", null],
+    ["g66", "Daniel Hillier", "INT", null],
+    ["g67", "Nick Taylor", "INT", null],
+    ["g68", "Tom Hoge", "INT", null],
+    ["g69", "Aldrich Potgieter", "INT", null],
+    ["g70", "Christiaan Bezuidenhout", "INT", null],
+    ["g71", "Haotong Li", "INT", null],
+    ["g72", "Martin Kaymer", "INT", null],
+    ["g73", "Ryo Hisatsune", "INT", null],
+    ["g74", "Chandler Blanchet", "INT", null],
+    ["g75", "Chris Kirk", "INT", null],
+    ["g76", "Jhonattan Vegas", "INT", null],
+    ["g77", "Kristoffer Reitan", "INT", null],
+    ["g78", "Matt Wallace", "INT", null],
+    ["g79", "Michael Kim", "INT", null],
+    ["g80", "Taylor Pendrith", "INT", null],
+    ["g81", "Andrew Putnam", "INT", null],
+    ["g82", "Mikael Lindberg", "INT", null],
+    ["g83", "Rico Hoey", "INT", null],
+    ["g84", "Sami Valimaki", "INT", null],
+    ["g85", "Casey Jarvis", "INT", null],
+    ["g86", "Keith Mitchell", "INT", null],
+    ["g87", "Rasmus Hojgaard", "INT", null],
+    ["g88", "Samuel Stevens", "INT", null],
+    ["g89", "John Parry", "INT", null],
+    ["g90", "Kazuki Higa", "INT", null],
+    ["g91", "Luke Donald", "INT", null],
+    ["g92", "Ryan Gerard", "INT", null],
+    ["g93", "William Mouw", "INT", null],
+    ["g94", "Alex Fitzpatrick", "INT", null],
+    ["g95", "Daniel Brown", "INT", null],
+    ["g96", "Elvis Smylie", "INT", null],
+    ["g97", "Rasmus Neergaard-Petersen", "INT", null],
+    ["g98", "Johnny Keefer", "INT", null],
+    ["g99", "Ben Kern", "INT", null],
+    ["g100", "Michael Brennan", "INT", null],
+    ["g101", "Brian Campbell", "INT", null],
   ];
 
   const golfers: Golfer[] = golferRows.map(([golferId, name, country]) => ({
