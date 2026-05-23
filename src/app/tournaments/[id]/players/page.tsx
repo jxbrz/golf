@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Flag, Trophy, UsersRound } from "lucide-react";
+import { ArrowRight, CalendarClock, Flag, Trophy, UsersRound } from "lucide-react";
 import { AppShell, HeaderInfoButton } from "@/components/layout/AppShell";
 import { FieldLeaderboard } from "@/components/leaderboard/FieldLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
@@ -18,11 +18,12 @@ export default async function PlayersLeaderboardPage({
   await requireCurrentUser();
   const tournament = getTournament(id);
   if (!tournament) notFound();
+  const fieldIsLive = !["draft", "picks_open", "picks_locked"].includes(tournament.status);
   const title = tournament.status === "final" ? "Field results" : "Field leaderboard";
   const field = getFieldLeaderboard(tournament.id);
   const allGolfers = getTournamentGolfers(tournament.id);
   const theme = majorThemes[tournament.majorKey];
-  const leader = field.find((golfer) => golfer.totalScore !== null) ?? field[0];
+  const leader = fieldIsLive ? field.find((golfer) => golfer.totalScore !== null) : null;
   const madeCut = allGolfers.filter((golfer) => golfer.madeCut === true).length;
   const scored = allGolfers.filter((golfer) => golfer.totalScore !== null).length;
 
@@ -45,7 +46,9 @@ export default async function PlayersLeaderboardPage({
                 </p>
                 <h1 className="mt-1 text-3xl font-bold leading-none sm:text-4xl">{title}</h1>
                 <p className="mt-2 max-w-2xl text-sm font-semibold text-white/72">
-                  Follow the full field, live scoring, cut status, and player costs in one place.
+                  {fieldIsLive
+                    ? "Follow the full field, live scoring, cut status, and player costs in one place."
+                    : "The full field leaderboard will appear once round 1 is underway."}
                 </p>
               </div>
               <Link
@@ -58,17 +61,45 @@ export default async function PlayersLeaderboardPage({
             <div className="grid grid-cols-3 border-t border-white/10 text-center">
               <FieldHeroMetric icon={<UsersRound size={17} />} label="Field" value={String(allGolfers.length)} />
               <FieldHeroMetric icon={<Trophy size={17} />} label="Leader" value={leader ? formatScoreOrLabel(leader.totalScore, "-") : "-"} />
-              <FieldHeroMetric icon={<Flag size={17} />} label="Cut Made" value={madeCut ? String(madeCut) : `${scored}/${allGolfers.length}`} />
+              <FieldHeroMetric
+                icon={<Flag size={17} />}
+                label={fieldIsLive ? "Cut Made" : "Scored"}
+                value={fieldIsLive ? (madeCut ? String(madeCut) : `${scored}/${allGolfers.length}`) : "Not live"}
+              />
             </div>
           </section>
-          <FieldLeaderboard
-            golfers={field}
-            majorKey={tournament.majorKey}
-            title={title}
-          />
+          {fieldIsLive ? (
+            <FieldLeaderboard
+              golfers={field}
+              majorKey={tournament.majorKey}
+              title={title}
+            />
+          ) : (
+            <FieldPendingState tournamentName={tournament.name} year={tournament.year} />
+          )}
         </main>
       </AppShell>
     </MajorThemeProvider>
+  );
+}
+
+function FieldPendingState({
+  tournamentName,
+  year,
+}: {
+  tournamentName: string;
+  year: number;
+}) {
+  return (
+    <section className="paper-panel rounded-lg border border-border p-5 text-center scorecard-shadow">
+      <span className="mx-auto flex size-12 items-center justify-center rounded-md bg-[var(--rough)] text-primary">
+        <CalendarClock size={24} />
+      </span>
+      <h2 className="mt-4 text-2xl font-black">Field leaderboard opens after round 1 starts</h2>
+      <p className="mx-auto mt-2 max-w-xl text-sm font-semibold text-muted">
+        {tournamentName} {year} scores are hidden until the first round is underway.
+      </p>
+    </section>
   );
 }
 
