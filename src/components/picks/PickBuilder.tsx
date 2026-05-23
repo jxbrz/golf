@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   CheckCircle2,
@@ -29,6 +29,7 @@ export function PickBuilder({
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const draftLoaded = useRef(false);
   const [tab, setTab] = useState<"all" | "mine">("all");
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterMode, setFilterMode] = useState<"all" | "affordable" | "value" | "selected">("all");
@@ -61,6 +62,38 @@ export function PickBuilder({
   const visibleGolfers = tab === "mine" ? selectedGolfers : filtered;
   const valid = selected.length === 4 && used <= 90 && !locked;
   const submitLabel = selected.length < 4 ? `Pick ${4 - selected.length} more` : used > 90 ? "Over budget" : "Submit team";
+  const draftKey = `major-picks:${tournamentId}:draft-picks`;
+
+  useEffect(() => {
+    if (locked) {
+      window.localStorage.removeItem(draftKey);
+      draftLoaded.current = true;
+      return;
+    }
+
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(draftKey) ?? "[]");
+      if (Array.isArray(stored)) {
+        const validIds = new Set(pickableGolfers.map((golfer) => golfer.id));
+        const savedSelected = stored
+          .filter((id): id is string => typeof id === "string" && validIds.has(id))
+          .slice(0, 4);
+        queueMicrotask(() => {
+          draftLoaded.current = true;
+          setSelected(savedSelected);
+        });
+        return;
+      }
+    } catch {
+      window.localStorage.removeItem(draftKey);
+    }
+    draftLoaded.current = true;
+  }, [draftKey, locked, pickableGolfers]);
+
+  useEffect(() => {
+    if (!draftLoaded.current || locked) return;
+    window.localStorage.setItem(draftKey, JSON.stringify(selected));
+  }, [draftKey, locked, selected]);
 
   function toggle(id: string) {
     if (locked) return;

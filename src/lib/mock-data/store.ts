@@ -1,4 +1,6 @@
 import Papa from "papaparse";
+import fs from "node:fs";
+import path from "node:path";
 import {
   calculateCutStatus,
   calculateEntryPointTotal,
@@ -80,6 +82,7 @@ type Store = {
 };
 
 const globalForStore = globalThis as typeof globalThis & { golfStore?: Store };
+const STORE_PATH = path.join(process.cwd(), ".data", "golf-store.json");
 
 const mockCutResults = new Map<string, Partial<TournamentGolfer>>([
   ["g01", { position: "1", totalScore: -6, todayScore: -2, round: 2, thru: "18", madeCut: true }],
@@ -117,24 +120,42 @@ const mockCutResults = new Map<string, Partial<TournamentGolfer>>([
 
 export function getStore() {
   if (!globalForStore.golfStore) {
-    globalForStore.golfStore = createSeedStore();
+    globalForStore.golfStore = loadPersistedStore() ?? createSeedStore();
+    ensureStoreShape(globalForStore.golfStore);
     recalculateTournament(globalForStore.golfStore.tournaments[0].id);
-  } else if (!globalForStore.golfStore.golferRoundScores) {
-    globalForStore.golfStore.golferRoundScores = buildRoundScores(
-      globalForStore.golfStore.tournamentGolfers,
-      nowIso(),
-    );
-  }
-  if (!globalForStore.golfStore.credentials) {
-    globalForStore.golfStore.credentials = defaultCredentials();
-  }
-  if (!globalForStore.golfStore.adminTeamCorrections) {
-    globalForStore.golfStore.adminTeamCorrections = [];
-  }
-  if (!globalForStore.golfStore.providerLeaderboardCache) {
-    globalForStore.golfStore.providerLeaderboardCache = [];
+    persistStore(globalForStore.golfStore);
+  } else {
+    ensureStoreShape(globalForStore.golfStore);
   }
   return globalForStore.golfStore;
+}
+
+function loadPersistedStore() {
+  try {
+    if (!fs.existsSync(STORE_PATH)) return null;
+    return JSON.parse(fs.readFileSync(STORE_PATH, "utf8")) as Store;
+  } catch (error) {
+    console.warn("Unable to load persisted golf store. Falling back to seed data.", error);
+    return null;
+  }
+}
+
+function persistStore(store: Store) {
+  try {
+    fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
+    fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
+  } catch (error) {
+    console.warn("Unable to persist golf store.", error);
+  }
+}
+
+function ensureStoreShape(store: Store) {
+  store.golferRoundScores ??= buildRoundScores(store.tournamentGolfers, nowIso());
+  store.credentials ??= defaultCredentials();
+  store.adminTeamCorrections ??= [];
+  store.providerLeaderboardCache ??= [];
+  store.scoreSyncLogs ??= [];
+  store.adminOverrides ??= [];
 }
 
 export function getCurrentUser(userId?: string | null) {
@@ -322,6 +343,7 @@ export async function applyOddsPricing(tournamentId: string) {
     updated += 1;
   }
 
+  persistStore(store);
   return {
     ok: true,
     message: `Applied odds pricing to ${updated} golfers. ${preview.unmatched.length} top-55 odds runners were unmatched.`,
@@ -445,6 +467,7 @@ export function submitEntry(tournamentId: string, userId: string, tournamentGolf
     })),
   );
   recalculateTournament(tournamentId);
+  persistStore(store);
   return { ok: true, message: "Team submitted. It is now locked." };
 }
 
@@ -525,6 +548,7 @@ export function adminUpsertEntryPicks(input: {
     createdAt: timestamp,
   });
   recalculateTournament(tournament.id, ["drop_open", "round_3", "round_4", "final"].includes(tournament.status));
+  persistStore(store);
   return { ok: true, message: "Entry picks updated." };
 }
 
@@ -550,22 +574,27 @@ export function dropPlayer(entryId: string, pickId: string) {
   entry.status = "qualified";
   entry.updatedAt = nowIso();
   recalculateTournament(entry.tournamentId);
+  persistStore(store);
   return { ok: true, message: "Player dropped. Your remaining 3 now count." };
 }
 
 export function updateTournamentStatus(tournamentId: string, status: TournamentStatus) {
-  const tournament = mustFind(getStore().tournaments, tournamentId, "Tournament");
+  const store = getStore();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
   tournament.status = status;
   tournament.updatedAt = nowIso();
   recalculateTournament(tournamentId);
+  persistStore(store);
 }
 
 export function processCut(tournamentId: string) {
   applyMockCutResults(tournamentId);
-  const tournament = mustFind(getStore().tournaments, tournamentId, "Tournament");
+  const store = getStore();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
   tournament.status = "drop_open";
   tournament.updatedAt = nowIso();
   recalculateTournament(tournamentId, true);
+  persistStore(store);
 }
 
 export function processCutFromSyncedScores(tournamentId: string) {
@@ -594,13 +623,16 @@ export function processCutFromSyncedScores(tournamentId: string) {
   tournament.status = "drop_open";
   tournament.updatedAt = timestamp;
   recalculateTournament(tournamentId, true);
+  persistStore(store);
 }
 
 export function finaliseTournament(tournamentId: string) {
-  const tournament = mustFind(getStore().tournaments, tournamentId, "Tournament");
+  const store = getStore();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
   tournament.status = "final";
   tournament.updatedAt = nowIso();
   recalculateTournament(tournamentId, true);
+  persistStore(store);
 }
 
 export function updateGolferScore(input: {
@@ -631,6 +663,7 @@ export function updateGolferScore(input: {
     createdAt: nowIso(),
   });
   recalculateTournament(row.tournamentId);
+  persistStore(store);
 }
 
 export function importGolfersFromCsv(tournamentId: string, csv: string) {
@@ -696,6 +729,7 @@ export function importGolfersFromCsv(tournamentId: string, csv: string) {
     imported += 1;
   }
 
+  persistStore(store);
   return { ok: true, message: `Imported ${imported} golfers.` };
 }
 
@@ -774,6 +808,7 @@ export function importScoresFromCsv(tournamentId: string, csv: string) {
     syncedAt: timestamp,
   });
   recalculateTournament(tournamentId, true);
+  persistStore(store);
   return { ok: true, message: `Imported scores for ${imported} golfers.` };
 }
 
@@ -795,6 +830,7 @@ export function syncMockLeaderboard(tournamentId: string, provider = "mock") {
     syncedAt: nowIso(),
   });
   recalculateTournament(tournamentId);
+  persistStore(store);
 }
 
 export async function syncProviderLeaderboard(
@@ -816,6 +852,7 @@ export async function syncProviderLeaderboard(
       message,
       syncedAt: timestamp,
     });
+    persistStore(store);
     return { ok: true, message };
   }
 
@@ -903,6 +940,7 @@ export async function syncProviderLeaderboard(
       tournamentId,
       options?.applyCut ?? ["drop_open", "round_3", "round_4", "final"].includes(tournament.status),
     );
+    persistStore(store);
     return {
       ok: true,
       message: `${cached ? "Used cached scores" : "Synced scores"} for ${matched} of ${rows.length} provider rows.`,
@@ -917,6 +955,7 @@ export async function syncProviderLeaderboard(
       message,
       syncedAt: timestamp,
     });
+    persistStore(store);
     return { ok: false, message };
   }
 }
@@ -1018,6 +1057,7 @@ export function advanceWeekendStep(
   applyMockRoundScores(tournamentId, step === "round_1" ? 1 : step === "round_2" ? 2 : step === "round_3" ? 3 : 4);
   updateTournamentStatus(tournamentId, step);
   recalculateTournament(tournamentId, step === "round_3" || step === "round_4");
+  persistStore(getStore());
 }
 
 export async function advanceWeekendStepFromProvider(
@@ -1053,6 +1093,7 @@ export async function advanceWeekendStepFromProvider(
   });
   updateTournamentStatus(tournamentId, step);
   recalculateTournament(tournamentId, step === "round_3" || step === "round_4");
+  persistStore(getStore());
 }
 
 function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) {
