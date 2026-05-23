@@ -71,7 +71,7 @@ export function GroupLeaderboard({
               <summary className="grid cursor-pointer list-none grid-cols-[3.5rem_1fr_4.5rem_3.5rem_1rem] items-center gap-2 px-3 py-3 transition hover:bg-slate-50">
                 <span className="flex items-center gap-1.5 font-mono text-sm font-black text-primary metric-number">
                   {row.rank}
-                  <span className={row.rank % 2 === 0 ? "text-rose-600" : row.rank % 3 === 0 ? "text-muted" : "text-[var(--fairway)]"}>
+                  <span className="hidden">
                     {row.rank % 2 === 0 ? "↓1" : row.rank % 3 === 0 ? "—" : "↑2"}
                   </span>
                 </span>

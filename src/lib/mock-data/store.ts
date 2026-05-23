@@ -197,7 +197,11 @@ export function getTournamentGolfers(tournamentId: string) {
 }
 
 export function getFieldLeaderboard(tournamentId: string) {
-  return getTournamentGolfers(tournamentId).filter((golfer) => golfer.status !== "cut").sort((a, b) => {
+  return getTournamentGolfers(tournamentId).sort((a, b) => {
+    const aCut = a.status === "cut" || a.madeCut === false;
+    const bCut = b.status === "cut" || b.madeCut === false;
+    if (aCut && !bCut) return 1;
+    if (bCut && !aCut) return -1;
     if (a.totalScore === null && b.totalScore !== null) return 1;
     if (b.totalScore === null && a.totalScore !== null) return -1;
     if (a.totalScore !== null && b.totalScore !== null && a.totalScore !== b.totalScore) {
@@ -1103,7 +1107,7 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
 
   for (const [index, golfer] of golfers.entries()) {
     const cutResult = mockCutResults.get(golfer.golferId);
-    const missedCut = cutResult?.madeCut === false;
+    const missedCut = golfer.madeCut === false || golfer.status === "cut" || cutResult?.madeCut === false;
 
     if (roundNumber === 1) {
       const score = (index % 9) - 4;
@@ -1151,6 +1155,8 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
     upsertLatestRoundScore(store, golfer);
   }
 
+  assignMockPositions(golfers, roundNumber >= 3);
+
   store.scoreSyncLogs.unshift({
     id: id("sync"),
     tournamentId,
@@ -1195,6 +1201,39 @@ function applyMockCutResults(tournamentId: string) {
     golfer.lastSyncedAt = timestamp;
     golfer.updatedAt = timestamp;
     upsertLatestRoundScore(store, golfer);
+  }
+
+  assignMockPositions(golfers, true);
+}
+
+function assignMockPositions(golfers: TournamentGolfer[], cutFinalized = false) {
+  const activeGolfers = golfers
+    .filter((golfer) => golfer.totalScore !== null)
+    .filter((golfer) => !cutFinalized || golfer.madeCut !== false)
+    .sort((a, b) => {
+      if (a.totalScore !== b.totalScore) return a.totalScore! - b.totalScore!;
+      return (b.pointValue ?? 0) - (a.pointValue ?? 0);
+    });
+
+  let lastScore: number | null = null;
+  let lastPosition = 0;
+  for (const [index, golfer] of activeGolfers.entries()) {
+    if (golfer.totalScore !== lastScore) {
+      lastScore = golfer.totalScore;
+      lastPosition = index + 1;
+    }
+    const tied = activeGolfers.some(
+      (other) => other.id !== golfer.id && other.totalScore === golfer.totalScore,
+    );
+    golfer.position = tied ? `T${lastPosition}` : String(lastPosition);
+  }
+
+  if (cutFinalized) {
+    for (const golfer of golfers.filter((item) => item.madeCut === false || item.status === "cut")) {
+      golfer.position = "CUT";
+      golfer.status = "cut";
+      golfer.madeCut = false;
+    }
   }
 }
 

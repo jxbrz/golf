@@ -99,13 +99,19 @@ export function calculateLiveEntryScore(
     "round_4",
     "final",
   ].includes(tournament.status);
-  const picksToCount = hasCutHappened
-    ? bestScoredPicks(entry.picks.filter((pick) => pick.isCounting && !pick.isDropped))
-    : bestScoredPicks(entry.picks);
   const cutStatus = hasCutHappened ? calculateCutStatus(entry.picks) : null;
 
   if (cutStatus?.status === "eliminated") return null;
   if (cutStatus?.status === "drop_required") return null;
+
+  const picksToCount = hasCutHappened
+    ? bestScoredPicks(
+        entry.picks.filter((pick) =>
+          cutStatus?.countingPickIds.includes(pick.id) ||
+          (pick.tournamentGolfer.madeCut === true && !pick.isDropped),
+        ),
+      )
+    : bestScoredPicks(entry.picks);
 
   return sumScores(picksToCount);
 }
@@ -113,7 +119,14 @@ export function calculateLiveEntryScore(
 export function calculateFinalEntryScore(entry: EntryWithDetails) {
   const cutStatus = calculateCutStatus(entry.picks);
   if (cutStatus.status === "eliminated" || cutStatus.status === "drop_required") return null;
-  return sumScores(bestScoredPicks(entry.picks.filter((pick) => pick.isCounting && !pick.isDropped)));
+  return sumScores(
+    bestScoredPicks(
+      entry.picks.filter((pick) =>
+        cutStatus.countingPickIds.includes(pick.id) ||
+        (pick.tournamentGolfer.madeCut === true && !pick.isDropped),
+      ),
+    ),
+  );
 }
 
 export function calculateGroupLeaderboard(
@@ -126,14 +139,17 @@ export function calculateGroupLeaderboard(
         ? calculateFinalEntryScore(entry)
         : calculateLiveEntryScore(entry, tournament);
     const cutStatus = calculateCutStatus(entry.picks);
+    const effectiveStatus = ["drop_open", "round_3", "round_4", "final"].includes(tournament.status)
+      ? cutStatus.status
+      : entry.status;
 
     return {
       rank: 0,
       entry,
       score,
-      status: entry.status,
+      status: effectiveStatus,
       madeCutCount: cutStatus.madeCutCount,
-      needsDrop: entry.status === "drop_required",
+      needsDrop: effectiveStatus === "drop_required",
     };
   });
 

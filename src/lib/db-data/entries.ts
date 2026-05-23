@@ -10,6 +10,7 @@ import {
   tournaments,
   users,
 } from "@/db/schema";
+import { getTournamentGolfers } from "@/lib/mock-data/store";
 import {
   calculateGroupLeaderboard,
   validateEntryPicks,
@@ -127,15 +128,19 @@ export async function getDbEntriesWithDetails(tournamentId: string): Promise<Ent
       : [];
 
     const userById = new Map(userRows.map((user) => [user.id, asUser(user)]));
+    const mockTournamentGolferById = new Map(getTournamentGolfers(tournamentId).map((golfer) => [golfer.id, golfer]));
     const golferById = new Map(golferRows.map((golfer) => [golfer.id, asGolfer(golfer)]));
     const tournamentGolferById = new Map(
-      tournamentGolferRows.map((row) => [
-        row.id,
-        {
-          ...asTournamentGolfer(row),
-          golfer: golferById.get(row.golferId)!,
-        },
-      ]),
+      tournamentGolferRows.map((row) => {
+        const mockGolfer = mockTournamentGolferById.get(row.id);
+        return [
+          row.id,
+          mockGolfer ?? {
+            ...asTournamentGolfer(row),
+            golfer: golferById.get(row.golferId)!,
+          },
+        ];
+      }),
     );
 
     return entryRows.map((entry) => ({
