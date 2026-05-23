@@ -297,7 +297,7 @@ function TournamentTimeline({
               <span className="min-w-0">
                 <span className="block font-black text-primary">{step.label}</span>
                 <span className="mt-0.5 block text-sm font-semibold text-muted">
-                  {current ? "Current Step" : complete ? "Completed" : "Upcoming"}
+                  {current ? step.detail : complete ? "Completed" : "Upcoming"}
                 </span>
               </span>
               <span className="min-w-[6.5rem] text-right">
@@ -333,58 +333,58 @@ const timelineSteps: Array<{
   lockedIcon: ReactNode;
 }> = [
   {
-    label: "Lock Picks",
-    detail: "Entries close.",
+    label: "Picks Open",
+    detail: "Entries are still open",
     statuses: ["draft", "picks_open"],
-    time: "Thu 14 May - 11:00 AM",
+    time: "Entries close Thu 14 May - 11:00 AM",
     icon: <LockKeyhole size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Start Thursday",
-    detail: "Round 1 starts.",
+    label: "Picks Locked",
+    detail: "Ready to load round 1",
     statuses: ["picks_locked"],
-    time: "Thu 14 May - 12:00 PM",
+    time: "Round 1 Thu 14 May",
     icon: <Flag size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "End Round 1",
-    detail: "Round 1 complete.",
+    label: "Round 1 Loaded",
+    detail: "Ready to load round 2",
     statuses: ["round_1"],
-    time: "Thu 14 May - End of play",
+    time: "Round 1 complete Thu 14 May",
     icon: <Flag size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Process Cut",
-    detail: "Round 2 complete.",
+    label: "Round 2 Loaded",
+    detail: "Ready to process the cut",
     statuses: ["round_2", "cut_pending"],
-    time: "Fri 15 May - End of play",
+    time: "Round 2 complete Fri 15 May",
     icon: <Scissors size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "Start Saturday",
-    detail: "Round 3 starts.",
+    label: "Cut Processed",
+    detail: "Ready to load round 3",
     statuses: ["drop_open"],
-    time: "Sat 16 May - Before play",
+    time: "Cut after Fri 15 May",
     icon: <Flag size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "End Round 3",
-    detail: "Round 3 complete.",
+    label: "Round 3 Loaded",
+    detail: "Ready to load round 4",
     statuses: ["round_3"],
-    time: "Sat 16 May - End of play",
+    time: "Round 3 complete Sat 16 May",
     icon: <Flag size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
   {
-    label: "End Round 4",
-    detail: "Final scores.",
+    label: "Round 4 Loaded",
+    detail: "Ready to finalise results",
     statuses: ["round_4", "final"],
-    time: "Sun 17 May - End of play",
+    time: "Round 4 complete Sun 17 May",
     icon: <Medal size={18} />,
     lockedIcon: <LockKeyhole size={15} />,
   },
@@ -416,15 +416,15 @@ function getNextWeekendStep(status: TournamentStatus) {
     },
     picks_locked: {
       step: "round_1",
-      title: "Start Thursday",
-      buttonLabel: "Start Thursday",
+      title: "Load round 1",
+      buttonLabel: "Load Round 1",
       confirmation: "This adds mock round 1 scores and makes the leaderboards feel live.",
     },
     round_1: {
       step: "round_2",
-      title: "End round 1",
-      buttonLabel: "End Round 1",
-      confirmation: "This adds mock round 2 scores after round 1 is complete. Process the cut after round 2.",
+      title: "Load round 2",
+      buttonLabel: "Load Round 2",
+      confirmation: "This adds mock round 2 scores. Process the cut after round 2.",
     },
     round_2: {
       step: "process_cut",
@@ -440,14 +440,14 @@ function getNextWeekendStep(status: TournamentStatus) {
     },
     drop_open: {
       step: "round_3",
-      title: "Start Saturday",
-      buttonLabel: "Start Saturday",
+      title: "Load round 3",
+      buttonLabel: "Load Round 3",
       confirmation: "Use this once the cut has been checked. The app is already counting best 3 scores.",
     },
     round_3: {
       step: "round_4",
-      title: "End round 3",
-      buttonLabel: "End Round 3",
+      title: "Load round 4",
+      buttonLabel: "Load Round 4",
       confirmation: "This adds round 4 scores after round 3 is complete.",
     },
     round_4: {
