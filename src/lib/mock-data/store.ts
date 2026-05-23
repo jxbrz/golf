@@ -84,38 +84,47 @@ type Store = {
 const globalForStore = globalThis as typeof globalThis & { golfStore?: Store };
 const STORE_PATH = path.join(process.cwd(), ".data", "golf-store.json");
 
-const mockCutResults = new Map<string, Partial<TournamentGolfer>>([
-  ["g01", { position: "1", totalScore: -6, todayScore: -2, round: 2, thru: "18", madeCut: true }],
-  ["g02", { position: "T2", totalScore: -4, todayScore: -1, round: 2, thru: "18", madeCut: true }],
-  ["g03", { position: "T4", totalScore: -3, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g04", { position: "T4", totalScore: -3, todayScore: -1, round: 2, thru: "18", madeCut: true }],
-  ["g05", { position: "T6", totalScore: -2, todayScore: 1, round: 2, thru: "18", madeCut: true }],
-  ["g06", { position: "T6", totalScore: -2, todayScore: -2, round: 2, thru: "18", madeCut: true }],
-  ["g07", { position: "T8", totalScore: -1, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g08", { position: "T8", totalScore: -1, todayScore: -1, round: 2, thru: "18", madeCut: true }],
-  ["g09", { position: "T10", totalScore: 0, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g10", { position: "T10", totalScore: 0, todayScore: 1, round: 2, thru: "18", madeCut: true }],
-  ["g11", { position: "T12", totalScore: 1, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g12", { position: "T12", totalScore: 1, todayScore: -1, round: 2, thru: "18", madeCut: true }],
-  ["g13", { position: "T14", totalScore: 2, todayScore: 1, round: 2, thru: "18", madeCut: true }],
-  ["g14", { position: "T14", totalScore: 2, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g15", { position: "T16", totalScore: 3, todayScore: 2, round: 2, thru: "18", madeCut: true }],
-  ["g16", { position: "T16", totalScore: 3, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g17", { position: "T18", totalScore: 4, todayScore: 3, round: 2, thru: "18", madeCut: true }],
-  ["g18", { position: "T18", totalScore: 4, todayScore: 1, round: 2, thru: "18", madeCut: true }],
-  ["g19", { position: "T20", totalScore: 5, todayScore: 2, round: 2, thru: "18", madeCut: true }],
-  ["g20", { position: "T20", totalScore: 5, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g21", { position: "CUT", totalScore: 7, todayScore: 3, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g22", { position: "CUT", totalScore: 8, todayScore: 4, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g23", { position: "CUT", totalScore: 8, todayScore: 2, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g24", { position: "CUT", totalScore: 9, todayScore: 3, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g25", { position: "CUT", totalScore: 10, todayScore: 5, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g30", { position: "CUT", totalScore: 8, todayScore: 2, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g50", { position: "CUT", totalScore: 15, todayScore: 6, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g51", { position: "CUT", totalScore: 14, todayScore: 2, round: 2, thru: "18", madeCut: false, status: "cut" }],
-  ["g53", { position: "T21", totalScore: 5, todayScore: -1, round: 2, thru: "18", madeCut: true }],
-  ["g54", { position: "T21", totalScore: 5, todayScore: 0, round: 2, thru: "18", madeCut: true }],
-  ["g55", { position: "T21", totalScore: 5, todayScore: 1, round: 2, thru: "18", madeCut: true }],
+const COURSE_PAR = 70;
+const CUT_LINE_AFTER_ROUND_TWO = 4;
+
+const pgaRoundFixtures = new Map<string, readonly [number, number, number, number]>([
+  ["g01", [67, 71, 71, 69]], // Scottie Scheffler, -2
+  ["g02", [74, 67, 66, 69]], // Rory McIlroy, -4
+  ["g03", [71, 67, 72, 70]], // Cameron Young, E
+  ["g04", [69, 70, 67, 68]], // Jon Rahm, -6
+  ["g06", [68, 73, 66, 69]], // Xander Schauffele, -4
+  ["g07", [72, 66, 68, 69]], // Ludvig Aberg, -5
+  ["g08", [70, 72, 71, 65]], // Matt Fitzpatrick, -2
+  ["g10", [69, 69, 72, 65]], // Justin Thomas, -5
+  ["g11", [69, 72, 74, 68]], // Collin Morikawa, +3
+  ["g12", [70, 73, 65, 69]], // Justin Rose, -3
+  ["g13", [69, 72, 68, 74]], // Brooks Koepka, +3
+  ["g14", [72, 65, 71, 69]], // Chris Gotterup, -3
+  ["g15", [70, 67, 71, 72]], // Hideki Matsuyama, E
+  ["g17", [69, 73, 66, 71]], // Joaquin Niemann, -1
+  ["g18", [70, 69, 74, 68]], // Patrick Cantlay, +1
+  ["g19", [71, 70, 67, 70]], // Ben Griffin, -2
+  ["g23", [68, 73, 72, 70]], // Corey Conners, +3
+  ["g24", [70, 72, 67, 71]], // Sam Burns, E
+  ["g26", [69, 72, 70, 68]], // Jordan Spieth, -1
+  ["g27", [68, 76, 70, 68]], // Shane Lowry, +2
+  ["g28", [68, 72, 67, 70]], // Patrick Reed, -3
+  ["g29", [69, 71, 68, 68]], // Cameron Smith, -4
+  ["g31", [74, 70, 69, 68]], // Daniel Berger, +1
+  ["g32", [69, 70, 75, 72]], // Jason Day, +6
+  ["g37", [72, 73, 71, 70]], // Adam Scott, made weekend in this fixture set
+  ["g39", [71, 67, 72, 71]], // Si Woo Kim, +1
+  ["g40", [67, 70, 71, 71]], // Min Woo Lee, -1
+  ["g41", [69, 67, 71, 72]], // Maverick McNealy, -1
+  ["g45", [72, 70, 68, 72]], // Dustin Johnson, +2
+  ["g48", [70, 71, 68, 75]], // Rickie Fowler, +4
+  ["g49", [71, 67, 71, 70]], // Harris English, -1
+  ["g50", [70, 73, 66, 75]], // Brian Harman, +4
+  ["g51", [70, 69, 67, 65]], // Aaron Rai, -9
+  ["g52", [71, 71, 70, 70]], // Denny McCarthy, +2
+  ["g53", [70, 70, 72, 69]], // Ryan Fox, +1
+  ["g54", [68, 73, 72, 71]], // Sahith Theegala, +4
+  ["g55", [69, 75, 66, 72]], // Nicolai Hojgaard, +2
 ]);
 
 export function getStore() {
@@ -1106,32 +1115,28 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
   const golfers = store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId);
 
   for (const [index, golfer] of golfers.entries()) {
-    const cutResult = mockCutResults.get(golfer.golferId);
-    const missedCut = golfer.madeCut === false || golfer.status === "cut" || cutResult?.madeCut === false;
+    const rounds = pgaRoundFixtures.get(golfer.golferId) ?? fallbackMissedCutRounds(index);
+    const roundScore = scoreToPar(rounds[roundNumber - 1]);
+    const cumulative = rounds
+      .slice(0, roundNumber)
+      .reduce((total, strokes) => total + scoreToPar(strokes), 0);
+    const madeCut = pgaRoundFixtures.has(golfer.golferId) && rounds
+      .slice(0, 2)
+      .reduce((total, strokes) => total + scoreToPar(strokes), 0) <= CUT_LINE_AFTER_ROUND_TWO;
+    const missedCut = roundNumber >= 3 && !madeCut;
 
     if (roundNumber === 1) {
-      const score = (index % 9) - 4;
-      golfer.totalScore = score;
-      golfer.todayScore = score;
+      golfer.totalScore = cumulative;
+      golfer.todayScore = roundScore;
       golfer.round = 1;
       golfer.thru = "18";
-      golfer.position = index === 0 ? "1" : `T${Math.min(index + 1, 24)}`;
       golfer.madeCut = null;
       golfer.status = "active";
     } else if (roundNumber === 2) {
-      const pointValue = golfer.pointValue ?? 0;
-      const fallbackTotal = 7 + (pointValue % 7);
-      const fallbackToday = 2 + (pointValue % 4);
-      golfer.todayScore = cutResult?.todayScore ?? fallbackToday;
-      golfer.totalScore = cumulativeRoundTwoTotal(
-        store,
-        golfer,
-        golfer.todayScore,
-        cutResult?.totalScore ?? fallbackTotal,
-      );
+      golfer.todayScore = roundScore;
+      golfer.totalScore = cumulative;
       golfer.round = 2;
       golfer.thru = "18";
-      golfer.position = cutResult?.position === "CUT" ? `T${Math.min(index + 1, 68)}` : cutResult?.position ?? `T${Math.min(index + 1, 68)}`;
       golfer.madeCut = null;
       golfer.status = "active";
     } else if (missedCut) {
@@ -1140,12 +1145,10 @@ function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) 
       golfer.status = "cut";
       golfer.madeCut = false;
     } else {
-      const roundMove = roundNumber === 3 ? (index % 5) - 2 : (index % 7) - 3;
-      golfer.totalScore = (golfer.totalScore ?? cutResult?.totalScore ?? 0) + roundMove;
-      golfer.todayScore = roundMove;
+      golfer.totalScore = cumulative;
+      golfer.todayScore = roundScore;
       golfer.round = roundNumber;
       golfer.thru = "18";
-      golfer.position = index === 0 ? "1" : `T${Math.min(index + 1, 30)}`;
       golfer.madeCut = true;
       golfer.status = roundNumber === 4 ? "finished" : "active";
     }
@@ -1172,38 +1175,33 @@ function applyMockCutResults(tournamentId: string) {
   const timestamp = nowIso();
   const golfers = store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId);
 
-  for (const golfer of golfers) {
-    const pointValue = golfer.pointValue ?? 0;
-    const fallbackScore = 7 + (pointValue % 7);
-    const fallbackToday = 2 + (pointValue % 4);
-    const result = mockCutResults.get(golfer.golferId) ?? {
-      position: "CUT",
-      totalScore: fallbackScore,
-      todayScore: fallbackToday,
-      round: 2,
-      thru: "18",
-      madeCut: false,
-      status: "cut" as GolferStatus,
-    };
+  for (const [index, golfer] of golfers.entries()) {
+    const rounds = pgaRoundFixtures.get(golfer.golferId) ?? fallbackMissedCutRounds(index);
+    const roundTwoTotal = rounds.slice(0, 2).reduce((total, strokes) => total + scoreToPar(strokes), 0);
+    const madeCut = pgaRoundFixtures.has(golfer.golferId) && roundTwoTotal <= CUT_LINE_AFTER_ROUND_TWO;
 
-    golfer.position = result.position ?? null;
-    golfer.todayScore = result.todayScore ?? null;
-    golfer.totalScore = cumulativeRoundTwoTotal(
-      store,
-      golfer,
-      golfer.todayScore,
-      result.totalScore ?? null,
-    );
-    golfer.round = result.round ?? null;
-    golfer.thru = result.thru ?? null;
-    golfer.madeCut = result.madeCut ?? null;
-    golfer.status = (result.status as GolferStatus | undefined) ?? "active";
+    golfer.todayScore = scoreToPar(rounds[1]);
+    golfer.totalScore = roundTwoTotal;
+    golfer.round = 2;
+    golfer.thru = "18";
+    golfer.madeCut = madeCut;
+    golfer.status = madeCut ? "active" : "cut";
     golfer.lastSyncedAt = timestamp;
     golfer.updatedAt = timestamp;
     upsertLatestRoundScore(store, golfer);
   }
 
   assignMockPositions(golfers, true);
+}
+
+function fallbackMissedCutRounds(index: number): readonly [number, number, number, number] {
+  const firstRound = 71 + (index % 4);
+  const secondRound = 74 + (index % 3);
+  return [firstRound, secondRound, COURSE_PAR, COURSE_PAR];
+}
+
+function scoreToPar(strokes: number) {
+  return strokes - COURSE_PAR;
 }
 
 function assignMockPositions(golfers: TournamentGolfer[], cutFinalized = false) {
@@ -1513,23 +1511,6 @@ function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
   score.thru = golfer.thru;
   score.status = golfer.status;
   score.updatedAt = nowIso();
-}
-
-function cumulativeRoundTwoTotal(
-  store: Store,
-  golfer: TournamentGolfer,
-  todayScore: number | null,
-  fallbackTotal: number | null,
-) {
-  const roundOne = store.golferRoundScores.find(
-    (score) => score.tournamentGolferId === golfer.id && score.roundNumber === 1,
-  );
-
-  if (roundOne?.scoreToPar !== null && roundOne?.scoreToPar !== undefined && todayScore !== null) {
-    return roundOne.scoreToPar + todayScore;
-  }
-
-  return fallbackTotal;
 }
 
 function golferNameForRound(
