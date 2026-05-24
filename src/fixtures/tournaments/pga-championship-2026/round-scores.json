@@ -1,0 +1,1604 @@
+[
+  {
+    "golferId": "g01",
+    "rounds": [
+      67,
+      71,
+      71,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g02",
+    "rounds": [
+      74,
+      67,
+      66,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g03",
+    "rounds": [
+      71,
+      67,
+      72,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g04",
+    "rounds": [
+      69,
+      70,
+      67,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g05",
+    "rounds": [
+      76,
+      71,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g06",
+    "rounds": [
+      68,
+      73,
+      66,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g07",
+    "rounds": [
+      72,
+      66,
+      68,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g08",
+    "rounds": [
+      70,
+      72,
+      71,
+      65
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g09",
+    "rounds": [
+      72,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g10",
+    "rounds": [
+      69,
+      69,
+      72,
+      65
+    ],
+    "holeScores": {
+      "4": [
+        4,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        4,
+        3,
+        4,
+        4,
+        4,
+        3,
+        4,
+        4,
+        3,
+        4,
+        3
+      ]
+    }
+  },
+  {
+    "golferId": "g11",
+    "rounds": [
+      69,
+      72,
+      74,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g12",
+    "rounds": [
+      70,
+      73,
+      65,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g13",
+    "rounds": [
+      69,
+      72,
+      68,
+      74
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g14",
+    "rounds": [
+      72,
+      65,
+      71,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g15",
+    "rounds": [
+      70,
+      67,
+      71,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g16",
+    "rounds": [
+      72,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g17",
+    "rounds": [
+      69,
+      73,
+      66,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g18",
+    "rounds": [
+      70,
+      69,
+      74,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g19",
+    "rounds": [
+      71,
+      70,
+      67,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g20",
+    "rounds": [
+      74,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g21",
+    "rounds": [
+      70,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g22",
+    "rounds": [
+      72,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g23",
+    "rounds": [
+      68,
+      73,
+      72,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g24",
+    "rounds": [
+      70,
+      72,
+      67,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g25",
+    "rounds": [
+      73,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g26",
+    "rounds": [
+      69,
+      72,
+      70,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g27",
+    "rounds": [
+      68,
+      76,
+      70,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g28",
+    "rounds": [
+      68,
+      72,
+      67,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g29",
+    "rounds": [
+      69,
+      71,
+      68,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g31",
+    "rounds": [
+      74,
+      70,
+      69,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g32",
+    "rounds": [
+      69,
+      70,
+      75,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g33",
+    "rounds": [
+      75,
+      77,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g34",
+    "rounds": [
+      71,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g35",
+    "rounds": [
+      73,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g36",
+    "rounds": [
+      75,
+      77,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g37",
+    "rounds": [
+      72,
+      76,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g39",
+    "rounds": [
+      71,
+      67,
+      72,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g40",
+    "rounds": [
+      67,
+      70,
+      71,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g41",
+    "rounds": [
+      69,
+      67,
+      71,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g42",
+    "rounds": [
+      72,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g43",
+    "rounds": [
+      75,
+      70,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g45",
+    "rounds": [
+      72,
+      70,
+      68,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g46",
+    "rounds": [
+      70,
+      76,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g47",
+    "rounds": [
+      74,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g48",
+    "rounds": [
+      70,
+      71,
+      68,
+      75
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g49",
+    "rounds": [
+      71,
+      67,
+      71,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g50",
+    "rounds": [
+      70,
+      73,
+      66,
+      75
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g51",
+    "rounds": [
+      70,
+      69,
+      67,
+      65
+    ],
+    "holeScores": {
+      "4": [
+        4,
+        4,
+        3,
+        4,
+        4,
+        3,
+        4,
+        4,
+        3,
+        3,
+        4,
+        3,
+        4,
+        3,
+        4,
+        4,
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "golferId": "g52",
+    "rounds": [
+      71,
+      71,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g53",
+    "rounds": [
+      70,
+      70,
+      72,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g54",
+    "rounds": [
+      68,
+      73,
+      72,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g55",
+    "rounds": [
+      69,
+      75,
+      66,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g56",
+    "rounds": [
+      67,
+      69,
+      68,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g57",
+    "rounds": [
+      69,
+      72,
+      65,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g58",
+    "rounds": [
+      70,
+      69,
+      75,
+      63
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g59",
+    "rounds": [
+      68,
+      69,
+      71,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g60",
+    "rounds": [
+      71,
+      67,
+      71,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g61",
+    "rounds": [
+      74,
+      69,
+      67,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g62",
+    "rounds": [
+      67,
+      70,
+      73,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g63",
+    "rounds": [
+      71,
+      73,
+      70,
+      66
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g64",
+    "rounds": [
+      69,
+      70,
+      71,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g65",
+    "rounds": [
+      69,
+      72,
+      67,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g66",
+    "rounds": [
+      71,
+      69,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g67",
+    "rounds": [
+      69,
+      72,
+      65,
+      74
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g68",
+    "rounds": [
+      72,
+      70,
+      68,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g69",
+    "rounds": [
+      67,
+      70,
+      73,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g70",
+    "rounds": [
+      72,
+      72,
+      70,
+      67
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g71",
+    "rounds": [
+      71,
+      69,
+      71,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g72",
+    "rounds": [
+      67,
+      75,
+      66,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g73",
+    "rounds": [
+      67,
+      73,
+      73,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g74",
+    "rounds": [
+      69,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g75",
+    "rounds": [
+      73,
+      70,
+      65,
+      74
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g76",
+    "rounds": [
+      73,
+      71,
+      69,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g77",
+    "rounds": [
+      71,
+      72,
+      65,
+      74
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g78",
+    "rounds": [
+      71,
+      71,
+      72,
+      68
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g79",
+    "rounds": [
+      73,
+      70,
+      67,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g80",
+    "rounds": [
+      72,
+      72,
+      67,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g81",
+    "rounds": [
+      69,
+      71,
+      70,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g82",
+    "rounds": [
+      71,
+      71,
+      67,
+      74
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g83",
+    "rounds": [
+      70,
+      70,
+      71,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g84",
+    "rounds": [
+      73,
+      70,
+      71,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g85",
+    "rounds": [
+      70,
+      72,
+      78,
+      66
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g86",
+    "rounds": [
+      73,
+      69,
+      71,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g87",
+    "rounds": [
+      72,
+      71,
+      71,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g88",
+    "rounds": [
+      69,
+      73,
+      71,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g89",
+    "rounds": [
+      73,
+      71,
+      70,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g90",
+    "rounds": [
+      71,
+      71,
+      70,
+      75
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g91",
+    "rounds": [
+      71,
+      73,
+      74,
+      69
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g92",
+    "rounds": [
+      69,
+      72,
+      73,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g93",
+    "rounds": [
+      74,
+      70,
+      70,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g94",
+    "rounds": [
+      72,
+      70,
+      72,
+      74
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g95",
+    "rounds": [
+      68,
+      75,
+      70,
+      75
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g96",
+    "rounds": [
+      72,
+      72,
+      73,
+      71
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g97",
+    "rounds": [
+      72,
+      72,
+      71,
+      73
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g98",
+    "rounds": [
+      72,
+      72,
+      69,
+      76
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g99",
+    "rounds": [
+      74,
+      67,
+      77,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g100",
+    "rounds": [
+      72,
+      72,
+      69,
+      78
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g101",
+    "rounds": [
+      72,
+      72,
+      82,
+      72
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g102",
+    "rounds": [
+      72,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g103",
+    "rounds": [
+      69,
+      76,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g104",
+    "rounds": [
+      71,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g105",
+    "rounds": [
+      71,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g106",
+    "rounds": [
+      72,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g107",
+    "rounds": [
+      73,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g108",
+    "rounds": [
+      70,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g109",
+    "rounds": [
+      75,
+      71,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g110",
+    "rounds": [
+      72,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g111",
+    "rounds": [
+      71,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g112",
+    "rounds": [
+      75,
+      71,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g113",
+    "rounds": [
+      73,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g114",
+    "rounds": [
+      76,
+      70,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g115",
+    "rounds": [
+      72,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g116",
+    "rounds": [
+      74,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g117",
+    "rounds": [
+      73,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g118",
+    "rounds": [
+      74,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g119",
+    "rounds": [
+      74,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g120",
+    "rounds": [
+      74,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g121",
+    "rounds": [
+      72,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g122",
+    "rounds": [
+      74,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g123",
+    "rounds": [
+      77,
+      70,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g124",
+    "rounds": [
+      72,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g125",
+    "rounds": [
+      74,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g126",
+    "rounds": [
+      74,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g127",
+    "rounds": [
+      75,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g128",
+    "rounds": [
+      76,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g129",
+    "rounds": [
+      73,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g130",
+    "rounds": [
+      72,
+      76,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g131",
+    "rounds": [
+      76,
+      72,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g132",
+    "rounds": [
+      72,
+      77,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g133",
+    "rounds": [
+      75,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g134",
+    "rounds": [
+      76,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g135",
+    "rounds": [
+      75,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g136",
+    "rounds": [
+      77,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g137",
+    "rounds": [
+      75,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g138",
+    "rounds": [
+      75,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g139",
+    "rounds": [
+      78,
+      73,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g140",
+    "rounds": [
+      75,
+      76,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g141",
+    "rounds": [
+      77,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g142",
+    "rounds": [
+      77,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g143",
+    "rounds": [
+      74,
+      78,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g144",
+    "rounds": [
+      75,
+      77,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g145",
+    "rounds": [
+      75,
+      77,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g146",
+    "rounds": [
+      76,
+      78,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g147",
+    "rounds": [
+      80,
+      74,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g148",
+    "rounds": [
+      77,
+      77,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g149",
+    "rounds": [
+      76,
+      79,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g150",
+    "rounds": [
+      79,
+      76,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g151",
+    "rounds": [
+      75,
+      80,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g152",
+    "rounds": [
+      75,
+      80,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g153",
+    "rounds": [
+      81,
+      75,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g154",
+    "rounds": [
+      78,
+      78,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g155",
+    "rounds": [
+      77,
+      80,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g156",
+    "rounds": [
+      77,
+      81,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g157",
+    "rounds": [
+      79,
+      79,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g158",
+    "rounds": [
+      81,
+      80,
+      70,
+      70
+    ],
+    "holeScores": {}
+  },
+  {
+    "golferId": "g159",
+    "rounds": [
+      79,
+      83,
+      70,
+      70
+    ],
+    "holeScores": {}
+  }
+]

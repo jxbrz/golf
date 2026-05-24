@@ -1,0 +1,956 @@
+[
+  {
+    "id": "g01",
+    "name": "Scottie Scheffler",
+    "country": "INT",
+    "pointValue": 55
+  },
+  {
+    "id": "g02",
+    "name": "Rory McIlroy",
+    "country": "INT",
+    "pointValue": 54
+  },
+  {
+    "id": "g03",
+    "name": "Cameron Young",
+    "country": "INT",
+    "pointValue": 53
+  },
+  {
+    "id": "g04",
+    "name": "Jon Rahm",
+    "country": "INT",
+    "pointValue": 52
+  },
+  {
+    "id": "g05",
+    "name": "Bryson DeChambeau",
+    "country": "INT",
+    "pointValue": 51
+  },
+  {
+    "id": "g06",
+    "name": "Xander Schauffele",
+    "country": "INT",
+    "pointValue": 50
+  },
+  {
+    "id": "g07",
+    "name": "Ludvig Aberg",
+    "country": "INT",
+    "pointValue": 49
+  },
+  {
+    "id": "g08",
+    "name": "Matt Fitzpatrick",
+    "country": "INT",
+    "pointValue": 48
+  },
+  {
+    "id": "g09",
+    "name": "Tommy Fleetwood",
+    "country": "INT",
+    "pointValue": 47
+  },
+  {
+    "id": "g10",
+    "name": "Justin Thomas",
+    "country": "INT",
+    "pointValue": 46
+  },
+  {
+    "id": "g11",
+    "name": "Collin Morikawa",
+    "country": "INT",
+    "pointValue": 45
+  },
+  {
+    "id": "g12",
+    "name": "Justin Rose",
+    "country": "INT",
+    "pointValue": 44
+  },
+  {
+    "id": "g13",
+    "name": "Brooks Koepka",
+    "country": "INT",
+    "pointValue": 43
+  },
+  {
+    "id": "g14",
+    "name": "Chris Gotterup",
+    "country": "INT",
+    "pointValue": 42
+  },
+  {
+    "id": "g15",
+    "name": "Hideki Matsuyama",
+    "country": "INT",
+    "pointValue": 41
+  },
+  {
+    "id": "g16",
+    "name": "Tyrrell Hatton",
+    "country": "INT",
+    "pointValue": 40
+  },
+  {
+    "id": "g17",
+    "name": "Joaquin Niemann",
+    "country": "INT",
+    "pointValue": 39
+  },
+  {
+    "id": "g18",
+    "name": "Patrick Cantlay",
+    "country": "INT",
+    "pointValue": 38
+  },
+  {
+    "id": "g19",
+    "name": "Ben Griffin",
+    "country": "INT",
+    "pointValue": 37
+  },
+  {
+    "id": "g20",
+    "name": "Viktor Hovland",
+    "country": "INT",
+    "pointValue": 36
+  },
+  {
+    "id": "g21",
+    "name": "Robert MacIntyre",
+    "country": "INT",
+    "pointValue": 35
+  },
+  {
+    "id": "g22",
+    "name": "Russell Henley",
+    "country": "INT",
+    "pointValue": 34
+  },
+  {
+    "id": "g23",
+    "name": "Corey Conners",
+    "country": "INT",
+    "pointValue": 33
+  },
+  {
+    "id": "g24",
+    "name": "Sam Burns",
+    "country": "INT",
+    "pointValue": 32
+  },
+  {
+    "id": "g25",
+    "name": "Sepp Straka",
+    "country": "INT",
+    "pointValue": 31
+  },
+  {
+    "id": "g26",
+    "name": "Jordan Spieth",
+    "country": "INT",
+    "pointValue": 30
+  },
+  {
+    "id": "g27",
+    "name": "Shane Lowry",
+    "country": "INT",
+    "pointValue": 29
+  },
+  {
+    "id": "g28",
+    "name": "Patrick Reed",
+    "country": "INT",
+    "pointValue": 28
+  },
+  {
+    "id": "g29",
+    "name": "Cameron Smith",
+    "country": "INT",
+    "pointValue": 27
+  },
+  {
+    "id": "g30",
+    "name": "Tony Finau",
+    "country": "INT",
+    "pointValue": 26
+  },
+  {
+    "id": "g31",
+    "name": "Daniel Berger",
+    "country": "INT",
+    "pointValue": 25
+  },
+  {
+    "id": "g32",
+    "name": "Jason Day",
+    "country": "INT",
+    "pointValue": 24
+  },
+  {
+    "id": "g33",
+    "name": "Max Homa",
+    "country": "INT",
+    "pointValue": 23
+  },
+  {
+    "id": "g34",
+    "name": "Akshay Bhatia",
+    "country": "INT",
+    "pointValue": 22
+  },
+  {
+    "id": "g35",
+    "name": "Sungjae Im",
+    "country": "INT",
+    "pointValue": 21
+  },
+  {
+    "id": "g36",
+    "name": "Marco Penge",
+    "country": "INT",
+    "pointValue": 20
+  },
+  {
+    "id": "g37",
+    "name": "Adam Scott",
+    "country": "INT",
+    "pointValue": 19
+  },
+  {
+    "id": "g38",
+    "name": "Jake Knapp",
+    "country": "INT",
+    "pointValue": 18
+  },
+  {
+    "id": "g39",
+    "name": "Si Woo Kim",
+    "country": "INT",
+    "pointValue": 17
+  },
+  {
+    "id": "g40",
+    "name": "Minwoo Lee",
+    "country": "INT",
+    "pointValue": 16
+  },
+  {
+    "id": "g41",
+    "name": "Maverick McNealy",
+    "country": "INT",
+    "pointValue": 15
+  },
+  {
+    "id": "g42",
+    "name": "Gary Woodland",
+    "country": "INT",
+    "pointValue": 14
+  },
+  {
+    "id": "g43",
+    "name": "Wyndham Clark",
+    "country": "INT",
+    "pointValue": 13
+  },
+  {
+    "id": "g44",
+    "name": "Will Zalatoris",
+    "country": "INT",
+    "pointValue": 12
+  },
+  {
+    "id": "g45",
+    "name": "Dustin Johnson",
+    "country": "INT",
+    "pointValue": 11
+  },
+  {
+    "id": "g46",
+    "name": "J.J. Spaun",
+    "country": "INT",
+    "pointValue": 10
+  },
+  {
+    "id": "g47",
+    "name": "Jacob Bridgeman",
+    "country": "INT",
+    "pointValue": 9
+  },
+  {
+    "id": "g48",
+    "name": "Rickie Fowler",
+    "country": "INT",
+    "pointValue": 8
+  },
+  {
+    "id": "g49",
+    "name": "Harris English",
+    "country": "INT",
+    "pointValue": 7
+  },
+  {
+    "id": "g50",
+    "name": "Brian Harman",
+    "country": "INT",
+    "pointValue": 6
+  },
+  {
+    "id": "g51",
+    "name": "Aaron Rai",
+    "country": "INT",
+    "pointValue": 5
+  },
+  {
+    "id": "g52",
+    "name": "Denny McCarthy",
+    "country": "INT",
+    "pointValue": 4
+  },
+  {
+    "id": "g53",
+    "name": "Ryan Fox",
+    "country": "INT",
+    "pointValue": 3
+  },
+  {
+    "id": "g54",
+    "name": "Sahith Theegala",
+    "country": "INT",
+    "pointValue": 2
+  },
+  {
+    "id": "g55",
+    "name": "Nicolai Hojgaard",
+    "country": "INT",
+    "pointValue": 1
+  },
+  {
+    "id": "g56",
+    "name": "Alex Smalley",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g57",
+    "name": "Matthias Schmid",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g58",
+    "name": "Kurt Kitayama",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g59",
+    "name": "Max Greyserman",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g60",
+    "name": "David Puig",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g61",
+    "name": "Padraig Harrington",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g62",
+    "name": "Stephan Jager",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g63",
+    "name": "Alexander Noren",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g64",
+    "name": "Andrew Novak",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g65",
+    "name": "Bud Cauley",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g66",
+    "name": "Daniel Hillier",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g67",
+    "name": "Nick Taylor",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g68",
+    "name": "Tom Hoge",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g69",
+    "name": "Aldrich Potgieter",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g70",
+    "name": "Christiaan Bezuidenhout",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g71",
+    "name": "Haotong Li",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g72",
+    "name": "Martin Kaymer",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g73",
+    "name": "Ryo Hisatsune",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g74",
+    "name": "Chandler Blanchet",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g75",
+    "name": "Chris Kirk",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g76",
+    "name": "Jhonattan Vegas",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g77",
+    "name": "Kristoffer Reitan",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g78",
+    "name": "Matt Wallace",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g79",
+    "name": "Michael Kim",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g80",
+    "name": "Taylor Pendrith",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g81",
+    "name": "Andrew Putnam",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g82",
+    "name": "Mikael Lindberg",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g83",
+    "name": "Rico Hoey",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g84",
+    "name": "Sami Valimaki",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g85",
+    "name": "Casey Jarvis",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g86",
+    "name": "Keith Mitchell",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g87",
+    "name": "Rasmus Hojgaard",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g88",
+    "name": "Samuel Stevens",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g89",
+    "name": "John Parry",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g90",
+    "name": "Kazuki Higa",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g91",
+    "name": "Luke Donald",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g92",
+    "name": "Ryan Gerard",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g93",
+    "name": "William Mouw",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g94",
+    "name": "Alex Fitzpatrick",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g95",
+    "name": "Daniel Brown",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g96",
+    "name": "Elvis Smylie",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g97",
+    "name": "Rasmus Neergaard-Petersen",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g98",
+    "name": "Johnny Keefer",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g99",
+    "name": "Ben Kern",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g100",
+    "name": "Michael Brennan",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g101",
+    "name": "Brian Campbell",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g102",
+    "name": "Thomas Detry",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g103",
+    "name": "Garrick Higgo",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g104",
+    "name": "Jimmy Walker",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g105",
+    "name": "J.T. Poston",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g106",
+    "name": "Andy Sullivan",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g107",
+    "name": "Kota Kaneko",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g108",
+    "name": "Michael Block",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g109",
+    "name": "Tyler Collet",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g110",
+    "name": "Angel Ayora",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g111",
+    "name": "Pierceson Coody",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g112",
+    "name": "Adam Schenk",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g113",
+    "name": "Jordan Gumberg",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g114",
+    "name": "Max McGreevy",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g115",
+    "name": "Brandt Snedeker",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g116",
+    "name": "Stewart Cink",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g117",
+    "name": "Ben Polland",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g118",
+    "name": "David Lipsky",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g119",
+    "name": "Keegan Bradley",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g120",
+    "name": "Tom McKibbin",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g121",
+    "name": "Austin Smotherman",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g122",
+    "name": "Travis Smyth",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g123",
+    "name": "Patrick Rodgers",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g124",
+    "name": "Harry Hall",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g125",
+    "name": "Ricky Castillo",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g126",
+    "name": "Billy Horschel",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g127",
+    "name": "Jason Dufner",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g128",
+    "name": "Steven Fisk",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g129",
+    "name": "Joe Highsmith",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g130",
+    "name": "Bernd Wiesberger",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g131",
+    "name": "Emiliano Grillo",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g132",
+    "name": "Y.E. Yang",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g133",
+    "name": "Garrett Sapp",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g134",
+    "name": "Lucas Glover",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g135",
+    "name": "Nico Echavarria",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g136",
+    "name": "Shaun Micheel",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g137",
+    "name": "Sudarshan Yellamaraju",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g138",
+    "name": "Jayden Schaper",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g139",
+    "name": "Davis Riley",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g140",
+    "name": "Paul McClure",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g141",
+    "name": "Michael Thorbjornsen",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g142",
+    "name": "Matt McCarty",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g143",
+    "name": "Ian Holt",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g144",
+    "name": "Jordan Smith",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g145",
+    "name": "Adrien Saddier",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g146",
+    "name": "Zach Haynes",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g147",
+    "name": "Jared Jones",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g148",
+    "name": "Chris Gabriele",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g149",
+    "name": "Francisco Bide",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g150",
+    "name": "Austin Hurt",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g151",
+    "name": "Ryan Lenahan",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g152",
+    "name": "Timothy Wiseman",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g153",
+    "name": "Braden Shattuck",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g154",
+    "name": "Derek Berg",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g155",
+    "name": "Ryan Vermeer",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g156",
+    "name": "Jesse Droemer",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g157",
+    "name": "Michael Kartrude",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g158",
+    "name": "Mark Geddes",
+    "country": "INT",
+    "pointValue": null
+  },
+  {
+    "id": "g159",
+    "name": "Bryce Fisher",
+    "country": "INT",
+    "pointValue": null
+  }
+]

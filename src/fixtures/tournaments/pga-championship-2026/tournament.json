@@ -1,0 +1,13 @@
+{
+  "id": "t_pga_2026",
+  "name": "PGA Championship",
+  "majorKey": "pga",
+  "year": 2026,
+  "venue": "Aronimink Golf Club, Newtown Square, Pennsylvania",
+  "startDate": "2026-05-14T12:00:00.000Z",
+  "endDate": "2026-05-17T23:00:00.000Z",
+  "pickDeadline": "2026-05-14T11:00:00.000Z",
+  "dropDeadline": "2026-05-16T16:00:00.000Z",
+  "status": "picks_open",
+  "providerTournamentId": "033"
+}
