@@ -8,6 +8,7 @@ import {
   entryPicks,
   golferRoundScores,
   golfers,
+  groupCompetitions,
   tournamentGolfers,
   tournaments,
   users,
@@ -33,6 +34,14 @@ import type {
 
 type DbGolferRow = typeof golfers.$inferSelect;
 type DbGolferRoundScoreRow = typeof golferRoundScores.$inferSelect;
+type DbGroupCompetitionRow = typeof groupCompetitions.$inferSelect;
+type DbGroupCompetitionStatus = DbGroupCompetitionRow["status"];
+
+const PICK_EDITABLE_COMPETITION_STATUSES: readonly DbGroupCompetitionStatus[] = ["setup", "picks_open"];
+
+export function canSubmitDbPicksForCompetitionStatus(status: DbGroupCompetitionStatus) {
+  return PICK_EDITABLE_COMPETITION_STATUSES.includes(status);
+}
 
 function toIso(value: Date | string | null) {
   if (!value) return null;
@@ -125,6 +134,36 @@ export async function getDbTournament(tournamentId: string) {
   return row ? asTournament(row) : null;
 }
 
+export async function getActiveDbGroupCompetition(tournamentId: string) {
+  if (!process.env.DATABASE_URL) return null;
+  const db = getDb();
+  const [row] = await db
+    .select()
+    .from(groupCompetitions)
+    .where(eq(groupCompetitions.tournamentId, tournamentId))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function lockDbPicks(tournamentId: string) {
+  if (!process.env.DATABASE_URL) return null;
+  const db = getDb();
+  const competition = await getActiveDbGroupCompetition(tournamentId);
+  if (!competition) return null;
+
+  const timestamp = new Date();
+  await db
+    .update(groupCompetitions)
+    .set({
+      status: "picks_locked",
+      picksLockAt: timestamp,
+      updatedAt: timestamp,
+    })
+    .where(eq(groupCompetitions.id, competition.id));
+
+  return { ok: true, message: "Picks locked." };
+}
+
 export async function resetDbTournamentEntries(tournamentId: string) {
   if (!process.env.DATABASE_URL) return false;
 
@@ -145,6 +184,17 @@ export async function resetDbTournamentEntries(tournamentId: string) {
     .update(tournaments)
     .set({ status: "picks_open", updatedAt: new Date() })
     .where(eq(tournaments.id, tournamentId));
+  await db
+    .update(groupCompetitions)
+    .set({
+      status: "picks_open",
+      picksLockAt: null,
+      cutProcessedAt: null,
+      finalisedAt: null,
+      currentRound: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(groupCompetitions.tournamentId, tournamentId));
 
   return true;
 }
@@ -340,16 +390,18 @@ export async function submitDbEntry(
   const db = getDb();
   const tournament = await getDbTournament(tournamentId);
   if (!tournament) return { ok: false, message: "Tournament was not found." };
+  const competition = await getActiveDbGroupCompetition(tournamentId);
+  if (!competition) return null;
+
+  if (!canSubmitDbPicksForCompetitionStatus(competition.status)) {
+    return { ok: false, message: "Picks are closed for this tournament." };
+  }
 
   const [existing] = await db
     .select()
     .from(entries)
     .where(and(eq(entries.tournamentId, tournamentId), eq(entries.userId, userId)))
     .limit(1);
-
-  if (!["draft", "picks_open"].includes(tournament.status)) {
-    return { ok: false, message: "Picks are closed for this tournament." };
-  }
 
   const selectedGolfers = await db
     .select()
@@ -377,6 +429,7 @@ export async function submitDbEntry(
   const entryId = existing?.id ?? newId("entry");
   const entryValues = {
     id: entryId,
+    groupCompetitionId: competition.id,
     tournamentId,
     userId,
     status: "submitted" as const,
@@ -393,6 +446,7 @@ export async function submitDbEntry(
       .update(entries)
       .set({
         status: entryValues.status,
+        groupCompetitionId: competition.id,
         totalPoints: entryValues.totalPoints,
         submittedAt: existing.submittedAt ?? timestamp,
         updatedAt: timestamp,

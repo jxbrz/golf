@@ -6,6 +6,7 @@ import { clearSession, createSession, requireAdminUser, requireCurrentUser } fro
 import {
   adminUpsertDbEntryPicks,
   dropDbPlayer,
+  lockDbPicks,
   resetDbTournamentEntries,
   submitDbEntry,
 } from "@/lib/db-data/entries";
@@ -184,10 +185,11 @@ export async function applyOddsPricingAction(formData: FormData) {
 export async function advanceWeekendStepAction(formData: FormData) {
   await requireAdminUser();
   const tournamentId = String(formData.get("tournamentId"));
-  await advanceWeekendStepFromProvider(
-    tournamentId,
-    String(formData.get("step")) as Parameters<typeof advanceWeekendStep>[1],
-  );
+  const step = String(formData.get("step")) as Parameters<typeof advanceWeekendStep>[1];
+  if (step === "lock_picks") {
+    await tryDb(() => lockDbPicks(tournamentId));
+  }
+  await advanceWeekendStepFromProvider(tournamentId, step);
   revalidatePath("/admin");
   revalidatePath(`/admin/tournaments/${tournamentId}`);
   revalidatePath(`/admin/tournaments/${tournamentId}/scores`);
