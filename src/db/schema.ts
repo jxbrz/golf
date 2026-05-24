@@ -1,6 +1,7 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -31,6 +32,17 @@ export const tournamentStatusEnum = pgEnum("tournament_status", [
   "round_3",
   "round_4",
   "final",
+]);
+export const groupCompetitionStatusEnum = pgEnum("group_competition_status", [
+  "setup",
+  "picks_open",
+  "picks_locked",
+  "round_1_loaded",
+  "round_2_loaded",
+  "cut_processed",
+  "round_3_loaded",
+  "round_4_loaded",
+  "finalised",
 ]);
 export const entryStatusEnum = pgEnum("entry_status", [
   "draft",
@@ -85,6 +97,21 @@ export const groups = pgTable("groups", {
   ...timestamps,
 });
 
+export const competitionRuleSets = pgTable("competition_rule_sets", {
+  id: text("id").primaryKey(),
+  organisationId: text("organisation_id").notNull().references(() => organisations.id),
+  name: text("name").notNull(),
+  pickCount: integer("pick_count").notNull(),
+  budgetPoints: integer("budget_points").notNull(),
+  requiredMadeCutCount: integer("required_made_cut_count").notNull(),
+  maxActiveAfterCut: integer("max_active_after_cut").notNull(),
+  lockPolicy: text("lock_policy").notNull(),
+  dropPolicy: text("drop_policy").notNull(),
+  lowestRoundEnabled: boolean("lowest_round_enabled").notNull().default(true),
+  countbackPolicy: jsonb("countback_policy").notNull(),
+  ...timestamps,
+});
+
 export const groupMembers = pgTable("group_members", {
   id: text("id").primaryKey(),
   groupId: text("group_id").notNull().references(() => groups.id),
@@ -112,10 +139,15 @@ export const groupCompetitions = pgTable("group_competitions", {
   id: text("id").primaryKey(),
   groupId: text("group_id").notNull().references(() => groups.id),
   tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
+  ruleSetId: text("rule_set_id").references(() => competitionRuleSets.id),
   name: text("name").notNull(),
-  status: tournamentStatusEnum("status").notNull().default("picks_open"),
+  status: groupCompetitionStatusEnum("status").notNull().default("setup"),
   rosterSize: integer("roster_size").notNull().default(4),
   budget: integer("budget").notNull().default(90),
+  picksLockAt: timestamp("picks_lock_at", { withTimezone: true }),
+  cutProcessedAt: timestamp("cut_processed_at", { withTimezone: true }),
+  finalisedAt: timestamp("finalised_at", { withTimezone: true }),
+  currentRound: integer("current_round"),
   ...timestamps,
 });
 

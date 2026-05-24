@@ -15,6 +15,13 @@
       "when": 1779635020659,
       "tag": "0001_slim_lady_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779638621759,
+      "tag": "0002_mature_plazm",
+      "breakpoints": true
     }
   ]
 }
