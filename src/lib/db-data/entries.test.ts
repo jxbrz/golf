@@ -9,9 +9,13 @@ import {
 import {
   canSubmitDbPicksForCompetitionStatus,
   lockDbPicks,
+  resetDbTournamentEntries,
   submitDbEntry,
+  updateDbGroupCompetitionForWeekendStep,
 } from "./entries";
 import {
+  advanceWeekendStep,
+  getTournament,
   resetInMemoryStoreForTesting,
   submitEntry,
 } from "@/lib/mock-data/store";
@@ -97,10 +101,92 @@ describe("DB-backed entry lock behaviour", () => {
 
     const result = await lockDbPicks("t_pga_2026");
 
-    expect(result).toEqual({ ok: true, message: "Picks locked." });
+    expect(result).toEqual({ ok: true, message: "Competition status updated." });
     expect(db.state.groupCompetitions[0].status).toBe("picks_locked");
     expect(db.state.groupCompetitions[0].picksLockAt).toBeInstanceOf(Date);
     expect(db.state.tournaments[0].status).toBe("picks_open");
+  });
+
+  it("mirrors each admin weekend step into group competition status and current round", async () => {
+    db.seedCompetition("picks_open");
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "lock_picks");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "picks_locked",
+      currentRound: null,
+    });
+    expect(db.state.groupCompetitions[0].picksLockAt).toBeInstanceOf(Date);
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "round_1");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "round_1_loaded",
+      currentRound: 1,
+    });
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "round_2");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "round_2_loaded",
+      currentRound: 2,
+    });
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "process_cut");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "cut_processed",
+      currentRound: 2,
+    });
+    expect(db.state.groupCompetitions[0].cutProcessedAt).toBeInstanceOf(Date);
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "round_3");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "round_3_loaded",
+      currentRound: 3,
+    });
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "round_4");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "round_4_loaded",
+      currentRound: 4,
+    });
+
+    await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "final");
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "finalised",
+      currentRound: 4,
+    });
+    expect(db.state.groupCompetitions[0].finalisedAt).toBeInstanceOf(Date);
+    expect(db.state.tournaments[0].status).toBe("picks_open");
+  });
+
+  it("reset clears group competition lifecycle fields and reopens local DB state", async () => {
+    db.seedCompetition("finalised");
+    Object.assign(db.state.groupCompetitions[0], {
+      currentRound: 4,
+      picksLockAt: new Date("2026-05-14T11:00:00.000Z"),
+      cutProcessedAt: new Date("2026-05-15T23:00:00.000Z"),
+      finalisedAt: new Date("2026-05-17T23:00:00.000Z"),
+    });
+
+    const result = await resetDbTournamentEntries("t_pga_2026");
+
+    expect(result).toBe(true);
+    expect(db.state.groupCompetitions[0]).toMatchObject({
+      status: "picks_open",
+      currentRound: null,
+      picksLockAt: null,
+      cutProcessedAt: null,
+      finalisedAt: null,
+    });
+  });
+
+  it("returns null on missing DB group competition while mock weekend fallback still advances", async () => {
+    db.seedCompetition(null);
+    resetInMemoryStoreForTesting();
+
+    const result = await updateDbGroupCompetitionForWeekendStep("t_pga_2026", "round_1");
+    advanceWeekendStep("t_pga_2026", "round_1");
+
+    expect(result).toBeNull();
+    expect(getTournament("t_pga_2026")?.status).toBe("round_1");
   });
 
   it("treats only setup and picks_open as editable DB competition statuses", () => {

@@ -6,9 +6,9 @@ import { clearSession, createSession, requireAdminUser, requireCurrentUser } fro
 import {
   adminUpsertDbEntryPicks,
   dropDbPlayer,
-  lockDbPicks,
   resetDbTournamentEntries,
   submitDbEntry,
+  updateDbGroupCompetitionForWeekendStep,
 } from "@/lib/db-data/entries";
 import {
   advanceWeekendStep,
@@ -102,6 +102,7 @@ export async function resetTournamentToNoPicksAction(formData: FormData) {
 export async function processCutAction(formData: FormData) {
   await requireAdminUser();
   const tournamentId = String(formData.get("tournamentId"));
+  await tryDb(() => updateDbGroupCompetitionForWeekendStep(tournamentId, "process_cut"));
   processCut(tournamentId);
   revalidatePath(`/admin/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}`);
@@ -120,6 +121,7 @@ export async function recalculateAction(formData: FormData) {
 export async function finaliseTournamentAction(formData: FormData) {
   await requireAdminUser();
   const tournamentId = String(formData.get("tournamentId"));
+  await tryDb(() => updateDbGroupCompetitionForWeekendStep(tournamentId, "final"));
   finaliseTournament(tournamentId);
   revalidatePath(`/admin/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}`);
@@ -186,9 +188,7 @@ export async function advanceWeekendStepAction(formData: FormData) {
   await requireAdminUser();
   const tournamentId = String(formData.get("tournamentId"));
   const step = String(formData.get("step")) as Parameters<typeof advanceWeekendStep>[1];
-  if (step === "lock_picks") {
-    await tryDb(() => lockDbPicks(tournamentId));
-  }
+  await tryDb(() => updateDbGroupCompetitionForWeekendStep(tournamentId, step));
   await advanceWeekendStepFromProvider(tournamentId, step);
   revalidatePath("/admin");
   revalidatePath(`/admin/tournaments/${tournamentId}`);

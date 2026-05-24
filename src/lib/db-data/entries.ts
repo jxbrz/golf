@@ -36,6 +36,14 @@ type DbGolferRow = typeof golfers.$inferSelect;
 type DbGolferRoundScoreRow = typeof golferRoundScores.$inferSelect;
 type DbGroupCompetitionRow = typeof groupCompetitions.$inferSelect;
 type DbGroupCompetitionStatus = DbGroupCompetitionRow["status"];
+export type DbWeekendStep =
+  | "lock_picks"
+  | "round_1"
+  | "round_2"
+  | "process_cut"
+  | "round_3"
+  | "round_4"
+  | "final";
 
 const PICK_EDITABLE_COMPETITION_STATUSES: readonly DbGroupCompetitionStatus[] = ["setup", "picks_open"];
 
@@ -146,22 +154,23 @@ export async function getActiveDbGroupCompetition(tournamentId: string) {
 }
 
 export async function lockDbPicks(tournamentId: string) {
+  return updateDbGroupCompetitionForWeekendStep(tournamentId, "lock_picks");
+}
+
+export async function updateDbGroupCompetitionForWeekendStep(tournamentId: string, step: DbWeekendStep) {
   if (!process.env.DATABASE_URL) return null;
   const db = getDb();
   const competition = await getActiveDbGroupCompetition(tournamentId);
   if (!competition) return null;
 
   const timestamp = new Date();
+  const updateValues = dbGroupCompetitionStepUpdate(step, timestamp);
   await db
     .update(groupCompetitions)
-    .set({
-      status: "picks_locked",
-      picksLockAt: timestamp,
-      updatedAt: timestamp,
-    })
+    .set(updateValues)
     .where(eq(groupCompetitions.id, competition.id));
 
-  return { ok: true, message: "Picks locked." };
+  return { ok: true, message: "Competition status updated." };
 }
 
 export async function resetDbTournamentEntries(tournamentId: string) {
@@ -197,6 +206,56 @@ export async function resetDbTournamentEntries(tournamentId: string) {
     .where(eq(groupCompetitions.tournamentId, tournamentId));
 
   return true;
+}
+
+function dbGroupCompetitionStepUpdate(step: DbWeekendStep, timestamp: Date) {
+  if (step === "lock_picks") {
+    return {
+      status: "picks_locked" as const,
+      picksLockAt: timestamp,
+      updatedAt: timestamp,
+    };
+  }
+  if (step === "round_1") {
+    return {
+      status: "round_1_loaded" as const,
+      currentRound: 1,
+      updatedAt: timestamp,
+    };
+  }
+  if (step === "round_2") {
+    return {
+      status: "round_2_loaded" as const,
+      currentRound: 2,
+      updatedAt: timestamp,
+    };
+  }
+  if (step === "process_cut") {
+    return {
+      status: "cut_processed" as const,
+      cutProcessedAt: timestamp,
+      updatedAt: timestamp,
+    };
+  }
+  if (step === "round_3") {
+    return {
+      status: "round_3_loaded" as const,
+      currentRound: 3,
+      updatedAt: timestamp,
+    };
+  }
+  if (step === "round_4") {
+    return {
+      status: "round_4_loaded" as const,
+      currentRound: 4,
+      updatedAt: timestamp,
+    };
+  }
+  return {
+    status: "finalised" as const,
+    finalisedAt: timestamp,
+    updatedAt: timestamp,
+  };
 }
 
 export async function getDbEntriesWithDetails(tournamentId: string): Promise<EntryWithDetails[]> {
