@@ -4,6 +4,7 @@ import {
   calculateCutStatus,
   calculateEntryPointTotal,
   validateEntryPicks,
+  selectAutomaticDropPick,
 } from "./scoring";
 import type { EntryWithDetails } from "@/lib/types";
 
@@ -101,6 +102,26 @@ describe("scoring", () => {
     ]);
     expect(result.status).toBe("drop_required");
     expect(result.countingPickIds).toEqual([]);
+  });
+
+  it("selects the worst scoring made-cut player for automatic drop", () => {
+    const result = selectAutomaticDropPick([
+      basePick("a", true, "active", -2),
+      basePick("b", true, "active", -1),
+      basePick("c", true, "active", 0),
+      basePick("d", true, "active", 3),
+    ]);
+    expect(result?.id).toBe("d");
+  });
+
+  it("does not auto-select a drop when only three players make the cut", () => {
+    const result = selectAutomaticDropPick([
+      basePick("a", true, "active", -2),
+      basePick("b", true, "active", -1),
+      basePick("c", true, "active", 0),
+      basePick("d", false, "cut", 3),
+    ]);
+    expect(result).toBeNull();
   });
 
   it("counts the remaining three after a player is dropped", () => {

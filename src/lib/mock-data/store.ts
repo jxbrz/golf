@@ -7,6 +7,7 @@ import {
   calculateFinalEntryScore,
   calculateGroupLeaderboard,
   calculateLiveEntryScore,
+  selectAutomaticDropPick,
   validateEntryPicks,
 } from "@/lib/scoring/scoring";
 import { getGolfDataProvider } from "@/lib/golf-data/providers";
@@ -246,6 +247,21 @@ const pgaRoundFixtures = new Map<string, readonly [number, number, number, numbe
   ["g157", [79, 79, 70, 70]], // Michael Kartrude, CUT +18
   ["g158", [81, 80, 70, 70]], // Mark Geddes, CUT +21
   ["g159", [79, 83, 70, 70]], // Bryce Fisher, CUT +22
+]);
+
+const pgaRoundHoleFixtures = new Map<string, Partial<Record<1 | 2 | 3 | 4, number[]>>>([
+  [
+    "g10",
+    {
+      4: [4, 3, 4, 3, 4, 3, 4, 4, 3, 4, 4, 4, 3, 4, 4, 3, 4, 3],
+    },
+  ],
+  [
+    "g51",
+    {
+      4: [4, 4, 3, 4, 4, 3, 4, 4, 3, 3, 4, 3, 4, 3, 4, 4, 3, 4],
+    },
+  ],
 ]);
 
 export function getStore() {
@@ -541,10 +557,6 @@ export function submitEntry(tournamentId: string, userId: string, tournamentGolf
     (entry) => entry.tournamentId === tournamentId && entry.userId === userId,
   );
 
-  if (existing?.submittedAt) {
-    return { ok: false, message: "Your team has already been submitted and cannot be changed." };
-  }
-
   if (!canSubmitPicks(tournament)) {
     return { ok: false, message: "Picks are closed for this tournament." };
   }
@@ -602,7 +614,7 @@ export function submitEntry(tournamentId: string, userId: string, tournamentGolf
   );
   recalculateTournament(tournamentId);
   persistStore(store);
-  return { ok: true, message: "Team submitted. It is now locked." };
+  return { ok: true, message: existing ? "Team updated." : "Team submitted." };
 }
 
 export function adminUpsertEntryPicks(input: {
@@ -715,6 +727,9 @@ export function dropPlayer(entryId: string, pickId: string) {
 export function updateTournamentStatus(tournamentId: string, status: TournamentStatus) {
   const store = getStore();
   const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
+  if (["round_3", "round_4", "final"].includes(status)) {
+    autoDropOutstandingEntries(tournamentId);
+  }
   tournament.status = status;
   tournament.updatedAt = nowIso();
   recalculateTournament(tournamentId);
@@ -805,6 +820,7 @@ export function processCutFromSyncedScores(tournamentId: string) {
 export function finaliseTournament(tournamentId: string) {
   const store = getStore();
   const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
+  autoDropOutstandingEntries(tournamentId);
   tournament.status = "final";
   tournament.updatedAt = nowIso();
   recalculateTournament(tournamentId, true);
@@ -1225,11 +1241,15 @@ export function advanceWeekendStep(
     return;
   }
   if (step === "final") {
+    autoDropOutstandingEntries(tournamentId);
     applyMockRoundScores(tournamentId, 4);
     finaliseTournament(tournamentId);
     return;
   }
 
+  if (step === "round_3") {
+    autoDropOutstandingEntries(tournamentId);
+  }
   applyMockRoundScores(tournamentId, step === "round_1" ? 1 : step === "round_2" ? 2 : step === "round_3" ? 3 : 4);
   updateTournamentStatus(tournamentId, step);
   recalculateTournament(tournamentId, step === "round_3" || step === "round_4");
@@ -1257,11 +1277,15 @@ export async function advanceWeekendStepFromProvider(
   }
 
   if (step === "final") {
+    autoDropOutstandingEntries(tournamentId);
     await syncProviderLeaderboard(tournamentId, provider, { roundId: "4", applyCut: true });
     finaliseTournament(tournamentId);
     return;
   }
 
+  if (step === "round_3") {
+    autoDropOutstandingEntries(tournamentId);
+  }
   const roundId = step === "round_1" ? "1" : step === "round_2" ? "2" : step === "round_3" ? "3" : "4";
   await syncProviderLeaderboard(tournamentId, provider, {
     roundId,
@@ -1270,6 +1294,35 @@ export async function advanceWeekendStepFromProvider(
   updateTournamentStatus(tournamentId, step);
   recalculateTournament(tournamentId, step === "round_3" || step === "round_4");
   persistStore(getStore());
+}
+
+function autoDropOutstandingEntries(tournamentId: string) {
+  const store = getStore();
+  const timestamp = nowIso();
+  let changed = false;
+
+  for (const entry of store.entries.filter((item) => item.tournamentId === tournamentId)) {
+    const detailed = getEntriesWithDetails(tournamentId).find((item) => item.id === entry.id);
+    if (!detailed) continue;
+
+    const pickToDrop = selectAutomaticDropPick(detailed.picks);
+    if (!pickToDrop) continue;
+
+    for (const pick of store.entryPicks.filter((item) => item.entryId === entry.id)) {
+      const detailedPick = detailed.picks.find((item) => item.id === pick.id);
+      pick.isDropped = pick.id === pickToDrop.id;
+      pick.isCounting = Boolean(detailedPick && detailedPick.tournamentGolfer.madeCut === true && pick.id !== pickToDrop.id);
+      pick.updatedAt = timestamp;
+    }
+    entry.status = "qualified";
+    entry.updatedAt = timestamp;
+    changed = true;
+  }
+
+  if (changed) {
+    recalculateTournament(tournamentId, true);
+    persistStore(store);
+  }
 }
 
 function applyMockRoundScores(tournamentId: string, roundNumber: 1 | 2 | 3 | 4) {
@@ -1678,6 +1731,7 @@ function findOrCreateTournamentGolferForManualRow(
 
 function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
   const roundNumber = Math.min(Math.max(golfer.round ?? 1, 1), 4) as 1 | 2 | 3 | 4;
+  const holeScores = pgaRoundHoleFixtures.get(golfer.golferId)?.[roundNumber] ?? null;
   let score = store.golferRoundScores.find(
     (item) => item.tournamentGolferId === golfer.id && item.roundNumber === roundNumber,
   );
@@ -1689,7 +1743,7 @@ function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
       scoreToPar: golfer.todayScore,
       strokes: golfer.todayScore === null ? null : 70 + golfer.todayScore,
       thru: golfer.thru,
-      holeScores: null,
+      holeScores,
       status: golfer.status,
       createdAt: nowIso(),
       updatedAt: nowIso(),
@@ -1701,6 +1755,7 @@ function upsertLatestRoundScore(store: Store, golfer: TournamentGolfer) {
   score.scoreToPar = golfer.todayScore;
   score.strokes = golfer.todayScore === null ? null : 70 + golfer.todayScore;
   score.thru = golfer.thru;
+  score.holeScores = holeScores;
   score.status = golfer.status;
   score.updatedAt = nowIso();
 }
@@ -1714,7 +1769,7 @@ function golferNameForRound(
 
 function compareCountback(a?: number[] | null, b?: number[] | null) {
   if (!a?.length || !b?.length) return 0;
-  for (const holes of [3, 6, 9, 18]) {
+  for (const holes of [9, 6, 3]) {
     const difference = countbackScore(a, holes) - countbackScore(b, holes);
     if (difference !== 0) return difference;
   }
@@ -1725,7 +1780,7 @@ function countbackWinnerLabel(rounds: GolferRoundScore[], winner: GolferRoundSco
   const tiedRounds = rounds.filter((round) => round.scoreToPar === winner.scoreToPar);
   if (tiedRounds.length < 2 || !winner.holeScores?.length) return null;
 
-  for (const holes of [3, 6, 9, 18] as const) {
+  for (const holes of [9, 6, 3] as const) {
     const winnerScore = countbackScore(winner.holeScores, holes);
     if (
       tiedRounds.every(

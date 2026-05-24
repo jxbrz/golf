@@ -17,15 +17,18 @@ import type { TournamentGolfer } from "@/lib/types";
 import { cn, formatScore } from "@/lib/utils";
 
 type PickableGolfer = TournamentGolfer & { golfer: { name: string; country: string | null } };
+const EMPTY_SELECTED_IDS: string[] = [];
 
 export function PickBuilder({
   tournamentId,
   golfers,
   locked,
+  initialSelectedIds = EMPTY_SELECTED_IDS,
 }: {
   tournamentId: string;
   golfers: PickableGolfer[];
   locked: boolean;
+  initialSelectedIds?: string[];
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -65,6 +68,24 @@ export function PickBuilder({
   const draftKey = `major-picks:${tournamentId}:draft-picks`;
 
   useEffect(() => {
+    const validIds = new Set(pickableGolfers.map((golfer) => golfer.id));
+    const savedInitialSelected = initialSelectedIds
+      .filter((id) => validIds.has(id))
+      .slice(0, 4);
+
+    if (savedInitialSelected.length > 0) {
+      queueMicrotask(() => {
+        draftLoaded.current = true;
+        setSelected(savedInitialSelected);
+      });
+      if (locked) {
+        window.localStorage.removeItem(draftKey);
+      } else {
+        window.localStorage.setItem(draftKey, JSON.stringify(savedInitialSelected));
+      }
+      return;
+    }
+
     if (locked) {
       window.localStorage.removeItem(draftKey);
       draftLoaded.current = true;
@@ -74,7 +95,6 @@ export function PickBuilder({
     try {
       const stored = JSON.parse(window.localStorage.getItem(draftKey) ?? "[]");
       if (Array.isArray(stored)) {
-        const validIds = new Set(pickableGolfers.map((golfer) => golfer.id));
         const savedSelected = stored
           .filter((id): id is string => typeof id === "string" && validIds.has(id))
           .slice(0, 4);
@@ -88,7 +108,7 @@ export function PickBuilder({
       window.localStorage.removeItem(draftKey);
     }
     draftLoaded.current = true;
-  }, [draftKey, locked, pickableGolfers]);
+  }, [draftKey, initialSelectedIds, locked, pickableGolfers]);
 
   useEffect(() => {
     if (!draftLoaded.current || locked) return;
@@ -254,7 +274,9 @@ export function PickBuilder({
       <aside className="app-panel hidden p-4 lg:sticky lg:top-7 lg:block lg:self-start">
         <p className="sport-label">Your Team</p>
         <h2 className="mt-1 text-xl font-black">Team sheet</h2>
-        <p className="mb-4 mt-1 text-sm font-semibold text-muted">Four names. Ninety points. No changes after submission.</p>
+        <p className="mb-4 mt-1 text-sm font-semibold text-muted">
+          {locked ? "Picks are locked. You can review this team but cannot change it." : "Four names. Ninety points. You can edit until picks lock."}
+        </p>
         <BudgetBar used={used} />
         <div className="my-4 min-h-40 overflow-hidden rounded-md border border-border">
           {selectedGolfers.length ? (

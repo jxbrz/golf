@@ -1,4 +1,5 @@
 import { PlayerScoreRow } from "@/components/leaderboard/PlayerScoreRow";
+import { calculateFinalEntryScore, calculateLiveEntryScore } from "@/lib/scoring/scoring";
 import { isCutFinalizedStatus, tournamentStageCopy } from "@/lib/tournament-status";
 import type { EntryWithDetails, Tournament } from "@/lib/types";
 import { formatScoreOrLabel } from "@/lib/utils";
@@ -7,6 +8,11 @@ export function EntryTeamCard({ entry, tournament }: { entry: EntryWithDetails; 
   const stage = tournamentStageCopy(tournament);
   const cutFinalized = isCutFinalizedStatus(tournament.status);
   const scoreLabel = tournament.status === "final" ? "Final" : cutFinalized ? "Best 3" : "Score";
+  const calculatedScore =
+    tournament.status === "final"
+      ? calculateFinalEntryScore(entry)
+      : calculateLiveEntryScore(entry, tournament);
+  const displayScore = calculatedScore ?? entry.liveScore;
 
   return (
     <section className="app-panel p-4">
@@ -19,7 +25,7 @@ export function EntryTeamCard({ entry, tournament }: { entry: EntryWithDetails; 
         <span className="rounded-md bg-primary px-3 py-2 text-right text-white">
           <span className="block text-[10px] font-black uppercase text-white/62">{scoreLabel}</span>
           <span className="font-mono text-xl font-black metric-number">
-            {formatScoreOrLabel(entry.liveScore, "-")}
+            {formatScoreOrLabel(displayScore, "No score yet")}
           </span>
         </span>
       </div>

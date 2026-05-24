@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
-import { ChevronRight, ClipboardList } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ChevronRight, ClipboardList, Search } from "lucide-react";
 import { GolferHeadshot } from "@/components/golfers/GolferHeadshot";
 import { CutStatusBadge } from "@/components/leaderboard/CutStatusBadge";
 import { MajorMark } from "@/components/theme/MajorMark";
@@ -16,8 +19,16 @@ export function FieldLeaderboard({
   majorKey: MajorKey;
   title?: string;
 }) {
+  const [query, setQuery] = useState("");
   const theme = majorThemes[majorKey];
-  const podium = golfers.slice(0, 3);
+  const filteredGolfers = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) return golfers;
+    return golfers.filter((golfer) =>
+      golfer.golfer.name.toLowerCase().includes(normalizedQuery),
+    );
+  }, [golfers, query]);
+  const podium = filteredGolfers.slice(0, 3);
 
   return (
     <section className="mock-card overflow-hidden">
@@ -32,7 +43,7 @@ export function FieldLeaderboard({
           </div>
           <span className="rounded-md bg-[var(--rough)] px-3 py-2 text-right">
             <span className="block text-[10px] font-black uppercase text-muted">Players</span>
-            <span className="font-mono text-xl font-black text-primary">{golfers.length}</span>
+            <span className="font-mono text-xl font-black text-primary">{filteredGolfers.length}</span>
           </span>
         </div>
 
@@ -57,6 +68,16 @@ export function FieldLeaderboard({
           </div>
         ) : null}
 
+        <label className="mt-4 flex h-11 items-center gap-2 rounded-md border border-border bg-white px-3 shadow-sm">
+          <Search size={18} className="text-muted" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search golfers"
+            className="w-full bg-transparent text-sm font-semibold outline-none"
+          />
+        </label>
+
         <div className="mt-4 hidden grid-cols-[4rem_1fr_4rem_4.5rem_4.5rem_4.5rem_2rem] gap-3 rounded-md bg-[var(--rough)] px-3 py-2 text-xs font-black uppercase text-muted sm:grid">
           <span>Pos</span>
           <span>Player</span>
@@ -69,14 +90,20 @@ export function FieldLeaderboard({
       </div>
 
       <div className="divide-y divide-border">
-        {golfers.length === 0 ? (
+        {filteredGolfers.length === 0 ? (
           <div className="p-6 text-center">
             <ClipboardList className="mx-auto text-muted" size={34} />
-            <h3 className="mt-3 text-lg font-black">No golfers loaded</h3>
-            <p className="mt-1 text-sm text-muted">Import the tournament field from admin.</p>
+            <h3 className="mt-3 text-lg font-black">
+              {golfers.length === 0 ? "No golfers loaded" : "No golfers found"}
+            </h3>
+            <p className="mt-1 text-sm text-muted">
+              {golfers.length === 0
+                ? "Import the tournament field from admin."
+                : "Clear the search to restore the full field."}
+            </p>
           </div>
         ) : null}
-        {golfers.map((golfer, index) => {
+        {filteredGolfers.map((golfer, index) => {
           const madeCut = golfer.madeCut === true && golfer.status !== "cut";
           return (
             <Link

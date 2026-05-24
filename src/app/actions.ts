@@ -5,9 +5,7 @@ import { redirect } from "next/navigation";
 import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
 import {
   adminUpsertDbEntryPicks,
-  dropDbPlayer,
   resetDbTournamentEntries,
-  submitDbEntry,
 } from "@/lib/db-data/entries";
 import {
   advanceWeekendStep,
@@ -34,30 +32,29 @@ export async function submitEntryAction(formData: FormData) {
   const pickIds = String(formData.get("pickIds"))
     .split(",")
     .filter(Boolean);
-  const result = await submitDbEntry(tournamentId, user.id, pickIds);
-  if (result && !result.ok) {
-    redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(result.message)}`);
-  }
   const mockResult = submitEntry(tournamentId, user.id, pickIds);
-  if (!result && !mockResult.ok) {
+  if (!mockResult.ok) {
     redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(mockResult.message)}`);
   }
   revalidatePath("/");
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
+  revalidatePath(`/tournaments/${tournamentId}/team`);
+  revalidatePath(`/tournaments/${tournamentId}/pick`);
   redirect(`/tournaments/${tournamentId}`);
 }
 
 export async function dropPlayerAction(formData: FormData) {
   await requireCurrentUser();
   const tournamentId = String(formData.get("tournamentId"));
-  const result = await dropDbPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
-  if (!result) {
-    dropPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
-  }
+  dropPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
+  revalidatePath("/");
   revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath(`/tournaments/${tournamentId}/team`);
+  revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
+  revalidatePath(`/tournaments/${tournamentId}/drop`);
   revalidatePath(`/tournaments/${tournamentId}/results`);
-  redirect(`/tournaments/${tournamentId}/leaderboard`);
+  redirect(`/tournaments/${tournamentId}/team`);
 }
 
 export async function updateTournamentStatusAction(formData: FormData) {

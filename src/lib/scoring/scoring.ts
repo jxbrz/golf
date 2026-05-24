@@ -89,6 +89,20 @@ export function calculateDropRequirement(picks: EntryWithDetails["picks"]) {
   };
 }
 
+export function selectAutomaticDropPick(picks: EntryWithDetails["picks"]) {
+  const cutStatus = calculateCutStatus(picks);
+  if (cutStatus.status !== "drop_required") return null;
+
+  return [...picks]
+    .filter((pick) => golferCountsForCut(pick.tournamentGolfer))
+    .sort((a, b) => {
+      const aScore = a.tournamentGolfer.totalScore ?? Number.POSITIVE_INFINITY;
+      const bScore = b.tournamentGolfer.totalScore ?? Number.POSITIVE_INFINITY;
+      if (aScore !== bScore) return bScore - aScore;
+      return a.tournamentGolfer.golfer.name.localeCompare(b.tournamentGolfer.golfer.name);
+    })[0] ?? null;
+}
+
 export function calculateLiveEntryScore(
   entry: EntryWithDetails,
   tournament: Pick<Tournament, "status">,

@@ -8,7 +8,9 @@ import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { TournamentHeader } from "@/components/tournaments/TournamentHeader";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDbEntry, getDbLeaderboard } from "@/lib/db-data/entries";
-import { getEntry, getLeaderboard, getTournament } from "@/lib/mock-data/store";
+import { getEntry, getLeaderboard, getLowestRoundSummary, getTournament } from "@/lib/mock-data/store";
+import type { LowestRoundSummary } from "@/lib/types";
+import { formatScoreOrLabel } from "@/lib/utils";
 
 export default async function TournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,12 +29,19 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   }
   const dbRows = await getDbLeaderboard(tournament.id, tournament);
   const leaderboardRows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
+  const winnerRow =
+    tournament.status === "final"
+      ? getLeaderboard(tournament.id).find((row) => row.score !== null && row.status !== "eliminated" && row.entry.user.name)
+      : null;
+  const lowestRound = getLowestRoundSummary(tournament.id);
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell tournament={tournament}>
         {entry ? (
           <main className="space-y-4">
+            {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
+            <LowestRoundBanner lowestRound={lowestRound} />
             <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
               <div className="flex items-start gap-3">
                 <MajorMark majorKey={tournament.majorKey} size="md" />
@@ -85,6 +94,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         ) : (
           <>
             <TournamentHeader tournament={tournament} entrySubmitted={false} />
+            {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
+            <LowestRoundBanner lowestRound={lowestRound} />
             <main className="grid gap-4 lg:grid-cols-[1fr_22rem]">
               <GroupLeaderboard
                 rows={leaderboardRows}
@@ -116,5 +127,34 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         )}
       </AppShell>
     </MajorThemeProvider>
+  );
+}
+
+function WinnerBanner({ name }: { name: string }) {
+  return (
+    <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 scorecard-shadow">
+      <p className="sport-label text-emerald-800">Tournament winner</p>
+      <h2 className="mt-1 text-2xl font-black text-primary">Congratulations {name}</h2>
+    </section>
+  );
+}
+
+function LowestRoundBanner({ lowestRound }: { lowestRound: LowestRoundSummary }) {
+  if (lowestRound.scoreToPar === null || lowestRound.golfers.length === 0) return null;
+
+  const score = formatScoreOrLabel(lowestRound.scoreToPar);
+  const names = lowestRound.golfers.map((golfer) => golfer.golfer.name).join(", ");
+  const message =
+    lowestRound.golfers.length > 1
+      ? `${names} jointly won lowest round with a round of ${score}`
+      : lowestRound.countback
+        ? `${names} won on countback with a round of ${score}`
+        : `${names} won lowest round with a round of ${score}`;
+
+  return (
+    <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
+      <p className="sport-label">Lowest round</p>
+      <h2 className="mt-1 text-xl font-black text-primary">{message}</h2>
+    </section>
   );
 }

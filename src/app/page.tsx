@@ -16,7 +16,7 @@ import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDbEntry } from "@/lib/db-data/entries";
-import { getActiveTournament, getEntry } from "@/lib/mock-data/store";
+import { getActiveTournament, getEntry, getLeaderboard } from "@/lib/mock-data/store";
 import { isPrePlayStatus, tournamentStageCopy } from "@/lib/tournament-status";
 import type { TournamentStatus } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
@@ -27,6 +27,11 @@ export default async function Home() {
   const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   const prePlay = isPrePlayStatus(tournament.status);
   const stage = tournamentStageCopy(tournament);
+  const needsDrop = entry?.status === "drop_required";
+  const winnerRow =
+    tournament.status === "final"
+      ? getLeaderboard(tournament.id).find((row) => row.score !== null && row.status !== "eliminated" && row.entry.user.name)
+      : null;
 
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
@@ -42,6 +47,7 @@ export default async function Home() {
             prePlay={prePlay}
             tournament={tournament}
           />
+          {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
           {entry?.submittedAt ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
               <section className="app-panel p-5">
@@ -51,10 +57,19 @@ export default async function Home() {
                   </span>
                   <div>
                     <p className="sport-label">Team status</p>
-                    <h2 className="mt-1 text-2xl font-black">Thanks for your picks.</h2>
-                    <p className="mt-2 text-muted">{stage.team}</p>
-                    <Link href={`/tournaments/${tournament.id}/pick`} className="app-button mt-4">
-                      Review team
+                    <h2 className="mt-1 text-2xl font-black">
+                      {needsDrop ? "Drop required." : "Thanks for your picks."}
+                    </h2>
+                    <p className="mt-2 text-muted">
+                      {needsDrop
+                        ? "All 4 of your golfers made the cut. Drop 1 player so your best 3 count for the weekend."
+                        : stage.team}
+                    </p>
+                    <Link
+                      href={needsDrop ? `/tournaments/${tournament.id}/team#drop` : `/tournaments/${tournament.id}/team`}
+                      className="app-button mt-4"
+                    >
+                      {needsDrop ? "Drop player" : "Review team"}
                       <ArrowRight size={17} />
                     </Link>
                   </div>
@@ -66,6 +81,15 @@ export default async function Home() {
         </div>
       </AppShell>
     </MajorThemeProvider>
+  );
+}
+
+function WinnerBanner({ name }: { name: string }) {
+  return (
+    <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 scorecard-shadow">
+      <p className="sport-label text-emerald-800">Tournament winner</p>
+      <h2 className="mt-1 text-2xl font-black text-primary">Congratulations {name}</h2>
+    </section>
   );
 }
 
