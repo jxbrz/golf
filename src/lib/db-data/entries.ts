@@ -13,6 +13,7 @@ import {
   tournaments,
   users,
 } from "@/db/schema";
+import { loadTournamentFixture } from "@/fixtures/tournaments/loader";
 import { getTournament } from "@/lib/mock-data/store";
 import {
   calculateCutStatus,
@@ -46,6 +47,7 @@ export type DbWeekendStep =
   | "final";
 
 const PICK_EDITABLE_COMPETITION_STATUSES: readonly DbGroupCompetitionStatus[] = ["setup", "picks_open"];
+const PGA_FIXTURE_SLUG = "pga-championship-2026";
 
 export function canSubmitDbPicksForCompetitionStatus(status: DbGroupCompetitionStatus) {
   return PICK_EDITABLE_COMPETITION_STATUSES.includes(status);
@@ -170,7 +172,84 @@ export async function updateDbGroupCompetitionForWeekendStep(tournamentId: strin
     .set(updateValues)
     .where(eq(groupCompetitions.id, competition.id));
 
+  const roundNumber = roundNumberForWeekendStep(step);
+  if (roundNumber) {
+    await writeDbFixtureRoundScores(tournamentId, roundNumber, timestamp);
+  }
+
   return { ok: true, message: "Competition status updated." };
+}
+
+export async function writeDbFixtureRoundScores(
+  tournamentId: string,
+  roundNumber: 1 | 2 | 3 | 4,
+  timestamp = new Date(),
+) {
+  if (!process.env.DATABASE_URL) return null;
+  const db = getDb();
+  const competition = await getActiveDbGroupCompetition(tournamentId);
+  if (!competition) return null;
+
+  const fixture = loadTournamentFixture(PGA_FIXTURE_SLUG);
+  const fieldScores = new Map(fixture.roundScores.map((row) => [row.golferId, row]));
+  const tournamentGolferRows = await db
+    .select()
+    .from(tournamentGolfers)
+    .where(eq(tournamentGolfers.tournamentId, tournamentId));
+  const golferIds = tournamentGolferRows.map((golfer) => golfer.id);
+  const existingRows = golferIds.length
+    ? await db
+        .select()
+        .from(golferRoundScores)
+        .where(inArray(golferRoundScores.tournamentGolferId, golferIds))
+    : [];
+  const existingRoundRows = new Map(
+    existingRows
+      .filter((score) => score.roundNumber === roundNumber)
+      .map((score) => [score.tournamentGolferId, score]),
+  );
+  const rowsToInsert: Array<typeof golferRoundScores.$inferInsert> = [];
+  let written = 0;
+
+  for (const golfer of tournamentGolferRows) {
+    const fixtureScore = fieldScores.get(golfer.golferId);
+    if (!fixtureScore) continue;
+
+    const strokes = fixtureScore.rounds[roundNumber - 1];
+    const scoreToPar = strokes - fixture.expectedResults.coursePar;
+    const holeScores = fixtureScore.holeScores?.[String(roundNumber)] ?? null;
+    const rowValues = {
+      roundNumber,
+      scoreToPar,
+      strokes,
+      thru: "18",
+      holeScores: holeScores ? JSON.stringify(holeScores) : null,
+      status: roundNumber === 4 ? ("finished" as const) : ("active" as const),
+      updatedAt: timestamp,
+    };
+    const existing = existingRoundRows.get(golfer.id);
+
+    if (existing) {
+      await db
+        .update(golferRoundScores)
+        .set(rowValues)
+        .where(eq(golferRoundScores.id, existing.id));
+    } else {
+      rowsToInsert.push({
+        id: `rs_${golfer.id}_${roundNumber}`,
+        tournamentGolferId: golfer.id,
+        ...rowValues,
+        createdAt: timestamp,
+      });
+    }
+    written += 1;
+  }
+
+  if (rowsToInsert.length > 0) {
+    await db.insert(golferRoundScores).values(rowsToInsert);
+  }
+
+  return { ok: true, message: `Wrote ${written} round ${roundNumber} scores.` };
 }
 
 export async function resetDbTournamentEntries(tournamentId: string) {
@@ -256,6 +335,14 @@ function dbGroupCompetitionStepUpdate(step: DbWeekendStep, timestamp: Date) {
     finalisedAt: timestamp,
     updatedAt: timestamp,
   };
+}
+
+function roundNumberForWeekendStep(step: DbWeekendStep) {
+  if (step === "round_1") return 1;
+  if (step === "round_2") return 2;
+  if (step === "round_3") return 3;
+  if (step === "round_4") return 4;
+  return null;
 }
 
 export async function getDbEntriesWithDetails(tournamentId: string): Promise<EntryWithDetails[]> {

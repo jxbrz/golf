@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   entries,
   entryPicks,
+  golferRoundScores,
   groupCompetitions,
   tournamentGolfers,
   tournaments,
@@ -12,6 +13,7 @@ import {
   resetDbTournamentEntries,
   submitDbEntry,
   updateDbGroupCompetitionForWeekendStep,
+  writeDbFixtureRoundScores,
 } from "./entries";
 import {
   advanceWeekendStep,
@@ -157,6 +159,74 @@ describe("DB-backed entry lock behaviour", () => {
     expect(db.state.tournaments[0].status).toBe("picks_open");
   });
 
+  it("writes round 1 fixture scores to golfer_round_scores", async () => {
+    db.seedCompetition("picks_locked");
+
+    const result = await writeDbFixtureRoundScores("t_pga_2026", 1);
+
+    expect(result).toEqual({ ok: true, message: "Wrote 5 round 1 scores." });
+    expect(db.state.golferRoundScores).toHaveLength(5);
+    expect(roundScore("tg_g51", 1)).toMatchObject({
+      scoreToPar: 0,
+      strokes: 70,
+      thru: "18",
+      status: "active",
+    });
+  });
+
+  it("writes round 2 fixture scores to golfer_round_scores", async () => {
+    db.seedCompetition("round_1_loaded");
+
+    await writeDbFixtureRoundScores("t_pga_2026", 2);
+
+    expect(db.state.golferRoundScores).toHaveLength(5);
+    expect(roundScore("tg_g51", 2)).toMatchObject({
+      scoreToPar: -1,
+      strokes: 69,
+      thru: "18",
+      status: "active",
+    });
+  });
+
+  it("writes round 3 fixture scores to golfer_round_scores", async () => {
+    db.seedCompetition("cut_processed");
+
+    await writeDbFixtureRoundScores("t_pga_2026", 3);
+
+    expect(db.state.golferRoundScores).toHaveLength(5);
+    expect(roundScore("tg_g51", 3)).toMatchObject({
+      scoreToPar: -3,
+      strokes: 67,
+      thru: "18",
+      status: "active",
+    });
+  });
+
+  it("writes round 4 fixture scores including countback hole scores to golfer_round_scores", async () => {
+    db.seedCompetition("round_3_loaded");
+
+    await writeDbFixtureRoundScores("t_pga_2026", 4);
+
+    expect(db.state.golferRoundScores).toHaveLength(5);
+    expect(roundScore("tg_g51", 4)).toMatchObject({
+      scoreToPar: -5,
+      strokes: 65,
+      thru: "18",
+      status: "finished",
+    });
+    expect(JSON.parse(roundScore("tg_g51", 4)?.holeScores ?? "[]")).toHaveLength(18);
+  });
+
+  it("rerunning a round fixture write updates rows without duplicating them", async () => {
+    db.seedCompetition("round_1_loaded");
+
+    await writeDbFixtureRoundScores("t_pga_2026", 1);
+    await writeDbFixtureRoundScores("t_pga_2026", 1);
+
+    expect(db.state.golferRoundScores).toHaveLength(5);
+    expect(db.state.golferRoundScores.filter((score) => score.roundNumber === 1)).toHaveLength(5);
+  });
+
   it("reset clears group competition lifecycle fields and reopens local DB state", async () => {
     db.seedCompetition("finalised");
     Object.assign(db.state.groupCompetitions[0], {
@@ -186,6 +256,7 @@ describe("DB-backed entry lock behaviour", () => {
     advanceWeekendStep("t_pga_2026", "round_1");
 
     expect(result).toBeNull();
+    expect(db.state.golferRoundScores).toHaveLength(0);
     expect(getTournament("t_pga_2026")?.status).toBe("round_1");
   });
 
@@ -205,11 +276,18 @@ describe("DB-backed entry lock behaviour", () => {
 const validPickIds = ["tg_g52", "tg_g53", "tg_g54", "tg_g55"];
 const editedPickIds = ["tg_g51", "tg_g52", "tg_g53", "tg_g55"];
 
+function roundScore(tournamentGolferId: string, roundNumber: number) {
+  return db.state.golferRoundScores.find(
+    (score) => score.tournamentGolferId === tournamentGolferId && score.roundNumber === roundNumber,
+  );
+}
+
 function createFakeDb() {
   type CompetitionStatus = typeof groupCompetitions.$inferSelect.status;
   type TournamentRow = typeof tournaments.$inferSelect;
   type GroupCompetitionRow = typeof groupCompetitions.$inferSelect;
   type TournamentGolferRow = typeof tournamentGolfers.$inferSelect;
+  type GolferRoundScoreRow = typeof golferRoundScores.$inferSelect;
   type EntryRow = typeof entries.$inferSelect;
   type EntryPickRow = typeof entryPicks.$inferSelect;
 
@@ -217,12 +295,14 @@ function createFakeDb() {
     tournaments: TournamentRow[];
     groupCompetitions: GroupCompetitionRow[];
     tournamentGolfers: TournamentGolferRow[];
+    golferRoundScores: GolferRoundScoreRow[];
     entries: EntryRow[];
     entryPicks: EntryPickRow[];
   } = {
     tournaments: [],
     groupCompetitions: [],
     tournamentGolfers: [],
+    golferRoundScores: [],
     entries: [],
     entryPicks: [],
   };
@@ -231,6 +311,7 @@ function createFakeDb() {
     if (table === tournaments) return state.tournaments;
     if (table === groupCompetitions) return state.groupCompetitions;
     if (table === tournamentGolfers) return state.tournamentGolfers;
+    if (table === golferRoundScores) return state.golferRoundScores;
     if (table === entries) return state.entries;
     if (table === entryPicks) return state.entryPicks;
     return [];
@@ -242,6 +323,7 @@ function createFakeDb() {
       state.tournaments = [];
       state.groupCompetitions = [];
       state.tournamentGolfers = [];
+      state.golferRoundScores = [];
       state.entries = [];
       state.entryPicks = [];
     },
@@ -344,7 +426,12 @@ function createFakeDb() {
         set(values: Record<string, unknown>) {
           return {
             where() {
-              for (const row of rowsFor(table) as Array<Record<string, unknown>>) {
+              const rows = rowsFor(table) as Array<Record<string, unknown>>;
+              const rowsToUpdate =
+                table === golferRoundScores && typeof values.roundNumber === "number"
+                  ? rows.filter((row) => row.roundNumber === values.roundNumber)
+                  : rows;
+              for (const row of rowsToUpdate) {
                 Object.assign(row, values);
               }
               return Promise.resolve();
