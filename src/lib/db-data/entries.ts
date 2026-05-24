@@ -4,6 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db/client";
 import {
   adminTeamCorrections,
+  competitionRuleSets,
   entries,
   entryPicks,
   golferRoundScores,
@@ -37,6 +38,7 @@ type DbGolferRow = typeof golfers.$inferSelect;
 type DbGolferRoundScoreRow = typeof golferRoundScores.$inferSelect;
 type DbGroupCompetitionRow = typeof groupCompetitions.$inferSelect;
 type DbGroupCompetitionStatus = DbGroupCompetitionRow["status"];
+type DbCompetitionRuleSetRow = typeof competitionRuleSets.$inferSelect;
 export type DbWeekendStep =
   | "lock_picks"
   | "round_1"
@@ -52,6 +54,12 @@ const PGA_FIXTURE_SLUG = "pga-championship-2026";
 export function canSubmitDbPicksForCompetitionStatus(status: DbGroupCompetitionStatus) {
   return PICK_EDITABLE_COMPETITION_STATUSES.includes(status);
 }
+
+export type DbHybridStatus = {
+  competition: DbGroupCompetitionRow;
+  ruleSet: DbCompetitionRuleSetRow | null;
+  scoreRounds: Record<1 | 2 | 3 | 4, number>;
+};
 
 function toIso(value: Date | string | null) {
   if (!value) return null;
@@ -153,6 +161,48 @@ export async function getActiveDbGroupCompetition(tournamentId: string) {
     .where(eq(groupCompetitions.tournamentId, tournamentId))
     .limit(1);
   return row ?? null;
+}
+
+export async function getDbHybridStatus(tournamentId: string): Promise<DbHybridStatus | null> {
+  if (!process.env.DATABASE_URL) return null;
+  try {
+    const db = getDb();
+    const competition = await getActiveDbGroupCompetition(tournamentId);
+    if (!competition) return null;
+
+    const [ruleSet] = competition.ruleSetId
+      ? await db
+          .select()
+          .from(competitionRuleSets)
+          .where(eq(competitionRuleSets.id, competition.ruleSetId))
+          .limit(1)
+      : [];
+    const tournamentGolferRows = await db
+      .select()
+      .from(tournamentGolfers)
+      .where(eq(tournamentGolfers.tournamentId, tournamentId));
+    const golferIds = tournamentGolferRows.map((golfer) => golfer.id);
+    const scoreRows = golferIds.length
+      ? await db
+          .select()
+          .from(golferRoundScores)
+          .where(inArray(golferRoundScores.tournamentGolferId, golferIds))
+      : [];
+
+    return {
+      competition,
+      ruleSet: ruleSet ?? null,
+      scoreRounds: {
+        1: scoreRows.filter((score) => score.roundNumber === 1 && score.scoreToPar !== null).length,
+        2: scoreRows.filter((score) => score.roundNumber === 2 && score.scoreToPar !== null).length,
+        3: scoreRows.filter((score) => score.roundNumber === 3 && score.scoreToPar !== null).length,
+        4: scoreRows.filter((score) => score.roundNumber === 4 && score.scoreToPar !== null).length,
+      },
+    };
+  } catch (error) {
+    console.warn("Unable to read hybrid DB status.", error);
+    return null;
+  }
 }
 
 export async function lockDbPicks(tournamentId: string) {

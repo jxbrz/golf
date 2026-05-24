@@ -29,7 +29,7 @@ import { AppShell, HeaderSettingsButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireAdminUser } from "@/lib/auth";
-import { getDbEntriesWithDetails, getDbLeaderboard } from "@/lib/db-data/entries";
+import { getDbEntriesWithDetails, getDbHybridStatus, getDbLeaderboard, type DbHybridStatus } from "@/lib/db-data/entries";
 import {
   getEntriesWithDetails,
   getLeaderboard,
@@ -69,9 +69,12 @@ export default async function AdminTournamentPage({
   if (!tournament) notFound();
 
   const golfers = getTournamentGolfers(tournament.id);
-  const dbEntries = await getDbEntriesWithDetails(tournament.id);
+  const [dbEntries, dbRows, hybridStatus] = await Promise.all([
+    getDbEntriesWithDetails(tournament.id),
+    getDbLeaderboard(tournament.id, tournament),
+    getDbHybridStatus(tournament.id),
+  ]);
   const entries = dbEntries.length ? dbEntries : getEntriesWithDetails(tournament.id);
-  const dbRows = await getDbLeaderboard(tournament.id, tournament);
   const leaderboardRows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
   const scoredGolfers = golfers.filter((golfer) => golfer.totalScore !== null).length;
   const madeCutGolfers = golfers.filter((golfer) => golfer.madeCut === true).length;
@@ -170,8 +173,8 @@ export default async function AdminTournamentPage({
                   <TaskLink
                     href={`/tournaments/${tournament.id}/leaderboard`}
                     icon={<Eye />}
-                    label="View Standings"
-                    detail="Player-facing leaderboard"
+                    label="View Fantasy Standings"
+                    detail="Player-facing team leaderboard"
                   />
                   <TaskLink
                     href={`/tournaments/${tournament.id}/results`}
@@ -181,6 +184,8 @@ export default async function AdminTournamentPage({
                   />
                 </div>
               </section>
+
+              <HybridStatusPanel status={hybridStatus} mockStatus={tournament.status} />
             </aside>
           </div>
 
@@ -260,11 +265,88 @@ export default async function AdminTournamentPage({
             tournament={tournament}
             preview
             revealAll
+            title="Fantasy standings"
           />
         </main>
       </AppShell>
     </MajorThemeProvider>
   );
+}
+
+function HybridStatusPanel({
+  status,
+  mockStatus,
+}: {
+  status: DbHybridStatus | null;
+  mockStatus: TournamentStatus;
+}) {
+  if (!status) {
+    return (
+      <section className="app-panel p-4">
+        <p className="sport-label">Hybrid State</p>
+        <h2 className="mt-1 text-lg font-black">Mock fallback active</h2>
+        <p className="mt-1 text-sm font-semibold text-muted">
+          No DB group competition was found, so local mock state is driving this run.
+        </p>
+        <HybridRow label="Mock status" value={mockStatus} />
+      </section>
+    );
+  }
+
+  const { competition, ruleSet, scoreRounds } = status;
+  const countbackPolicy = ruleSet?.countbackPolicy as { order?: string[] } | null;
+
+  return (
+    <section className="app-panel p-4">
+      <p className="sport-label">Hybrid State</p>
+      <h2 className="mt-1 text-lg font-black">DB competition mirror</h2>
+      <div className="mt-3 grid gap-1">
+        <HybridRow label="Competition" value={`${competition.name} (${competition.id})`} />
+        <HybridRow label="DB status" value={competition.status} />
+        <HybridRow label="Current round" value={competition.currentRound ? String(competition.currentRound) : "-"} />
+        <HybridRow label="Mock status" value={mockStatus} />
+        <HybridRow label="Picks locked" value={formatNullableDate(competition.picksLockAt)} />
+        <HybridRow label="Cut processed" value={formatNullableDate(competition.cutProcessedAt)} />
+        <HybridRow label="Finalised" value={formatNullableDate(competition.finalisedAt)} />
+      </div>
+      <div className="mt-3 grid grid-cols-4 gap-1 text-center">
+        {[1, 2, 3, 4].map((round) => (
+          <span key={round} className="rounded-md border border-border bg-slate-50 px-2 py-2">
+            <span className="block text-[10px] font-black uppercase text-muted">R{round}</span>
+            <span className="font-mono text-sm font-black text-primary">{scoreRounds[round as 1 | 2 | 3 | 4]}</span>
+          </span>
+        ))}
+      </div>
+      {ruleSet ? (
+        <div className="mt-3 rounded-md border border-border bg-slate-50 p-3 text-sm">
+          <p className="font-black text-primary">{ruleSet.name}</p>
+          <p className="mt-1 font-semibold text-muted">
+            Pick {ruleSet.pickCount}, budget {ruleSet.budgetPoints}, cut target {ruleSet.requiredMadeCutCount}, active after cut {ruleSet.maxActiveAfterCut}.
+          </p>
+          <p className="mt-1 font-semibold text-muted">
+            {ruleSet.lockPolicy} - {ruleSet.dropPolicy}
+          </p>
+          <p className="mt-1 font-semibold text-muted">
+            Lowest round {ruleSet.lowestRoundEnabled ? "on" : "off"}; countback {(countbackPolicy?.order ?? []).join(", ") || "-"}.
+          </p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function HybridRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid grid-cols-[7rem_1fr] gap-2 rounded-md bg-slate-50 px-2 py-1.5 text-sm">
+      <span className="font-black uppercase text-muted text-[10px]">{label}</span>
+      <span className="min-w-0 truncate font-semibold text-primary">{value}</span>
+    </div>
+  );
+}
+
+function formatNullableDate(value: Date | string | null) {
+  if (!value) return "-";
+  return formatDateTime(value instanceof Date ? value.toISOString() : value);
 }
 
 function AdminMetric({ label, value }: { label: string; value: string }) {

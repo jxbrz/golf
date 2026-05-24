@@ -13,7 +13,7 @@ import { formatCost, formatScore, formatScoreOrLabel } from "@/lib/utils";
 export function FieldLeaderboard({
   golfers,
   majorKey,
-  title = "Field leaderboard",
+  title = "Tournament field leaderboard",
 }: {
   golfers: Array<TournamentGolfer & { golfer: { name: string; country: string | null } }>;
   majorKey: MajorKey;

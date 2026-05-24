@@ -20,7 +20,7 @@ export function PlayerScoreRow({
   const score = row.totalScore === null && row.status === "wd" ? "WD" : formatScoreOrLabel(row.totalScore, "Not started");
 
   return (
-    <div className="grid grid-cols-[2rem_1fr_auto] gap-3 border-b border-border py-3 last:border-b-0">
+    <div className={`grid grid-cols-[2rem_1fr_auto] gap-3 border-b border-border py-3 last:border-b-0 ${pick?.isDropped ? "opacity-60" : ""}`}>
       <GolferHeadshot name={row.golfer.name} size="sm" />
       <div>
         <div className="flex flex-wrap items-center gap-2">
@@ -32,6 +32,11 @@ export function PlayerScoreRow({
           </Link>
           {pick?.isDropped ? <CutStatusBadge status="dropped" /> : null}
           {pick?.isCounting && !pick.isDropped ? <CutStatusBadge status="counting" /> : null}
+          {pick && !pick.isDropped && !pick.isCounting ? (
+            <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-black uppercase text-emerald-900">
+              Active
+            </span>
+          ) : null}
         </div>
         <p className="mt-1 text-xs font-bold uppercase text-muted">
           {row.position ?? "Not started"} - Today {formatScore(row.todayScore)} - {row.thru ?? "-"} - Cost{" "}

@@ -11,7 +11,7 @@ export function GroupLeaderboard({
   preview = false,
   currentUserId,
   revealAll = false,
-  title = "Current standings",
+  title = "Fantasy standings",
 }: {
   rows: LeaderboardRow[];
   tournament: Tournament;
@@ -41,7 +41,7 @@ export function GroupLeaderboard({
       </div>
       {preview ? (
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <p className="sport-label">Standings</p>
+          <p className="sport-label">Fantasy standings</p>
           <Link
             href={`/tournaments/${tournament.id}/leaderboard`}
             className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
@@ -52,7 +52,7 @@ export function GroupLeaderboard({
       ) : null}
       <div className="grid grid-cols-[3.5rem_1fr_4.5rem_3.5rem] gap-2 border-b border-border bg-[var(--rough)] px-3 py-2 text-[10px] font-black uppercase text-muted">
         <span>Pos</span>
-        <span>Team</span>
+        <span>Fantasy team</span>
         <span className="text-right">Best 3 of 4</span>
         <span className="text-right">Pts</span>
       </div>

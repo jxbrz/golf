@@ -49,7 +49,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                   <p className="text-sm font-bold uppercase text-muted">
                     {tournament.name} {tournament.year}
                   </p>
-                  <h1 className="text-2xl font-black">Current standings</h1>
+                  <h1 className="text-2xl font-black">Fantasy standings</h1>
                   <p className="mt-1 text-sm text-muted">
                     Tap a name to see the golfers counting for that team.
                   </p>
@@ -58,13 +58,13 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                       href={`/tournaments/${tournament.id}/leaderboard`}
                       className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
                     >
-                      Current Standings
+                      Fantasy Standings
                     </Link>
                     <Link
                       href={`/tournaments/${tournament.id}/players`}
                       className="rounded-md border border-border bg-white px-3 py-2 text-sm font-black text-primary"
                     >
-                      Field Leaderboard
+                      Tournament Field
                     </Link>
                   </div>
                 </div>
@@ -76,7 +76,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 tournament={tournament}
                 currentUserId={user.id}
                 revealAll={user.role === "admin"}
-                title="Current standings"
+                title="Fantasy standings"
               />
               <div className="space-y-4">
                 <EntryTeamCard entry={entry} tournament={tournament} />
@@ -102,12 +102,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                 tournament={tournament}
                 currentUserId={user.id}
                 revealAll={user.role === "admin"}
-                title="Current standings"
+                title="Fantasy standings"
               />
               <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
                 <h2 className="text-lg font-black">No team submitted</h2>
                 <p className="mt-1 text-sm text-muted">
-                  Pick 4 golfers before the deadline to join the standings.
+                  Pick 4 golfers before the deadline to join the fantasy standings.
                 </p>
                 <Link
                   href={`/tournaments/${tournament.id}/pick`}
@@ -119,7 +119,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
                   href={`/tournaments/${tournament.id}/players`}
                   className="ml-2 mt-4 inline-flex rounded-md border border-border bg-white px-4 py-3 font-black text-primary"
                 >
-                  Field Leaderboard
+                  Tournament Field
                 </Link>
               </section>
             </main>

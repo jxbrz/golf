@@ -13,6 +13,9 @@ export function EntryTeamCard({ entry, tournament }: { entry: EntryWithDetails; 
       ? calculateFinalEntryScore(entry)
       : calculateLiveEntryScore(entry, tournament);
   const displayScore = calculatedScore ?? entry.liveScore;
+  const droppedCount = entry.picks.filter((pick) => pick.isDropped).length;
+  const activeCount = entry.picks.length - droppedCount;
+  const dropRequired = entry.status === "drop_required";
 
   return (
     <section className="app-panel p-4">
@@ -27,6 +30,17 @@ export function EntryTeamCard({ entry, tournament }: { entry: EntryWithDetails; 
           <span className="font-mono text-xl font-black metric-number">
             {formatScoreOrLabel(displayScore, "No score yet")}
           </span>
+        </span>
+      </div>
+      <div className="mb-2 grid grid-cols-3 gap-2 text-center text-xs font-black uppercase">
+        <span className="rounded-md bg-emerald-50 px-2 py-2 text-emerald-900">
+          {activeCount} active
+        </span>
+        <span className="rounded-md bg-amber-50 px-2 py-2 text-amber-900">
+          {droppedCount} dropped
+        </span>
+        <span className={dropRequired ? "rounded-md bg-rose-50 px-2 py-2 text-rose-900" : "rounded-md bg-slate-50 px-2 py-2 text-muted"}>
+          {dropRequired ? "drop required" : "drop clear"}
         </span>
       </div>
       {entry.picks.map((pick) => (

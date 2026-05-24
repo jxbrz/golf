@@ -5,7 +5,7 @@ import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { PickBuilder } from "@/components/picks/PickBuilder";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
-import { getDbEntry } from "@/lib/db-data/entries";
+import { canSubmitDbPicksForCompetitionStatus, getActiveDbGroupCompetition, getDbEntry } from "@/lib/db-data/entries";
 import {
   canSubmitPicks,
   getEntry,
@@ -20,10 +20,16 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   if (!tournament) notFound();
 
   const user = await requireCurrentUser();
-  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
-  const locked = !canSubmitPicks(tournament);
+  const [dbEntry, dbCompetition] = await Promise.all([
+    getDbEntry(tournament.id, user.id),
+    getActiveDbGroupCompetition(tournament.id),
+  ]);
+  const entry = dbEntry ?? getEntry(tournament.id, user.id);
+  const dbCanEdit = dbCompetition ? canSubmitDbPicksForCompetitionStatus(dbCompetition.status) : null;
+  const locked = dbCanEdit === null ? !canSubmitPicks(tournament) : !dbCanEdit;
   const initialSelectedIds = entry?.picks.map((pick) => pick.tournamentGolfer.id) ?? [];
   const needsDrop = entry?.status === "drop_required";
+  const droppedPick = entry?.picks.find((pick) => pick.isDropped);
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -36,17 +42,43 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
         rightSlot={<HeaderInfoButton />}
       >
         <main className="space-y-4">
+          <section className={`rounded-lg border p-3 text-sm font-black ${
+            locked
+              ? "border-amber-200 bg-amber-50 text-amber-950"
+              : "border-emerald-200 bg-emerald-50 text-emerald-950"
+          }`}>
+            {locked
+              ? "Picks are locked. Team edits are disabled."
+              : entry
+                ? "Picks are open. You can edit and resubmit before lock."
+                : "Picks are open. Build your 4-player team before lock."}
+          </section>
           {entry ? <EntryTeamCard entry={entry} tournament={tournament} /> : null}
           {needsDrop ? <DropSection entry={entry} tournamentId={tournament.id} /> : null}
-          <PickBuilder
-            tournamentId={tournament.id}
-            golfers={getTournamentGolfers(tournament.id)}
-            locked={locked}
-            initialSelectedIds={initialSelectedIds}
-          />
+          {!needsDrop && droppedPick ? <DropAppliedSection pickName={droppedPick.tournamentGolfer.golfer.name} /> : null}
+          {!locked || !entry ? (
+            <PickBuilder
+              tournamentId={tournament.id}
+              golfers={getTournamentGolfers(tournament.id)}
+              locked={locked}
+              initialSelectedIds={initialSelectedIds}
+            />
+          ) : null}
         </main>
       </AppShell>
     </MajorThemeProvider>
+  );
+}
+
+function DropAppliedSection({ pickName }: { pickName: string }) {
+  return (
+    <section className="app-panel p-4">
+      <p className="sport-label">Drop applied</p>
+      <h2 className="mt-1 text-xl font-black">{pickName} is dropped</h2>
+      <p className="mt-2 text-sm font-semibold text-muted">
+        Your remaining active golfers are the ones counting for the weekend. If no manual drop was made before round 3, the app applies the worst-scoring eligible drop automatically.
+      </p>
+    </section>
   );
 }
 

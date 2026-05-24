@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  competitionRuleSets,
   entries,
   entryPicks,
   golferRoundScores,
@@ -9,6 +10,7 @@ import {
 } from "@/db/schema";
 import {
   canSubmitDbPicksForCompetitionStatus,
+  getDbHybridStatus,
   lockDbPicks,
   resetDbTournamentEntries,
   submitDbEntry,
@@ -174,6 +176,19 @@ describe("DB-backed entry lock behaviour", () => {
     });
   });
 
+  it("reports hybrid DB status, fixture score presence, and active rule set", async () => {
+    db.seedCompetition("round_4_loaded");
+    await writeDbFixtureRoundScores("t_pga_2026", 1);
+    await writeDbFixtureRoundScores("t_pga_2026", 4);
+
+    const status = await getDbHybridStatus("t_pga_2026");
+
+    expect(status?.competition.id).toBe("competition_t_pga_2026");
+    expect(status?.competition.status).toBe("round_4_loaded");
+    expect(status?.ruleSet?.name).toBe("Major Picks Default");
+    expect(status?.scoreRounds).toEqual({ 1: 5, 2: 0, 3: 0, 4: 5 });
+  });
+
   it("writes round 2 fixture scores to golfer_round_scores", async () => {
     db.seedCompetition("round_1_loaded");
 
@@ -284,6 +299,7 @@ function roundScore(tournamentGolferId: string, roundNumber: number) {
 
 function createFakeDb() {
   type CompetitionStatus = typeof groupCompetitions.$inferSelect.status;
+  type CompetitionRuleSetRow = typeof competitionRuleSets.$inferSelect;
   type TournamentRow = typeof tournaments.$inferSelect;
   type GroupCompetitionRow = typeof groupCompetitions.$inferSelect;
   type TournamentGolferRow = typeof tournamentGolfers.$inferSelect;
@@ -294,6 +310,7 @@ function createFakeDb() {
   const state: {
     tournaments: TournamentRow[];
     groupCompetitions: GroupCompetitionRow[];
+    competitionRuleSets: CompetitionRuleSetRow[];
     tournamentGolfers: TournamentGolferRow[];
     golferRoundScores: GolferRoundScoreRow[];
     entries: EntryRow[];
@@ -301,6 +318,7 @@ function createFakeDb() {
   } = {
     tournaments: [],
     groupCompetitions: [],
+    competitionRuleSets: [],
     tournamentGolfers: [],
     golferRoundScores: [],
     entries: [],
@@ -310,6 +328,7 @@ function createFakeDb() {
   const rowsFor = (table: unknown) => {
     if (table === tournaments) return state.tournaments;
     if (table === groupCompetitions) return state.groupCompetitions;
+    if (table === competitionRuleSets) return state.competitionRuleSets;
     if (table === tournamentGolfers) return state.tournamentGolfers;
     if (table === golferRoundScores) return state.golferRoundScores;
     if (table === entries) return state.entries;
@@ -322,6 +341,7 @@ function createFakeDb() {
     reset() {
       state.tournaments = [];
       state.groupCompetitions = [];
+      state.competitionRuleSets = [];
       state.tournamentGolfers = [];
       state.golferRoundScores = [];
       state.entries = [];
@@ -366,6 +386,23 @@ function createFakeDb() {
             },
           ]
         : [];
+      state.competitionRuleSets = [
+        {
+          id: "rule_set_major_picks_default",
+          organisationId: "org_default",
+          name: "Major Picks Default",
+          pickCount: 4,
+          budgetPoints: 90,
+          requiredMadeCutCount: 3,
+          maxActiveAfterCut: 3,
+          lockPolicy: "manual_or_deadline",
+          dropPolicy: "manual_then_auto_worst_before_round_3",
+          lowestRoundEnabled: true,
+          countbackPolicy: { order: ["back_9", "back_6", "back_3"] },
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        },
+      ];
       state.tournamentGolfers = [
         ["tg_g51", "g51", 5],
         ["tg_g52", "g52", 4],

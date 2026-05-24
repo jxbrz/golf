@@ -19,7 +19,7 @@ export default async function PlayersLeaderboardPage({
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const fieldIsLive = !["draft", "picks_open", "picks_locked"].includes(tournament.status);
-  const title = tournament.status === "final" ? "Field results" : "Field leaderboard";
+  const title = tournament.status === "final" ? "Tournament field results" : "Tournament field leaderboard";
   const field = getFieldLeaderboard(tournament.id);
   const allGolfers = getTournamentGolfers(tournament.id);
   const theme = majorThemes[tournament.majorKey];
@@ -55,7 +55,7 @@ export default async function PlayersLeaderboardPage({
                 href={`/tournaments/${tournament.id}/leaderboard`}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-white px-3 text-sm font-black text-primary"
               >
-                Standings <ArrowRight size={16} />
+                Fantasy standings <ArrowRight size={16} />
               </Link>
             </div>
             <div className="grid grid-cols-3 border-t border-white/10 text-center">
@@ -95,7 +95,7 @@ function FieldPendingState({
       <span className="mx-auto flex size-12 items-center justify-center rounded-md bg-[var(--rough)] text-primary">
         <CalendarClock size={24} />
       </span>
-      <h2 className="mt-4 text-2xl font-black">Field leaderboard opens after round 1 starts</h2>
+      <h2 className="mt-4 text-2xl font-black">Tournament field leaderboard opens after round 1 starts</h2>
       <p className="mx-auto mt-2 max-w-xl text-sm font-semibold text-muted">
         {tournamentName} {year} scores are hidden until the first round is underway.
       </p>

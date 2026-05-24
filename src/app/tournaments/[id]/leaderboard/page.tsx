@@ -36,7 +36,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
     <MajorThemeProvider majorKey={tournament.majorKey}>
       <AppShell
         tournament={tournament}
-        screenTitle="Standings"
+        screenTitle="Fantasy Standings"
         screenSubtitle={stage.label}
         backHref="/"
         activeNav="standings"
@@ -66,7 +66,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
             </div>
           </section>
           <div className="mock-tabs">
-            <Link href="#standings-board" className="active">Overall</Link>
+            <Link href="#standings-board" className="active">Fantasy standings</Link>
             <Link href={userRank ? `#entry-${user.id}` : "#standings-board"}>
               <LocateFixed size={14} /> My Position{userRank ? ` #${userRank}` : ""}
             </Link>
@@ -80,7 +80,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
               tournament={tournament}
               currentUserId={user.id}
               revealAll={user.role === "admin"}
-              title="Current standings"
+              title="Fantasy standings"
             />
           </div>
           {entry ? <YourTeamPanel entry={entry} tournament={tournament} /> : null}

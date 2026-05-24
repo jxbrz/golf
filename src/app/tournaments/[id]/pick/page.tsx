@@ -5,7 +5,7 @@ import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { PickBuilder } from "@/components/picks/PickBuilder";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
-import { getDbEntry } from "@/lib/db-data/entries";
+import { canSubmitDbPicksForCompetitionStatus, getActiveDbGroupCompetition, getDbEntry } from "@/lib/db-data/entries";
 import { canSubmitPicks, getEntry, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
 
 export default async function PickPage({
@@ -23,8 +23,14 @@ export default async function PickPage({
   if (tournament.status === "final" && user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/results`);
   }
-  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
-  const locked = Boolean(entry?.submittedAt) || !canSubmitPicks(tournament);
+  const [dbEntry, dbCompetition] = await Promise.all([
+    getDbEntry(tournament.id, user.id),
+    getActiveDbGroupCompetition(tournament.id),
+  ]);
+  const entry = dbEntry ?? getEntry(tournament.id, user.id);
+  const dbCanEdit = dbCompetition ? canSubmitDbPicksForCompetitionStatus(dbCompetition.status) : null;
+  const locked = dbCanEdit === null ? !canSubmitPicks(tournament) : !dbCanEdit;
+  const initialSelectedIds = entry?.picks.map((pick) => pick.tournamentGolfer.id) ?? [];
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -42,7 +48,18 @@ export default async function PickPage({
               {error}
             </section>
           ) : null}
-          {entry?.submittedAt ? (
+          <section className={`rounded-lg border p-3 text-sm font-black ${
+            locked
+              ? "border-amber-200 bg-amber-50 text-amber-950"
+              : "border-emerald-200 bg-emerald-50 text-emerald-950"
+          }`}>
+            {locked
+              ? "Picks are locked. You can review your saved team, but edits are disabled."
+              : entry?.submittedAt
+                ? "Picks are open. You can still edit and resubmit this team."
+                : "Picks are open. Submit 4 golfers within the 90 point budget."}
+          </section>
+          {entry?.submittedAt && locked ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_18rem]">
               <EntryTeamCard entry={entry} tournament={tournament} />
               <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
@@ -65,6 +82,7 @@ export default async function PickPage({
               tournamentId={tournament.id}
               golfers={getTournamentGolfers(tournament.id)}
               locked={locked}
+              initialSelectedIds={initialSelectedIds}
             />
           )}
         </main>
