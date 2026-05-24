@@ -8,6 +8,12 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "player"]);
+export const organisationRoleEnum = pgEnum("organisation_role", [
+  "owner",
+  "admin",
+  "member",
+]);
+export const groupRoleEnum = pgEnum("group_role", ["admin", "player"]);
 export const majorKeyEnum = pgEnum("major_key", [
   "masters",
   "pga",
@@ -47,11 +53,43 @@ const timestamps = {
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 };
 
+export const organisations = pgTable("organisations", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  billingEmail: text("billing_email"),
+  ...timestamps,
+});
+
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   role: userRoleEnum("role").notNull().default("player"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const organisationMembers = pgTable("organisation_members", {
+  id: text("id").primaryKey(),
+  organisationId: text("organisation_id").notNull().references(() => organisations.id),
+  userId: text("user_id").notNull().references(() => users.id),
+  role: organisationRoleEnum("role").notNull().default("member"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const groups = pgTable("groups", {
+  id: text("id").primaryKey(),
+  organisationId: text("organisation_id").notNull().references(() => organisations.id),
+  name: text("name").notNull(),
+  slug: text("slug").notNull(),
+  ...timestamps,
+});
+
+export const groupMembers = pgTable("group_members", {
+  id: text("id").primaryKey(),
+  groupId: text("group_id").notNull().references(() => groups.id),
+  userId: text("user_id").notNull().references(() => users.id),
+  role: groupRoleEnum("role").notNull().default("player"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -67,6 +105,17 @@ export const tournaments = pgTable("tournaments", {
   dropDeadline: timestamp("drop_deadline", { withTimezone: true }).notNull(),
   status: tournamentStatusEnum("status").notNull().default("draft"),
   providerTournamentId: text("provider_tournament_id").notNull(),
+  ...timestamps,
+});
+
+export const groupCompetitions = pgTable("group_competitions", {
+  id: text("id").primaryKey(),
+  groupId: text("group_id").notNull().references(() => groups.id),
+  tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
+  name: text("name").notNull(),
+  status: tournamentStatusEnum("status").notNull().default("picks_open"),
+  rosterSize: integer("roster_size").notNull().default(4),
+  budget: integer("budget").notNull().default(90),
   ...timestamps,
 });
 
@@ -110,6 +159,7 @@ export const golferRoundScores = pgTable("golfer_round_scores", {
 
 export const entries = pgTable("entries", {
   id: text("id").primaryKey(),
+  groupCompetitionId: text("group_competition_id").references(() => groupCompetitions.id),
   tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
   userId: text("user_id").notNull().references(() => users.id),
   status: entryStatusEnum("status").notNull().default("draft"),

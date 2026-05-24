@@ -5,6 +5,11 @@ import {
   entries,
   golferRoundScores,
   golfers,
+  groupCompetitions,
+  groupMembers,
+  groups,
+  organisationMembers,
+  organisations,
   tournaments,
   tournamentGolfers,
   users,
@@ -18,6 +23,23 @@ function asDate(value: string | null) {
 
 async function seed() {
   const db = getDb();
+  const timestamp = new Date();
+  const defaultOrganisation = {
+    id: "org_default",
+    name: "Default Organisation",
+    slug: "default",
+    billingEmail: null,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  const defaultGroup = {
+    id: "group_default",
+    organisationId: defaultOrganisation.id,
+    name: "Default Group",
+    slug: "default",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
 
   await db
     .insert(users)
@@ -25,6 +47,36 @@ async function seed() {
       store.users.map((user) => ({
         ...user,
         createdAt: asDate(user.createdAt)!,
+      })),
+    )
+    .onConflictDoNothing();
+
+  await db.insert(organisations).values(defaultOrganisation).onConflictDoNothing();
+
+  await db
+    .insert(organisationMembers)
+    .values(
+      store.users.map((user) => ({
+        id: `org_member_${user.id}`,
+        organisationId: defaultOrganisation.id,
+        userId: user.id,
+        role: user.role === "admin" ? ("owner" as const) : ("member" as const),
+        createdAt: timestamp,
+      })),
+    )
+    .onConflictDoNothing();
+
+  await db.insert(groups).values(defaultGroup).onConflictDoNothing();
+
+  await db
+    .insert(groupMembers)
+    .values(
+      store.users.map((user) => ({
+        id: `group_member_${user.id}`,
+        groupId: defaultGroup.id,
+        userId: user.id,
+        role: user.role === "admin" ? ("admin" as const) : ("player" as const),
+        createdAt: timestamp,
       })),
     )
     .onConflictDoNothing();
@@ -38,6 +90,23 @@ async function seed() {
         endDate: asDate(tournament.endDate)!,
         pickDeadline: asDate(tournament.pickDeadline)!,
         dropDeadline: asDate(tournament.dropDeadline)!,
+        createdAt: asDate(tournament.createdAt)!,
+        updatedAt: asDate(tournament.updatedAt)!,
+      })),
+    )
+    .onConflictDoNothing();
+
+  await db
+    .insert(groupCompetitions)
+    .values(
+      store.tournaments.map((tournament) => ({
+        id: `competition_${tournament.id}`,
+        groupId: defaultGroup.id,
+        tournamentId: tournament.id,
+        name: `${defaultGroup.name} - ${tournament.name} ${tournament.year}`,
+        status: tournament.status,
+        rosterSize: 4,
+        budget: 90,
         createdAt: asDate(tournament.createdAt)!,
         updatedAt: asDate(tournament.updatedAt)!,
       })),
@@ -85,6 +154,7 @@ async function seed() {
       .values(
         store.entries.map((entry) => ({
           ...entry,
+          groupCompetitionId: `competition_${entry.tournamentId}`,
           submittedAt: asDate(entry.submittedAt),
           createdAt: asDate(entry.createdAt)!,
           updatedAt: asDate(entry.updatedAt)!,

@@ -5,12 +5,14 @@ import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { PickBuilder } from "@/components/picks/PickBuilder";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
+import { getDbEntry } from "@/lib/db-data/entries";
 import {
   canSubmitPicks,
   getEntry,
   getTournament,
   getTournamentGolfers,
 } from "@/lib/mock-data/store";
+import type { EntryWithDetails } from "@/lib/types";
 
 export default async function TeamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,7 +20,7 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
   if (!tournament) notFound();
 
   const user = await requireCurrentUser();
-  const entry = getEntry(tournament.id, user.id);
+  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   const locked = !canSubmitPicks(tournament);
   const initialSelectedIds = entry?.picks.map((pick) => pick.tournamentGolfer.id) ?? [];
   const needsDrop = entry?.status === "drop_required";
@@ -52,7 +54,7 @@ function DropSection({
   entry,
   tournamentId,
 }: {
-  entry: NonNullable<ReturnType<typeof getEntry>>;
+  entry: EntryWithDetails;
   tournamentId: string;
 }) {
   const dropOptions = entry.picks.filter(

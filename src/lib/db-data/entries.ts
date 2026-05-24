@@ -6,12 +6,13 @@ import {
   adminTeamCorrections,
   entries,
   entryPicks,
+  golferRoundScores,
   golfers,
   tournamentGolfers,
   tournaments,
   users,
 } from "@/db/schema";
-import { getStore, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
+import { getTournament } from "@/lib/mock-data/store";
 import {
   calculateCutStatus,
   calculateGroupLeaderboard,
@@ -29,6 +30,9 @@ import type {
   TournamentGolfer,
   User,
 } from "@/lib/types";
+
+type DbGolferRow = typeof golfers.$inferSelect;
+type DbGolferRoundScoreRow = typeof golferRoundScores.$inferSelect;
 
 function toIso(value: Date | string | null) {
   if (!value) return null;
@@ -83,6 +87,28 @@ function asEntry(row: typeof entries.$inferSelect): Entry {
 function asEntryPick(row: typeof entryPicks.$inferSelect): EntryPick {
   return {
     ...row,
+    createdAt: toIso(row.createdAt)!,
+    updatedAt: toIso(row.updatedAt)!,
+  };
+}
+
+function parseHoleScores(value: string | null) {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) && parsed.every((score) => typeof score === "number")
+      ? parsed
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function asGolferRoundScore(row: typeof golferRoundScores.$inferSelect): GolferRoundScore {
+  return {
+    ...row,
+    roundNumber: row.roundNumber as 1 | 2 | 3 | 4,
+    holeScores: parseHoleScores(row.holeScores),
     createdAt: toIso(row.createdAt)!,
     updatedAt: toIso(row.updatedAt)!,
   };
@@ -157,14 +183,12 @@ export async function getDbEntriesWithDetails(tournamentId: string): Promise<Ent
       : [];
 
     const userById = new Map(userRows.map((user) => [user.id, asUser(user)]));
-    const mockTournamentGolferById = new Map(getTournamentGolfers(tournamentId).map((golfer) => [golfer.id, golfer]));
     const golferById = new Map(golferRows.map((golfer) => [golfer.id, asGolfer(golfer)]));
     const tournamentGolferById = new Map(
       tournamentGolferRows.map((row) => {
-        const mockGolfer = mockTournamentGolferById.get(row.id);
         return [
           row.id,
-          mockGolfer ?? {
+          {
             ...asTournamentGolfer(row),
             golfer: golferById.get(row.golferId)!,
           },
@@ -240,12 +264,35 @@ export async function getDbLowestRoundSummary(tournamentId: string): Promise<Low
   const entriesWithDetails = await getDbEntriesWithDetails(tournamentId);
   if (entriesWithDetails.length === 0) return null;
 
-  const store = getStore();
-  const golferLookup = getTournamentGolfers(tournamentId);
+  const db = getDb();
+  const tournamentGolferRows = await db
+    .select()
+    .from(tournamentGolfers)
+    .where(eq(tournamentGolfers.tournamentId, tournamentId));
+  let golferRows: DbGolferRow[] = [];
+  if (tournamentGolferRows.length) {
+    golferRows = (await db
+        .select()
+        .from(golfers)
+        .where(inArray(golfers.id, tournamentGolferRows.map((row) => row.golferId)))) as DbGolferRow[];
+  }
+  let roundRows: DbGolferRoundScoreRow[] = [];
+  if (tournamentGolferRows.length) {
+    roundRows = (await db
+        .select()
+        .from(golferRoundScores)
+        .where(inArray(golferRoundScores.tournamentGolferId, tournamentGolferRows.map((row) => row.id)))) as DbGolferRoundScoreRow[];
+  }
+  const golferById = new Map(golferRows.map((golfer) => [golfer.id, asGolfer(golfer)]));
+  const golferLookup = tournamentGolferRows.map((row) => ({
+    ...asTournamentGolfer(row),
+    golfer: golferById.get(row.golferId)!,
+  }));
   const pickedGolferIds = new Set(
     entriesWithDetails.flatMap((entry) => entry.picks.map((pick) => pick.tournamentGolferId)),
   );
-  const rounds = store.golferRoundScores
+  const rounds = roundRows
+    .map(asGolferRoundScore)
     .filter((round) => round.scoreToPar !== null)
     .filter((round) => pickedGolferIds.has(round.tournamentGolferId))
     .filter((round) =>
@@ -268,7 +315,7 @@ export async function getDbLowestRoundSummary(tournamentId: string): Promise<Low
     (round) => round.scoreToPar === bestScore && compareCountback(round.holeScores, bestRound.holeScores) === 0,
   );
   const bestGolferIds = new Set(bestRounds.map((round) => round.tournamentGolferId));
-  const golfers = golferLookup.filter((golfer) => bestGolferIds.has(golfer.id));
+  const winningGolfers = golferLookup.filter((golfer) => bestGolferIds.has(golfer.id));
   const pickedUserIds = new Set(
     entriesWithDetails
       .filter((entry) => entry.picks.some((pick) => bestGolferIds.has(pick.tournamentGolferId)))
@@ -278,7 +325,7 @@ export async function getDbLowestRoundSummary(tournamentId: string): Promise<Low
   return {
     scoreToPar: bestScore,
     roundNumber: bestRound.roundNumber ?? null,
-    golfers,
+    golfers: winningGolfers,
     pickedBy: entriesWithDetails.map((entry) => entry.user).filter((user) => pickedUserIds.has(user.id)),
     countback: bestRounds.length === 1 ? countbackWinnerLabel(rounds, bestRound) : null,
   };
@@ -299,10 +346,6 @@ export async function submitDbEntry(
     .from(entries)
     .where(and(eq(entries.tournamentId, tournamentId), eq(entries.userId, userId)))
     .limit(1);
-
-  if (existing?.submittedAt) {
-    return { ok: false, message: "Your team has already been submitted and cannot be changed." };
-  }
 
   if (!["draft", "picks_open"].includes(tournament.status)) {
     return { ok: false, message: "Picks are closed for this tournament." };
@@ -351,7 +394,7 @@ export async function submitDbEntry(
       .set({
         status: entryValues.status,
         totalPoints: entryValues.totalPoints,
-        submittedAt: timestamp,
+        submittedAt: existing.submittedAt ?? timestamp,
         updatedAt: timestamp,
       })
       .where(eq(entries.id, existing.id));
@@ -373,7 +416,7 @@ export async function submitDbEntry(
     })),
   );
 
-  return { ok: true, message: "Team submitted. It is now locked." };
+  return { ok: true, message: existing ? "Team updated." : "Team submitted." };
 }
 
 export async function adminUpsertDbEntryPicks(input: {
@@ -519,7 +562,7 @@ function golferNameForRound(
 
 function compareCountback(a?: number[] | null, b?: number[] | null) {
   if (!a?.length || !b?.length) return 0;
-  for (const holes of [3, 6, 9, 18]) {
+  for (const holes of [9, 6, 3]) {
     const difference = countbackScore(a, holes) - countbackScore(b, holes);
     if (difference !== 0) return difference;
   }
@@ -530,7 +573,7 @@ function countbackWinnerLabel(rounds: GolferRoundScore[], winner: GolferRoundSco
   const tiedRounds = rounds.filter((round) => round.scoreToPar === winner.scoreToPar);
   if (tiedRounds.length < 2 || !winner.holeScores?.length) return null;
 
-  for (const holes of [3, 6, 9, 18] as const) {
+  for (const holes of [9, 6, 3] as const) {
     const winnerScore = countbackScore(winner.holeScores, holes);
     if (
       tiedRounds.every((round) => {

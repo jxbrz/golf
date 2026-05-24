@@ -5,7 +5,9 @@ import { redirect } from "next/navigation";
 import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
 import {
   adminUpsertDbEntryPicks,
+  dropDbPlayer,
   resetDbTournamentEntries,
+  submitDbEntry,
 } from "@/lib/db-data/entries";
 import {
   advanceWeekendStep,
@@ -32,9 +34,11 @@ export async function submitEntryAction(formData: FormData) {
   const pickIds = String(formData.get("pickIds"))
     .split(",")
     .filter(Boolean);
-  const mockResult = submitEntry(tournamentId, user.id, pickIds);
-  if (!mockResult.ok) {
-    redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(mockResult.message)}`);
+  const result =
+    (await tryDb(() => submitDbEntry(tournamentId, user.id, pickIds))) ??
+    submitEntry(tournamentId, user.id, pickIds);
+  if (!result.ok) {
+    redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(result.message)}`);
   }
   revalidatePath("/");
   revalidatePath(`/tournaments/${tournamentId}`);
@@ -47,7 +51,12 @@ export async function submitEntryAction(formData: FormData) {
 export async function dropPlayerAction(formData: FormData) {
   await requireCurrentUser();
   const tournamentId = String(formData.get("tournamentId"));
-  dropPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
+  const result =
+    (await tryDb(() => dropDbPlayer(String(formData.get("entryId")), String(formData.get("pickId"))))) ??
+    dropPlayer(String(formData.get("entryId")), String(formData.get("pickId")));
+  if (!result.ok) {
+    redirect(`/tournaments/${tournamentId}/team?error=${encodeURIComponent(result.message)}#drop`);
+  }
   revalidatePath("/");
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}/team`);
@@ -238,4 +247,13 @@ export async function loginAction(formData: FormData) {
 export async function logoutAction() {
   await clearSession();
   redirect("/login");
+}
+
+async function tryDb<T>(operation: () => Promise<T | null>) {
+  try {
+    return await operation();
+  } catch (error) {
+    console.warn("Database operation failed. Falling back to mock store.", error);
+    return null;
+  }
 }
