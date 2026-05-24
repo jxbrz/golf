@@ -19,6 +19,7 @@ import {
   finaliseTournamentAction,
   processCutAction,
   recalculateAction,
+  resetTournamentToNoPicksAction,
   syncScoresAction,
   updateTournamentStatusAction,
 } from "@/app/actions";
@@ -58,10 +59,10 @@ export default async function AdminTournamentPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ odds?: string }>;
+  searchParams: Promise<{ odds?: string; reset?: string }>;
 }) {
   const { id } = await params;
-  const { odds } = await searchParams;
+  const { odds, reset } = await searchParams;
   await requireAdminUser();
 
   const tournament = getTournament(id);
@@ -189,6 +190,12 @@ export default async function AdminTournamentPage({
             </p>
           ) : null}
 
+          {reset === "no-picks" ? (
+            <p className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm font-black text-emerald-900 scorecard-shadow">
+              Test reset complete. No picks have been submitted and the game is back to picks open.
+            </p>
+          ) : null}
+
           {odds === "error" ? (
             <p className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm font-black text-rose-900 scorecard-shadow">
               Odds pricing could not be applied. Preview the odds to see the provider error.
@@ -233,6 +240,18 @@ export default async function AdminTournamentPage({
                 <AdminButton action={recalculateAction} tournamentId={tournament.id} label="Recalculate" />
                 <AdminButton action={finaliseTournamentAction} tournamentId={tournament.id} label="Finalise" />
               </div>
+            </section>
+            <section className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4">
+              <h2 className="text-lg font-black text-amber-950">Testing reset</h2>
+              <p className="mt-1 text-sm font-semibold leading-6 text-amber-900">
+                Clears submitted teams, score logs, score overrides, and returns the game to picks open.
+              </p>
+              <form action={resetTournamentToNoPicksAction} className="mt-4">
+                <input type="hidden" name="tournamentId" value={tournament.id} />
+                <button className="rounded-md bg-amber-500 px-4 py-3 text-sm font-black uppercase text-amber-950 shadow-sm">
+                  Reset to no picks
+                </button>
+              </form>
             </section>
           </details>
 

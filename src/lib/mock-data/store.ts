@@ -721,6 +721,48 @@ export function updateTournamentStatus(tournamentId: string, status: TournamentS
   persistStore(store);
 }
 
+export function resetTournamentToNoPicks(tournamentId: string) {
+  const store = getStore();
+  const timestamp = nowIso();
+  const tournament = mustFind(store.tournaments, tournamentId, "Tournament");
+  const tournamentGolferIds = new Set(
+    store.tournamentGolfers
+      .filter((golfer) => golfer.tournamentId === tournamentId)
+      .map((golfer) => golfer.id),
+  );
+  const entryIds = new Set(
+    store.entries.filter((entry) => entry.tournamentId === tournamentId).map((entry) => entry.id),
+  );
+
+  tournament.status = "picks_open";
+  tournament.updatedAt = timestamp;
+  store.entries = store.entries.filter((entry) => entry.tournamentId !== tournamentId);
+  store.entryPicks = store.entryPicks.filter((pick) => !entryIds.has(pick.entryId));
+  store.adminTeamCorrections = store.adminTeamCorrections.filter(
+    (correction) => !entryIds.has(correction.entryId),
+  );
+  store.adminOverrides = store.adminOverrides.filter(
+    (override) => !tournamentGolferIds.has(override.tournamentGolferId),
+  );
+  store.scoreSyncLogs = store.scoreSyncLogs.filter((log) => log.tournamentId !== tournamentId);
+
+  for (const golfer of store.tournamentGolfers.filter((item) => item.tournamentId === tournamentId)) {
+    golfer.position = null;
+    golfer.totalScore = null;
+    golfer.todayScore = null;
+    golfer.round = null;
+    golfer.thru = null;
+    golfer.madeCut = null;
+    golfer.status = "active";
+    golfer.lastSyncedAt = null;
+    golfer.updatedAt = timestamp;
+  }
+
+  store.golferRoundScores = buildRoundScores(store.tournamentGolfers, timestamp);
+  recalculateTournament(tournamentId);
+  persistStore(store);
+}
+
 export function processCut(tournamentId: string) {
   applyMockCutResults(tournamentId);
   const store = getStore();

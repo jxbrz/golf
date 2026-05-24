@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
-import { adminUpsertDbEntryPicks, dropDbPlayer, submitDbEntry } from "@/lib/db-data/entries";
+import {
+  adminUpsertDbEntryPicks,
+  dropDbPlayer,
+  resetDbTournamentEntries,
+  submitDbEntry,
+} from "@/lib/db-data/entries";
 import {
   advanceWeekendStep,
   advanceWeekendStepFromProvider,
@@ -15,6 +20,7 @@ import {
   importScoresFromCsv,
   processCut,
   recalculateTournament,
+  resetTournamentToNoPicks,
   submitEntry,
   syncProviderLeaderboard,
   updateGolferScore,
@@ -66,6 +72,24 @@ export async function updateTournamentStatusAction(formData: FormData) {
   revalidatePath(`/tournaments/${tournamentId}/drop`);
   revalidatePath(`/tournaments/${tournamentId}/results`);
   redirect(`/admin/tournaments/${tournamentId}`);
+}
+
+export async function resetTournamentToNoPicksAction(formData: FormData) {
+  await requireAdminUser();
+  const tournamentId = String(formData.get("tournamentId"));
+  await resetDbTournamentEntries(tournamentId);
+  resetTournamentToNoPicks(tournamentId);
+  revalidatePath("/");
+  revalidatePath("/admin");
+  revalidatePath(`/admin/tournaments/${tournamentId}`);
+  revalidatePath(`/admin/tournaments/${tournamentId}/entries`);
+  revalidatePath(`/admin/tournaments/${tournamentId}/scores`);
+  revalidatePath(`/tournaments/${tournamentId}`);
+  revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
+  revalidatePath(`/tournaments/${tournamentId}/pick`);
+  revalidatePath(`/tournaments/${tournamentId}/players`);
+  revalidatePath(`/tournaments/${tournamentId}/results`);
+  redirect(`/admin/tournaments/${tournamentId}?reset=no-picks`);
 }
 
 export async function processCutAction(formData: FormData) {

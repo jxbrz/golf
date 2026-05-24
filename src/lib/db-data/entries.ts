@@ -99,6 +99,30 @@ export async function getDbTournament(tournamentId: string) {
   return row ? asTournament(row) : null;
 }
 
+export async function resetDbTournamentEntries(tournamentId: string) {
+  if (!process.env.DATABASE_URL) return false;
+
+  const db = getDb();
+  const entryRows = await db
+    .select({ id: entries.id })
+    .from(entries)
+    .where(eq(entries.tournamentId, tournamentId));
+  const entryIds = entryRows.map((entry) => entry.id);
+
+  if (entryIds.length > 0) {
+    await db.delete(adminTeamCorrections).where(inArray(adminTeamCorrections.entryId, entryIds));
+    await db.delete(entryPicks).where(inArray(entryPicks.entryId, entryIds));
+    await db.delete(entries).where(inArray(entries.id, entryIds));
+  }
+
+  await db
+    .update(tournaments)
+    .set({ status: "picks_open", updatedAt: new Date() })
+    .where(eq(tournaments.id, tournamentId));
+
+  return true;
+}
+
 export async function getDbEntriesWithDetails(tournamentId: string): Promise<EntryWithDetails[]> {
   if (!process.env.DATABASE_URL) return [];
 
