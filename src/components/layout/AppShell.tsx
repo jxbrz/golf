@@ -46,24 +46,25 @@ export async function AppShell({
   const teamNavLabel = entry?.submittedAt ? "Team" : "Pick";
   const theme = majorThemes[tournament.majorKey];
   const showResults = tournament.status === "final";
-  const finalReadOnly = showResults && user.role !== "admin";
+  const isPlatformControlUser = user.role === "owner" || user.role === "admin";
+  const finalReadOnly = showResults && !isPlatformControlUser;
   const prePlay = ["draft", "picks_open", "picks_locked"].includes(tournament.status);
   const fieldNavLabel = showResults ? "Field Results" : "Field";
   const showDropNav = entry?.status === "drop_required" && !finalReadOnly;
   const stageLabel = tournament.status.replaceAll("_", " ");
   const desktopNavItems =
-    user.role !== "admin" && finalReadOnly
+    !isPlatformControlUser && finalReadOnly
       ? [
           { href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "standings" as const },
           { href: `/tournaments/${tournament.id}/players`, label: "Field Results", icon: Users, key: "field" as const },
         ]
-      : user.role !== "admin" && prePlay
+      : !isPlatformControlUser && prePlay
         ? [
             { href: "/app", label: "Home", icon: Home, key: "home" as const },
             { href: `/tournaments/${tournament.id}/pick`, label: entry?.submittedAt ? "Team" : "Pick Team", icon: ListChecks, key: "team" as const },
             { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
           ]
-        : user.role !== "admin"
+        : !isPlatformControlUser
           ? [
               { href: "/app", label: "Home", icon: Home, key: "home" as const },
               { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const },
@@ -80,19 +81,19 @@ export async function AppShell({
               ...(showResults ? [{ href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "standings" as const }] : []),
             ];
   const mobileNavItems =
-    showResults && user.role !== "admin"
+    showResults && !isPlatformControlUser
       ? [
           { href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "results" as const },
           { href: `/tournaments/${tournament.id}/players`, label: "Field Results", icon: Users, key: "field" as const },
           { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const },
           { href: "/app", label: "Home", icon: Home, key: "home" as const },
         ]
-      : user.role === "admin"
+      : isPlatformControlUser
       ? [
           { href: "/app", label: "Home", icon: Home, key: "home" as const },
           { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
           { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
-          { href: `/admin/tournaments/${tournament.id}`, label: "Admin", icon: Shield, key: "admin" as const },
+          { href: user.role === "owner" ? "/owner" : "/admin", label: user.role === "owner" ? "Owner" : "Admin", icon: Shield, key: "admin" as const },
         ]
       : prePlay
         ? [
@@ -138,12 +139,12 @@ export async function AppShell({
               </Link>
             );
           })}
-          {user.role === "admin" ? (
+          {isPlatformControlUser ? (
             <Link
-              href="/admin"
+              href={user.role === "owner" ? "/owner" : "/admin"}
               className="mt-2 flex h-11 items-center gap-3 rounded-md bg-white/10 px-3 text-sm font-extrabold text-white"
             >
-              <Shield size={18} strokeWidth={2.2} /> Admin
+              <Shield size={18} strokeWidth={2.2} /> {user.role === "owner" ? "Owner" : "Admin"}
             </Link>
           ) : null}
         </nav>
