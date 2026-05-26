@@ -17,6 +17,8 @@ export default async function LoginPage({
   const { error } = await searchParams;
   const tournament = getActiveTournament();
   const theme = majorThemes[tournament.majorKey];
+  const showDemoAccounts =
+    process.env.NODE_ENV !== "production" || process.env.SHOW_DEMO_ACCOUNTS === "true";
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -27,7 +29,7 @@ export default async function LoginPage({
               <MajorMark majorKey={tournament.majorKey} size="lg" />
               <h1 className="mt-8 max-w-xl text-6xl font-black leading-tight">Major Picks</h1>
               <p className="mt-4 max-w-md text-lg font-semibold leading-8 text-white/78">
-                {theme.label} {tournament.year}, built for one private sweepstake.
+                Sign in to your private Major Picks league for {theme.label} {tournament.year}.
               </p>
             </div>
             <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-md border border-white/15">
@@ -46,7 +48,9 @@ export default async function LoginPage({
           <div className="app-panel-header p-5">
             <p className="sport-label">Private competition</p>
             <h1 className="mt-1 text-3xl font-black">Sign in</h1>
-            <p className="mt-2 font-semibold text-muted">Pick your team and follow the scores.</p>
+            <p className="mt-2 font-semibold text-muted">
+              Access your league, manage your picks and follow the standings.
+            </p>
           </div>
           <form action={loginAction} className="space-y-4 p-5">
             {error ? (
@@ -79,11 +83,13 @@ export default async function LoginPage({
             </button>
           </form>
         </section>
-        <section className="app-panel mt-4 p-4 text-sm">
-          <p className="sport-label">Starter accounts</p>
-          <p className="mt-2 text-muted">Admin: admin@majorpicks.local / Admin123!</p>
-          <p className="mt-1 text-muted">Players: player1@majorpicks.local or player2@majorpicks.local / Player123!</p>
-        </section>
+        {showDemoAccounts ? (
+          <section className="app-panel mt-4 p-4 text-sm">
+            <p className="sport-label">Starter accounts</p>
+            <p className="mt-2 text-muted">Admin: admin@majorpicks.local / Admin123!</p>
+            <p className="mt-1 text-muted">Players: player1@majorpicks.local or player2@majorpicks.local / Player123!</p>
+          </section>
+        ) : null}
           </div>
         </div>
       </main>

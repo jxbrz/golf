@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Building2, Mail, UserRound } from "lucide-react";
+import { ArrowLeft, Building2, Mail, MessageSquareText, UserRound, UsersRound } from "lucide-react";
 
 const organisationTypes = [
   "Golf club",
@@ -11,6 +11,10 @@ const organisationTypes = [
 ];
 
 export default function RegisterOrganisationPage() {
+  async function requestOrganisationAccess() {
+    "use server";
+  }
+
   return (
     <main className="min-h-screen bg-[#f4f7f2] px-4 py-6 text-primary sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-4xl">
@@ -21,15 +25,15 @@ export default function RegisterOrganisationPage() {
 
         <section className="mt-6 overflow-hidden rounded-lg border border-border bg-white scorecard-shadow">
           <div className="app-panel-header p-5 sm:p-7">
-            <p className="sport-label">Organisation onboarding</p>
+            <p className="sport-label">Request access</p>
             <h1 className="mt-2 text-4xl font-bold">Start an organisation</h1>
             <p className="mt-3 max-w-2xl font-semibold leading-7 text-muted">
-              This creates the front door for clubs, societies and groups. Payments and full league
-              provisioning will be added in a later onboarding slice.
+              Tell us about your club, society or group and we will help you set up a private Major
+              Picks league for your next major week.
             </p>
           </div>
 
-          <form className="grid gap-5 p-5 sm:p-7">
+          <form action={requestOrganisationAccess} className="grid gap-5 p-5 sm:p-7">
             <label className="block">
               <span className="flex items-center gap-2 text-sm font-black uppercase text-muted">
                 <Building2 size={16} />
@@ -39,6 +43,7 @@ export default function RegisterOrganisationPage() {
                 name="organisationName"
                 type="text"
                 placeholder="Aronimink Members League"
+                required
                 className="mt-2 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
               />
             </label>
@@ -70,6 +75,8 @@ export default function RegisterOrganisationPage() {
                 <input
                   name="name"
                   type="text"
+                  placeholder="Sam Taylor"
+                  required
                   className="mt-2 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
                 />
               </label>
@@ -81,24 +88,45 @@ export default function RegisterOrganisationPage() {
                 <input
                   name="email"
                   type="email"
+                  placeholder="sam@example.com"
+                  required
                   className="mt-2 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
                 />
               </label>
             </div>
 
-            <div className="rounded-md border border-secondary/30 bg-secondary/10 p-4">
-              <p className="font-black text-primary">Coming next</p>
-              <p className="mt-1 text-sm font-semibold leading-6 text-muted">
-                This placeholder will become organisation creation, league setup and invite
-                sending. For now, existing local login and mock accounts remain unchanged.
-              </p>
-            </div>
+            <label className="block">
+              <span className="flex items-center gap-2 text-sm font-black uppercase text-muted">
+                <UsersRound size={16} />
+                Expected number of players
+              </span>
+              <input
+                name="expectedPlayers"
+                type="number"
+                min="4"
+                placeholder="40"
+                className="mt-2 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
+              />
+            </label>
+
+            <label className="block">
+              <span className="flex items-center gap-2 text-sm font-black uppercase text-muted">
+                <MessageSquareText size={16} />
+                Message or details
+              </span>
+              <textarea
+                name="message"
+                rows={5}
+                placeholder="Tell us which majors you run, how your group is organised, and anything you need from the league setup."
+                className="mt-2 w-full rounded-md border border-border bg-white px-3 py-3 text-base font-semibold outline-none focus:border-primary"
+              />
+            </label>
 
             <button
-              type="button"
-              className="h-12 rounded-md bg-primary px-4 text-base font-black text-white opacity-70"
+              type="submit"
+              className="h-12 rounded-md bg-primary px-4 text-base font-black text-white"
             >
-              Organisation requests coming soon
+              Request access
             </button>
           </form>
         </section>

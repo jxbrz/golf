@@ -21,7 +21,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   }
   const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   if (user.role !== "admin" && !entry?.submittedAt && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
-    redirect("/");
+    redirect("/app");
   }
   const dbRows = await getDbLeaderboard(tournament.id, tournament);
   const rows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
@@ -38,7 +38,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
         tournament={tournament}
         screenTitle="Fantasy Standings"
         screenSubtitle={stage.label}
-        backHref="/"
+        backHref="/app"
         activeNav="standings"
         rightSlot={<HeaderInfoButton />}
       >

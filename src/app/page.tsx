@@ -161,8 +161,8 @@ export default function MarketingHomePage() {
         <div>
           <h2 className="text-4xl font-bold">Private competitions, set up like a club draw.</h2>
           <p className="mt-4 max-w-md font-semibold leading-7 text-muted">
-            The product is moving from one private game into an organisation-led platform. This
-            first slice creates the public front door and the league structure underneath it.
+            Give your players a polished league experience from the first tee shot to the final
+            putt, with clear rules, private standings and organiser tools built for major weeks.
           </p>
         </div>
         <div className="grid gap-3">

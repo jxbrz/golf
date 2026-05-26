@@ -23,9 +23,11 @@ export default async function JoinInvitePage({
           <p className="sport-label mt-5">Private invite</p>
           <h1 className="mt-2 text-4xl font-bold">Join a Major Picks league</h1>
           <p className="mt-3 max-w-2xl font-semibold leading-7 text-muted">
-            Invite code <span className="font-black text-primary">{inviteCode}</span> was recognised
-            by the route. Full invite acceptance, account creation and league membership will be
-            wired in a later onboarding slice.
+            You have been invited to join a Major Picks league. Sign in with the email address your
+            organiser invited, then make your picks when the league opens.
+          </p>
+          <p className="mt-4 inline-flex rounded-md border border-border bg-[#f8fafc] px-3 py-2 text-xs font-black uppercase text-muted">
+            Invite code: <span className="ml-2 text-primary">{inviteCode}</span>
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link href="/login" className="app-button h-12 px-5 text-base">
