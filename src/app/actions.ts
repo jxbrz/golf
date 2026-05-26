@@ -8,6 +8,8 @@ import {
   createSession,
   getSessionUser,
   requireAdminUser,
+  requireOrganisationAdmin,
+  requirePlatformAdminOrOwner,
   requireCurrentUser,
 } from "@/lib/auth";
 import {
@@ -58,6 +60,7 @@ const inviteSchema = z.object({
   email: z.string().trim().email(),
   role: z.enum(["admin", "player"]),
   expiresAt: z.coerce.date(),
+  returnTo: z.string().optional(),
 });
 
 export async function submitEntryAction(formData: FormData) {
@@ -296,53 +299,60 @@ export async function requestOrganisationAccessAction(formData: FormData) {
 }
 
 export async function approveOrganisationRequestAction(formData: FormData) {
-  const admin = await requireAdminUser();
+  const admin = await requirePlatformAdminOrOwner();
   const requestId = String(formData.get("requestId") || "");
   if (!requestId) redirect("/admin/organisation-requests?error=missing");
 
   const result = await approveOrganisationRequest(requestId, admin.id);
   revalidatePath("/admin");
-  revalidatePath("/admin/organisation-requests");
+  revalidatePath("/owner");
+  revalidatePath("/owner/organisation-requests");
   revalidatePath("/admin/organisations");
-  if (!result.ok) redirect(`/admin/organisation-requests?error=${encodeURIComponent(result.message)}`);
-  redirect(`/admin/organisations/${result.organisationId}`);
+  revalidatePath("/owner/organisations");
+  if (!result.ok) redirect(`/owner/organisation-requests?error=${encodeURIComponent(result.message)}`);
+  redirect(`/owner/organisations/${result.organisationId}`);
 }
 
 export async function rejectOrganisationRequestAction(formData: FormData) {
-  const admin = await requireAdminUser();
+  const admin = await requirePlatformAdminOrOwner();
   const requestId = String(formData.get("requestId") || "");
   if (!requestId) redirect("/admin/organisation-requests?error=missing");
 
   const result = await rejectOrganisationRequest(requestId, admin.id);
   revalidatePath("/admin");
-  revalidatePath("/admin/organisation-requests");
-  if (!result.ok) redirect(`/admin/organisation-requests?error=${encodeURIComponent(result.message)}`);
-  redirect("/admin/organisation-requests?reviewed=rejected");
+  revalidatePath("/owner");
+  revalidatePath("/owner/organisation-requests");
+  if (!result.ok) redirect(`/owner/organisation-requests?error=${encodeURIComponent(result.message)}`);
+  redirect("/owner/organisation-requests?reviewed=rejected");
 }
 
 export async function createInviteAction(formData: FormData) {
-  const admin = await requireAdminUser();
   const parsed = inviteSchema.safeParse({
     organisationId: formData.get("organisationId"),
     leagueId: formData.get("leagueId"),
     email: formData.get("email"),
     role: formData.get("role"),
     expiresAt: formData.get("expiresAt"),
+    returnTo: formData.get("returnTo"),
   });
   const organisationId = String(formData.get("organisationId") || "");
+  const fallbackPath = `/admin/organisations/${organisationId}`;
   if (!parsed.success) {
-    redirect(`/admin/organisations/${organisationId}?inviteError=invalid`);
+    redirect(`${fallbackPath}?inviteError=invalid`);
   }
+  const admin = await requireOrganisationAdmin(parsed.data.organisationId);
+  const returnTo = safeOrganisationReturnTo(parsed.data.returnTo, parsed.data.organisationId);
   if (parsed.data.expiresAt <= new Date()) {
-    redirect(`/admin/organisations/${organisationId}?inviteError=invalid`);
+    redirect(`${returnTo}?inviteError=invalid`);
   }
 
   const result = await createInvite({ ...parsed.data, createdByUserId: admin.id });
   revalidatePath(`/admin/organisations/${parsed.data.organisationId}`);
+  revalidatePath(`/owner/organisations/${parsed.data.organisationId}`);
   if (!result.ok || !result.invite) {
-    redirect(`/admin/organisations/${parsed.data.organisationId}?inviteError=${encodeURIComponent(result.message)}`);
+    redirect(`${returnTo}?inviteError=${encodeURIComponent(result.message)}`);
   }
-  redirect(`/admin/organisations/${parsed.data.organisationId}?invite=${result.invite.inviteCode}`);
+  redirect(`${returnTo}?invite=${result.invite.inviteCode}`);
 }
 
 export async function acceptInviteAction(formData: FormData) {
@@ -385,4 +395,12 @@ async function tryDb<T>(operation: () => Promise<T | null>) {
     console.warn("Database operation failed. Falling back to mock store.", error);
     return null;
   }
+}
+
+function safeOrganisationReturnTo(value: string | undefined, organisationId: string) {
+  const fallback = `/admin/organisations/${organisationId}`;
+  if (!value) return fallback;
+  if (value === `/admin/organisations/${organisationId}`) return value;
+  if (value === `/owner/organisations/${organisationId}`) return value;
+  return fallback;
 }

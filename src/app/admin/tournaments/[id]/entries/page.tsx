@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { AdminEntriesEditor } from "@/components/admin/AdminEntriesEditor";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requireAdminUser } from "@/lib/auth";
+import { requirePlatformAdminOrOwner } from "@/lib/auth";
 import { getDbAdminEntryRows } from "@/lib/db-data/entries";
 import {
   getAdminEntryRows,
@@ -21,7 +21,7 @@ export default async function AdminEntriesPage({
 }) {
   const { id } = await params;
   const { error } = await searchParams;
-  await requireAdminUser();
+  await requirePlatformAdminOrOwner();
   const tournament = getTournament(id);
   if (!tournament) notFound();
   const dbRows = await getDbAdminEntryRows(tournament.id);

@@ -28,7 +28,7 @@ import { OddsPricingPanel } from "@/components/admin/OddsPricingPanel";
 import { AppShell, HeaderSettingsButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requireAdminUser } from "@/lib/auth";
+import { requirePlatformAdminOrOwner } from "@/lib/auth";
 import { getDbEntriesWithDetails, getDbHybridStatus, getDbLeaderboard, type DbHybridStatus } from "@/lib/db-data/entries";
 import {
   getEntriesWithDetails,
@@ -63,7 +63,7 @@ export default async function AdminTournamentPage({
 }) {
   const { id } = await params;
   const { odds, reset } = await searchParams;
-  await requireAdminUser();
+  await requirePlatformAdminOrOwner();
 
   const tournament = getTournament(id);
   if (!tournament) notFound();

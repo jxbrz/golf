@@ -216,6 +216,27 @@ export async function listOrganisations() {
   }));
 }
 
+export async function listPlatformUsers() {
+  if (!process.env.DATABASE_URL) return [];
+  const db = getDb();
+  return db.select().from(users).orderBy(desc(users.createdAt));
+}
+
+export async function listPlatformLeagues() {
+  if (!process.env.DATABASE_URL) return [];
+  const db = getDb();
+  const [leagueRows, organisationRows] = await Promise.all([
+    db.select().from(leagues).orderBy(desc(leagues.createdAt)),
+    db.select().from(organisations),
+  ]);
+  const organisationsById = new Map(organisationRows.map((organisation) => [organisation.id, organisation]));
+
+  return leagueRows.map((league) => ({
+    league,
+    organisation: organisationsById.get(league.organisationId) ?? null,
+  }));
+}
+
 export async function getOrganisationDetail(organisationId: string) {
   if (!process.env.DATABASE_URL) return null;
   const db = getDb();

@@ -137,6 +137,10 @@ function ensureStoreShape(store: Store) {
   store.providerLeaderboardCache ??= [];
   store.scoreSyncLogs ??= [];
   store.adminOverrides ??= [];
+  const platformAdmin = store.users.find((user) => user.email === "admin@majorpicks.local");
+  if (platformAdmin && platformAdmin.role === "admin") {
+    platformAdmin.role = "owner";
+  }
 }
 
 export function getCurrentUser(userId?: string | null) {
@@ -1712,7 +1716,7 @@ function defaultCredentials(): Credential[] {
 function createSeedStore(): Store {
   const timestamp = nowIso();
   const users = [
-    ["u_admin", "Admin", "admin", "admin@majorpicks.local"],
+    ["u_admin", "Admin", "owner", "admin@majorpicks.local"],
     ["u_player1", "Player One", "player", "player1@majorpicks.local"],
     ["u_player2", "Player Two", "player", "player2@majorpicks.local"],
   ].map(

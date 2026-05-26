@@ -1,4 +1,4 @@
-export type Role = "admin" | "player";
+export type Role = "owner" | "admin" | "player";
 export type MajorKey = "masters" | "pga" | "us_open" | "the_open";
 export type TournamentStatus =
   | "draft"

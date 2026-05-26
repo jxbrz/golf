@@ -2,33 +2,27 @@ import Link from "next/link";
 import { ArrowLeft, Building2, UsersRound } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { getUserOrganisationMemberships, requireCurrentUser } from "@/lib/auth";
+import { requirePlatformAdminOrOwner } from "@/lib/auth";
 import { listOrganisations } from "@/lib/db-data/organisations";
 import { getActiveTournament } from "@/lib/mock-data/store";
 
-export default async function OrganisationsPage() {
-  const user = await requireCurrentUser();
+export default async function OwnerOrganisationsPage() {
+  await requirePlatformAdminOrOwner();
   const active = getActiveTournament();
-  const memberships = (await getUserOrganisationMemberships(user.id)).filter(({ membership }) =>
-    ["owner", "admin"].includes(membership.role),
-  );
-  const allowedOrganisationIds = new Set(memberships.map(({ organisation }) => organisation.id));
-  const rows = (await listOrganisations()).filter(({ organisation }) =>
-    allowedOrganisationIds.has(organisation.id),
-  );
+  const rows = await listOrganisations();
 
   return (
     <MajorThemeProvider majorKey={active.majorKey}>
       <AppShell tournament={active}>
         <main className="space-y-4">
-          <Link href="/admin" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
+          <Link href="/owner" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
             <ArrowLeft size={17} />
-            Back to admin
+            Back to owner dashboard
           </Link>
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-            <p className="sport-label">Organisation admin</p>
-            <h1 className="mt-1 text-3xl font-black">Your organisations</h1>
-            <p className="mt-1 text-muted">Manage the organisations where you are an owner or admin.</p>
+            <p className="sport-label">Platform owner</p>
+            <h1 className="mt-1 text-3xl font-black">All organisations</h1>
+            <p className="mt-1 text-muted">View every club, society and group using Major Picks.</p>
           </section>
 
           <section className="grid gap-3">
@@ -36,7 +30,7 @@ export default async function OrganisationsPage() {
               rows.map(({ organisation, memberCount, leagueCount }) => (
                 <Link
                   key={organisation.id}
-                  href={`/admin/organisations/${organisation.id}`}
+                  href={`/owner/organisations/${organisation.id}`}
                   className="rounded-lg border border-border bg-surface p-4 scorecard-shadow"
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

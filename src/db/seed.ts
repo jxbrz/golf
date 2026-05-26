@@ -45,7 +45,7 @@ async function seed() {
     name: "Major Picks",
     slug: "major-picks",
     type: "other" as const,
-    createdByUserId: store.users.find((user) => user.role === "admin")?.id ?? store.users[0]!.id,
+    createdByUserId: store.users.find((user) => user.role === "owner" || user.role === "admin")?.id ?? store.users[0]!.id,
     billingEmail: null,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -69,6 +69,13 @@ async function seed() {
     )
     .onConflictDoNothing();
 
+  await db.execute(sql`
+    update users
+    set role = 'owner'
+    where email = 'admin@majorpicks.local'
+      and role = 'admin'
+  `);
+
   await db.insert(organisations).values(defaultOrganisation).onConflictDoNothing();
 
   await db
@@ -78,7 +85,7 @@ async function seed() {
         id: `org_member_${user.id}`,
         organisationId: defaultOrganisation.id,
         userId: user.id,
-        role: user.role === "admin" ? ("owner" as const) : ("player" as const),
+        role: user.role === "owner" || user.role === "admin" ? ("owner" as const) : ("player" as const),
         createdAt: timestamp,
       })),
     )
@@ -125,7 +132,7 @@ async function seed() {
         id: `group_member_${user.id}`,
         groupId: defaultGroup.id,
         userId: user.id,
-        role: user.role === "admin" ? ("admin" as const) : ("player" as const),
+        role: user.role === "owner" || user.role === "admin" ? ("admin" as const) : ("player" as const),
         createdAt: timestamp,
       })),
     )

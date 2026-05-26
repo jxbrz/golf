@@ -3,7 +3,7 @@ import { AdminScoreEditor } from "@/components/admin/AdminScoreEditor";
 import { ManualScoreImport } from "@/components/admin/ManualScoreImport";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requireAdminUser } from "@/lib/auth";
+import { requirePlatformAdminOrOwner } from "@/lib/auth";
 import { getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
 
 export default async function AdminScoresPage({
@@ -17,7 +17,7 @@ export default async function AdminScoresPage({
   const { imported } = await searchParams;
   const tournament = getTournament(id);
   if (!tournament) notFound();
-  const user = await requireAdminUser();
+  const user = await requirePlatformAdminOrOwner();
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>

@@ -4,20 +4,20 @@ import { ArrowLeft, Copy, MailPlus } from "lucide-react";
 import { createInviteAction } from "@/app/actions";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requireOrganisationAdmin } from "@/lib/auth";
+import { requirePlatformAdminOrOwner } from "@/lib/auth";
 import { getOrganisationDetail } from "@/lib/db-data/organisations";
 import { getActiveTournament } from "@/lib/mock-data/store";
 
-export default async function OrganisationDetailPage({
+export default async function OwnerOrganisationDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ invite?: string; inviteError?: string }>;
 }) {
+  await requirePlatformAdminOrOwner();
   const active = getActiveTournament();
   const { id } = await params;
-  await requireOrganisationAdmin(id);
   const { invite, inviteError } = await searchParams;
   const detail = await getOrganisationDetail(id);
   if (!detail) notFound();
@@ -28,16 +28,16 @@ export default async function OrganisationDetailPage({
     <MajorThemeProvider majorKey={active.majorKey}>
       <AppShell tournament={active}>
         <main className="space-y-4">
-          <Link href="/admin/organisations" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
+          <Link href="/owner/organisations" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
             <ArrowLeft size={17} />
-            Back to organisations
+            Back to all organisations
           </Link>
 
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
-            <p className="sport-label">Organisation admin · {detail.organisation.type.replaceAll("_", " ")}</p>
+            <p className="sport-label">Platform organisation · {detail.organisation.type.replaceAll("_", " ")}</p>
             <h1 className="mt-1 text-3xl font-black">{detail.organisation.name}</h1>
             <p className="mt-1 text-muted">
-              {detail.members.length} members - {detail.leagues.length} leagues - created{" "}
+              {detail.members.length} members · {detail.leagues.length} leagues · created{" "}
               {formatDate(detail.organisation.createdAt)}
             </p>
           </section>
@@ -58,17 +58,13 @@ export default async function OrganisationDetailPage({
           <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
             <section className="space-y-4">
               <Panel title="Leagues">
-                <p className="mb-3 text-sm font-semibold leading-6 text-muted">
-                  These leagues inherit global tournament timing, score sync and weekend state from
-                  the platform lifecycle.
-                </p>
                 {detail.leagues.length ? (
                   <div className="grid gap-2">
                     {detail.leagues.map((league) => (
                       <div key={league.id} className="rounded-md border border-border p-3">
                         <p className="font-black">{league.name}</p>
                         <p className="text-sm font-semibold text-muted">
-                          {league.seasonYear} - {league.status}
+                          {league.seasonYear} · {league.status}
                         </p>
                       </div>
                     ))}
@@ -85,7 +81,7 @@ export default async function OrganisationDetailPage({
                       <div key={member.id} className="rounded-md border border-border p-3">
                         <p className="font-black">{user?.name ?? member.userId}</p>
                         <p className="text-sm font-semibold text-muted">
-                          {user?.email ?? "No email"} - {member.role}
+                          {user?.email ?? "No email"} · {member.role}
                         </p>
                       </div>
                     ))}
@@ -102,7 +98,7 @@ export default async function OrganisationDetailPage({
                       <div key={inviteRow.id} className="rounded-md border border-border p-3">
                         <p className="font-black">{inviteRow.email}</p>
                         <p className="text-sm font-semibold text-muted">
-                          {inviteRow.role} - {inviteRow.status} - expires {formatDate(inviteRow.expiresAt)}
+                          {inviteRow.role} · {inviteRow.status} · expires {formatDate(inviteRow.expiresAt)}
                         </p>
                         <code className="mt-2 inline-block rounded bg-[#f8fafc] px-2 py-1 text-xs font-black text-primary">
                           /join/{inviteRow.inviteCode}
@@ -128,7 +124,7 @@ export default async function OrganisationDetailPage({
               ) : null}
               <form action={createInviteAction} className="mt-4 grid gap-3">
                 <input type="hidden" name="organisationId" value={detail.organisation.id} />
-                <input type="hidden" name="returnTo" value={`/admin/organisations/${detail.organisation.id}`} />
+                <input type="hidden" name="returnTo" value={`/owner/organisations/${detail.organisation.id}`} />
                 <label className="block">
                   <span className="text-sm font-black uppercase text-muted">Email</span>
                   <input
