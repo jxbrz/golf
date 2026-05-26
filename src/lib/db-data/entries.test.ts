@@ -3,13 +3,16 @@ import {
   competitionRuleSets,
   entries,
   entryPicks,
+  golfers,
   golferRoundScores,
   groupCompetitions,
   tournamentGolfers,
   tournaments,
+  users,
 } from "@/db/schema";
 import {
   canSubmitDbPicksForCompetitionStatus,
+  getDbLeaderboard,
   getDbHybridStatus,
   lockDbPicks,
   resetDbTournamentEntries,
@@ -203,6 +206,27 @@ describe("DB-backed entry lock behaviour", () => {
     });
   });
 
+  it("hydrates DB leaderboard picks with loaded fixture round score totals", async () => {
+    db.seedCompetition("picks_open");
+    await submitDbEntry("t_pga_2026", "u_player1", validPickIds);
+    await writeDbFixtureRoundScores("t_pga_2026", 1);
+    await writeDbFixtureRoundScores("t_pga_2026", 2);
+
+    const tournament = getTournament("t_pga_2026");
+    expect(tournament).toBeDefined();
+
+    const rows = await getDbLeaderboard("t_pga_2026", tournament!);
+    const playerRow = rows.find((row) => row.entry.userId === "u_player1");
+
+    expect(playerRow?.entry.picks.map((pick) => pick.tournamentGolfer.totalScore)).toEqual([
+      2,
+      0,
+      1,
+      4,
+    ]);
+    expect(playerRow?.score).toBe(3);
+  });
+
   it("writes round 3 fixture scores to golfer_round_scores", async () => {
     db.seedCompetition("cut_processed");
 
@@ -303,16 +327,20 @@ function createFakeDb() {
   type TournamentRow = typeof tournaments.$inferSelect;
   type GroupCompetitionRow = typeof groupCompetitions.$inferSelect;
   type TournamentGolferRow = typeof tournamentGolfers.$inferSelect;
+  type GolferRow = typeof golfers.$inferSelect;
   type GolferRoundScoreRow = typeof golferRoundScores.$inferSelect;
   type EntryRow = typeof entries.$inferSelect;
   type EntryPickRow = typeof entryPicks.$inferSelect;
+  type UserRow = typeof users.$inferSelect;
 
   const state: {
     tournaments: TournamentRow[];
     groupCompetitions: GroupCompetitionRow[];
     competitionRuleSets: CompetitionRuleSetRow[];
     tournamentGolfers: TournamentGolferRow[];
+    golfers: GolferRow[];
     golferRoundScores: GolferRoundScoreRow[];
+    users: UserRow[];
     entries: EntryRow[];
     entryPicks: EntryPickRow[];
   } = {
@@ -320,7 +348,9 @@ function createFakeDb() {
     groupCompetitions: [],
     competitionRuleSets: [],
     tournamentGolfers: [],
+    golfers: [],
     golferRoundScores: [],
+    users: [],
     entries: [],
     entryPicks: [],
   };
@@ -330,7 +360,9 @@ function createFakeDb() {
     if (table === groupCompetitions) return state.groupCompetitions;
     if (table === competitionRuleSets) return state.competitionRuleSets;
     if (table === tournamentGolfers) return state.tournamentGolfers;
+    if (table === golfers) return state.golfers;
     if (table === golferRoundScores) return state.golferRoundScores;
+    if (table === users) return state.users;
     if (table === entries) return state.entries;
     if (table === entryPicks) return state.entryPicks;
     return [];
@@ -343,7 +375,9 @@ function createFakeDb() {
       state.groupCompetitions = [];
       state.competitionRuleSets = [];
       state.tournamentGolfers = [];
+      state.golfers = [];
       state.golferRoundScores = [];
+      state.users = [];
       state.entries = [];
       state.entryPicks = [];
     },
@@ -425,6 +459,23 @@ function createFakeDb() {
         createdAt: timestamp,
         updatedAt: timestamp,
       }));
+      state.golfers = ["g51", "g52", "g53", "g54", "g55"].map((id) => ({
+        id,
+        providerPlayerId: id,
+        name: `Golfer ${id.slice(1)}`,
+        country: "USA",
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }));
+      state.users = [
+        {
+          id: "u_player1",
+          name: "Player One",
+          email: "player1@example.com",
+          role: "player",
+          createdAt: timestamp,
+        },
+      ];
     },
     select() {
       return {

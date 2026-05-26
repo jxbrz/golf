@@ -18,7 +18,10 @@ import { loadTournamentFixture } from "@/fixtures/tournaments/loader";
 import { getTournament } from "@/lib/mock-data/store";
 import {
   calculateCutStatus,
+  calculateFinalEntryScore,
   calculateGroupLeaderboard,
+  calculateLiveEntryScore,
+  selectAutomaticDropPick,
   validateEntryPicks,
 } from "@/lib/scoring/scoring";
 import type {
@@ -222,9 +225,21 @@ export async function updateDbGroupCompetitionForWeekendStep(tournamentId: strin
     .set(updateValues)
     .where(eq(groupCompetitions.id, competition.id));
 
+  if (step === "process_cut") {
+    await processDbCut(tournamentId, timestamp);
+  }
+  if (step === "round_3") {
+    await autoDropDbOutstandingEntries(tournamentId, timestamp);
+  }
+
   const roundNumber = roundNumberForWeekendStep(step);
   if (roundNumber) {
     await writeDbFixtureRoundScores(tournamentId, roundNumber, timestamp);
+  }
+
+  if (step === "final") {
+    await autoDropDbOutstandingEntries(tournamentId, timestamp);
+    await updateDbEntryCutStatuses(tournamentId, timestamp, true);
   }
 
   return { ok: true, message: "Competition status updated." };
@@ -299,7 +314,163 @@ export async function writeDbFixtureRoundScores(
     await db.insert(golferRoundScores).values(rowsToInsert);
   }
 
+  await updateDbTournamentGolferScoreSummaries(tournamentId, roundNumber, timestamp);
+
   return { ok: true, message: `Wrote ${written} round ${roundNumber} scores.` };
+}
+
+async function processDbCut(tournamentId: string, timestamp = new Date()) {
+  const db = getDb();
+  const fixture = loadTournamentFixture(PGA_FIXTURE_SLUG);
+  const tournamentGolferRows = await db
+    .select()
+    .from(tournamentGolfers)
+    .where(eq(tournamentGolfers.tournamentId, tournamentId));
+  if (tournamentGolferRows.length === 0) return;
+
+  const scoreRows = await db
+    .select()
+    .from(golferRoundScores)
+    .where(inArray(golferRoundScores.tournamentGolferId, tournamentGolferRows.map((row) => row.id)));
+  const scoresByGolfer = roundScoresByTournamentGolferId(scoreRows.map(asGolferRoundScore));
+
+  await Promise.all(
+    tournamentGolferRows.map((golfer) => {
+      const roundScores = scoresByGolfer.get(golfer.id) ?? [];
+      const firstTwoRounds = roundScores.filter((score) => score.roundNumber <= 2 && score.scoreToPar !== null);
+      const roundTwo = firstTwoRounds.find((score) => score.roundNumber === 2);
+      const totalScore = firstTwoRounds.reduce((total, score) => total + score.scoreToPar!, 0);
+      const madeCut = firstTwoRounds.length >= 2 && totalScore <= fixture.expectedResults.cutLineAfterRoundTwo;
+
+      return db
+        .update(tournamentGolfers)
+        .set({
+          totalScore: firstTwoRounds.length ? totalScore : null,
+          todayScore: roundTwo?.scoreToPar ?? null,
+          round: firstTwoRounds.length ? 2 : null,
+          thru: roundTwo?.thru ?? null,
+          madeCut,
+          status: madeCut ? ("active" as const) : ("cut" as const),
+          lastSyncedAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .where(eq(tournamentGolfers.id, golfer.id));
+    }),
+  );
+
+  await updateDbEntryCutStatuses(tournamentId, timestamp);
+}
+
+async function updateDbTournamentGolferScoreSummaries(
+  tournamentId: string,
+  throughRound: 1 | 2 | 3 | 4,
+  timestamp = new Date(),
+) {
+  const db = getDb();
+  const tournamentGolferRows = await db
+    .select()
+    .from(tournamentGolfers)
+    .where(eq(tournamentGolfers.tournamentId, tournamentId));
+  if (tournamentGolferRows.length === 0) return;
+
+  const scoreRows = await db
+    .select()
+    .from(golferRoundScores)
+    .where(inArray(golferRoundScores.tournamentGolferId, tournamentGolferRows.map((row) => row.id)));
+  const scoresByGolfer = totalScoresByTournamentGolferId(scoreRows.map(asGolferRoundScore), throughRound);
+
+  await Promise.all(
+    tournamentGolferRows.map((golfer) => {
+      const scoreSummary = scoresByGolfer.get(golfer.id);
+      const missedCut = throughRound >= 3 && golfer.madeCut === false;
+      const status = missedCut ? "cut" : scoreSummary?.status ?? golfer.status;
+
+      return db
+        .update(tournamentGolfers)
+        .set({
+          totalScore: missedCut ? golfer.totalScore : scoreSummary?.totalScore ?? null,
+          todayScore: missedCut ? golfer.todayScore : scoreSummary?.todayScore ?? null,
+          round: missedCut ? 2 : scoreSummary?.round ?? null,
+          thru: missedCut ? golfer.thru : scoreSummary?.thru ?? null,
+          status,
+          lastSyncedAt: timestamp,
+          updatedAt: timestamp,
+        })
+        .where(eq(tournamentGolfers.id, golfer.id));
+    }),
+  );
+}
+
+async function updateDbEntryCutStatuses(
+  tournamentId: string,
+  timestamp = new Date(),
+  finalise = false,
+) {
+  const db = getDb();
+  const detailedEntries = await getDbEntriesWithDetails(tournamentId);
+
+  await Promise.all(
+    detailedEntries.map(async (entry) => {
+      const cutStatus = calculateCutStatus(entry.picks);
+      const entryStatus =
+        finalise && cutStatus.status === "qualified" ? ("final" as const) : cutStatus.status;
+      const score = finalise
+        ? calculateFinalEntryScore(entry)
+        : calculateLiveEntryScore(entry, { status: "drop_open" });
+
+      await db
+        .update(entries)
+        .set({
+          status: entryStatus,
+          liveScore: finalise ? entry.liveScore : score,
+          finalScore: finalise ? score : entry.finalScore,
+          updatedAt: timestamp,
+        })
+        .where(eq(entries.id, entry.id));
+
+      await Promise.all(
+        entry.picks.map((pick) =>
+          db
+            .update(entryPicks)
+            .set({
+              isCounting: cutStatus.countingPickIds.includes(pick.id),
+              updatedAt: timestamp,
+            })
+            .where(eq(entryPicks.id, pick.id)),
+        ),
+      );
+    }),
+  );
+}
+
+async function autoDropDbOutstandingEntries(tournamentId: string, timestamp = new Date()) {
+  const db = getDb();
+  const detailedEntries = await getDbEntriesWithDetails(tournamentId);
+  const entriesNeedingDrop = detailedEntries.filter((entry) => entry.status === "drop_required");
+
+  await Promise.all(
+    entriesNeedingDrop.map(async (entry) => {
+      const pickToDrop = selectAutomaticDropPick(entry.picks);
+      if (!pickToDrop) return;
+
+      await Promise.all(
+        entry.picks.map((pick) =>
+          db
+            .update(entryPicks)
+            .set({
+              isDropped: pick.id === pickToDrop.id,
+              isCounting: pick.id !== pickToDrop.id && pick.tournamentGolfer.madeCut === true,
+              updatedAt: timestamp,
+            })
+            .where(eq(entryPicks.id, pick.id)),
+        ),
+      );
+      await db
+        .update(entries)
+        .set({ status: "qualified", updatedAt: timestamp })
+        .where(eq(entries.id, entry.id));
+    }),
+  );
 }
 
 export async function resetDbTournamentEntries(tournamentId: string) {
@@ -421,6 +592,12 @@ export async function getDbEntriesWithDetails(tournamentId: string): Promise<Ent
           .from(tournamentGolfers)
           .where(inArray(tournamentGolfers.id, pickRows.map((pick) => pick.tournamentGolferId)))
       : [];
+    const roundScoreRows = tournamentGolferRows.length
+      ? await db
+          .select()
+          .from(golferRoundScores)
+          .where(inArray(golferRoundScores.tournamentGolferId, tournamentGolferRows.map((row) => row.id)))
+      : [];
     const golferRows = tournamentGolferRows.length
       ? await db
           .select()
@@ -430,12 +607,22 @@ export async function getDbEntriesWithDetails(tournamentId: string): Promise<Ent
 
     const userById = new Map(userRows.map((user) => [user.id, asUser(user)]));
     const golferById = new Map(golferRows.map((golfer) => [golfer.id, asGolfer(golfer)]));
+    const scoresByTournamentGolferId = totalScoresByTournamentGolferId(
+      roundScoreRows.map(asGolferRoundScore),
+    );
     const tournamentGolferById = new Map(
       tournamentGolferRows.map((row) => {
+        const scoreSummary = scoresByTournamentGolferId.get(row.id);
+        const tournamentGolfer = asTournamentGolfer(row);
         return [
           row.id,
           {
-            ...asTournamentGolfer(row),
+            ...tournamentGolfer,
+            totalScore: scoreSummary?.totalScore ?? tournamentGolfer.totalScore,
+            todayScore: scoreSummary?.todayScore ?? tournamentGolfer.todayScore,
+            round: scoreSummary?.round ?? tournamentGolfer.round,
+            thru: scoreSummary?.thru ?? tournamentGolfer.thru,
+            status: scoreSummary?.status ?? tournamentGolfer.status,
             golfer: golferById.get(row.golferId)!,
           },
         ];
@@ -478,6 +665,42 @@ export async function getDbEntriesWithDetails(tournamentId: string): Promise<Ent
   }
 }
 
+function roundScoresByTournamentGolferId(roundRows: GolferRoundScore[]) {
+  const grouped = new Map<string, GolferRoundScore[]>();
+  for (const row of roundRows) {
+    const rows = grouped.get(row.tournamentGolferId) ?? [];
+    rows.push(row);
+    grouped.set(row.tournamentGolferId, rows);
+  }
+
+  return grouped;
+}
+
+function totalScoresByTournamentGolferId(roundRows: GolferRoundScore[], throughRound = 4) {
+  const grouped = roundScoresByTournamentGolferId(roundRows);
+
+  return new Map(
+    [...grouped.entries()].map(([tournamentGolferId, rows]) => {
+      const scoredRows = rows
+        .filter((row) => row.scoreToPar !== null && row.roundNumber <= throughRound)
+        .sort((a, b) => a.roundNumber - b.roundNumber);
+      const latest = scoredRows.at(-1);
+      return [
+        tournamentGolferId,
+        {
+          totalScore: scoredRows.length
+            ? scoredRows.reduce((total, row) => total + row.scoreToPar!, 0)
+            : null,
+          todayScore: latest?.scoreToPar ?? null,
+          round: latest?.roundNumber ?? null,
+          thru: latest?.thru ?? null,
+          status: latest?.status ?? null,
+        },
+      ];
+    }),
+  );
+}
+
 export async function getDbEntry(tournamentId: string, userId: string) {
   return (await getDbEntriesWithDetails(tournamentId)).find((entry) => entry.userId === userId);
 }
@@ -502,6 +725,66 @@ export async function getDbAdminEntryRows(tournamentId: string): Promise<AdminEn
 
 export async function getDbLeaderboard(tournamentId: string, tournament: Tournament) {
   return calculateGroupLeaderboard(await getDbEntriesWithDetails(tournamentId), tournament);
+}
+
+export async function getDbFieldLeaderboard(tournamentId: string) {
+  if (!process.env.DATABASE_URL) return [];
+
+  try {
+    const db = getDb();
+    const tournamentGolferRows = await db
+      .select()
+      .from(tournamentGolfers)
+      .where(eq(tournamentGolfers.tournamentId, tournamentId));
+    if (tournamentGolferRows.length === 0) return [];
+
+    const [golferRows, roundRows] = await Promise.all([
+      db
+        .select()
+        .from(golfers)
+        .where(inArray(golfers.id, tournamentGolferRows.map((row) => row.golferId))),
+      db
+        .select()
+        .from(golferRoundScores)
+        .where(inArray(golferRoundScores.tournamentGolferId, tournamentGolferRows.map((row) => row.id))),
+    ]);
+    const golferById = new Map(golferRows.map((golfer) => [golfer.id, asGolfer(golfer)]));
+    const scoresByTournamentGolferId = totalScoresByTournamentGolferId(
+      roundRows.map(asGolferRoundScore),
+    );
+
+    return tournamentGolferRows
+      .map((row) => {
+        const scoreSummary = scoresByTournamentGolferId.get(row.id);
+        const tournamentGolfer = asTournamentGolfer(row);
+        return {
+          ...tournamentGolfer,
+          totalScore: scoreSummary?.totalScore ?? tournamentGolfer.totalScore,
+          todayScore: scoreSummary?.todayScore ?? tournamentGolfer.todayScore,
+          round: scoreSummary?.round ?? tournamentGolfer.round,
+          thru: scoreSummary?.thru ?? tournamentGolfer.thru,
+          status: tournamentGolfer.madeCut === false ? ("cut" as const) : scoreSummary?.status ?? tournamentGolfer.status,
+          golfer: golferById.get(row.golferId)!,
+        };
+      })
+      .sort((a, b) => {
+        const aCut = a.status === "cut" || a.madeCut === false;
+        const bCut = b.status === "cut" || b.madeCut === false;
+        if (aCut && !bCut) return 1;
+        if (bCut && !aCut) return -1;
+        if (a.totalScore === null && b.totalScore !== null) return 1;
+        if (b.totalScore === null && a.totalScore !== null) return -1;
+        if (a.totalScore !== null && b.totalScore !== null && a.totalScore !== b.totalScore) {
+          return a.totalScore - b.totalScore;
+        }
+        if (a.status === "active" && b.status !== "active") return -1;
+        if (b.status === "active" && a.status !== "active") return 1;
+        return a.golfer.name.localeCompare(b.golfer.name);
+      });
+  } catch (error) {
+    console.warn("Unable to read DB field leaderboard. Falling back to mock store.", error);
+    return [];
+  }
 }
 
 export async function getDbLowestRoundSummary(tournamentId: string): Promise<LowestRoundSummary | null> {
@@ -769,8 +1052,17 @@ export async function dropDbPlayer(entryId: string, pickId: string) {
   const [entry] = await db.select().from(entries).where(eq(entries.id, entryId)).limit(1);
   if (!entry) return { ok: false, message: "Entry was not found." };
 
+  const competition = entry.groupCompetitionId
+    ? await getActiveDbGroupCompetition(entry.tournamentId)
+    : null;
+  const dbDropOpen = competition
+    ? ["cut_processed", "round_3_loaded", "round_4_loaded"].includes(competition.status)
+    : null;
   const tournament = getTournament(entry.tournamentId);
-  if (!tournament || !["drop_open", "round_3", "round_4"].includes(tournament.status)) {
+  const mockDropOpen = tournament
+    ? ["drop_open", "round_3", "round_4"].includes(tournament.status)
+    : false;
+  if (dbDropOpen === false || (dbDropOpen === null && !mockDropOpen)) {
     return { ok: false, message: "The drop window is not open." };
   }
 

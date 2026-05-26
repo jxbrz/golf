@@ -28,6 +28,20 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
   const user = await requireCurrentUser();
   const dbRows = await getDbLeaderboard(tournament.id, tournament);
   const rows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
+  const winnerRow =
+    rows.find(
+      (row) =>
+        row.rank === 1 &&
+        row.score !== null &&
+        row.status !== "eliminated" &&
+        row.entry.user.name,
+    ) ??
+    rows.find(
+      (row) =>
+        row.score !== null &&
+        row.status !== "eliminated" &&
+        row.entry.user.name,
+    );
   const dbLowestRound = await getDbLowestRoundSummary(tournament.id);
   const lowestRound = dbLowestRound ?? getLowestRoundSummary(tournament.id);
   const backHref =
@@ -60,6 +74,8 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               </p>
             </div>
           </section>
+
+          {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
 
           <section className="paper-panel rounded-lg border border-border p-4 scorecard-shadow">
             <div className="flex gap-3">
@@ -134,5 +150,16 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
         </main>
       </AppShell>
     </MajorThemeProvider>
+  );
+}
+
+function WinnerBanner({ name }: { name: string }) {
+  return (
+    <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 scorecard-shadow">
+      <p className="sport-label text-emerald-800">Fantasy winner</p>
+      <h2 className="mt-1 text-2xl font-black text-primary">
+        Congratulations {name}
+      </h2>
+    </section>
   );
 }

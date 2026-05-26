@@ -11,6 +11,7 @@ export function GroupLeaderboard({
   preview = false,
   currentUserId,
   revealAll = false,
+  picksRevealed,
   title = "Fantasy standings",
 }: {
   rows: LeaderboardRow[];
@@ -18,15 +19,17 @@ export function GroupLeaderboard({
   preview?: boolean;
   currentUserId?: string;
   revealAll?: boolean;
+  picksRevealed?: boolean;
   title?: string;
 }) {
   const visibleRows = preview ? rows.slice(0, 4) : rows;
   const cutFinalized = isCutFinalizedStatus(tournament.status);
-  const picksRevealed =
-    new Date() > new Date(tournament.pickDeadline) ||
-    !["draft", "picks_open"].includes(tournament.status);
+  const shouldRevealPicks =
+    picksRevealed ??
+    (new Date() > new Date(tournament.pickDeadline) ||
+      !["draft", "picks_open"].includes(tournament.status));
   const scoreText = (row: LeaderboardRow) => {
-    if (!picksRevealed && !revealAll && row.entry.userId !== currentUserId) {
+    if (!shouldRevealPicks && !revealAll && row.entry.userId !== currentUserId) {
       return "Hidden";
     }
     if (row.status === "drop_required") return "Pending";
@@ -98,7 +101,7 @@ export function GroupLeaderboard({
                 <ChevronRight className="text-muted transition group-open:rotate-90" size={16} />
               </summary>
               <div className="bg-white px-3 pb-3">
-                {picksRevealed || revealAll || isCurrentUser ? (
+                {shouldRevealPicks || revealAll || isCurrentUser ? (
                   row.entry.picks.map((pick) => (
                     <PlayerScoreRow key={pick.id} pick={pick} cutFinalized={cutFinalized} />
                   ))

@@ -29,10 +29,6 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   }
   const dbRows = await getDbLeaderboard(tournament.id, tournament);
   const leaderboardRows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
-  const winnerRow =
-    tournament.status === "final"
-      ? getLeaderboard(tournament.id).find((row) => row.score !== null && row.status !== "eliminated" && row.entry.user.name)
-      : null;
   const lowestRound = getLowestRoundSummary(tournament.id);
 
   return (
@@ -40,7 +36,6 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
       <AppShell tournament={tournament}>
         {entry ? (
           <main className="space-y-4">
-            {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
             <LowestRoundBanner lowestRound={lowestRound} />
             <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
               <div className="flex items-start gap-3">
@@ -94,7 +89,6 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         ) : (
           <>
             <TournamentHeader tournament={tournament} entrySubmitted={false} />
-            {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
             <LowestRoundBanner lowestRound={lowestRound} />
             <main className="grid gap-4 lg:grid-cols-[1fr_22rem]">
               <GroupLeaderboard
@@ -127,15 +121,6 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
         )}
       </AppShell>
     </MajorThemeProvider>
-  );
-}
-
-function WinnerBanner({ name }: { name: string }) {
-  return (
-    <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 scorecard-shadow">
-      <p className="sport-label text-emerald-800">Tournament winner</p>
-      <h2 className="mt-1 text-2xl font-black text-primary">Congratulations {name}</h2>
-    </section>
   );
 }
 

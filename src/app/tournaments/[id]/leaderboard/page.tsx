@@ -6,7 +6,7 @@ import { AppShell, HeaderInfoButton } from "@/components/layout/AppShell";
 import { GroupLeaderboard } from "@/components/leaderboard/GroupLeaderboard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
-import { getDbEntry, getDbLeaderboard } from "@/lib/db-data/entries";
+import { getDbEntry, getDbHybridStatus, getDbLeaderboard } from "@/lib/db-data/entries";
 import { getEntry, getLeaderboard, getTournament, getTournamentGolfers } from "@/lib/mock-data/store";
 import { isCutFinalizedStatus, tournamentStageCopy } from "@/lib/tournament-status";
 import { formatScoreOrLabel } from "@/lib/utils";
@@ -24,6 +24,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
     redirect("/app");
   }
   const dbRows = await getDbLeaderboard(tournament.id, tournament);
+  const hybridStatus = await getDbHybridStatus(tournament.id);
   const rows = dbRows.length ? dbRows : getLeaderboard(tournament.id);
   const golfers = getTournamentGolfers(tournament.id);
   const cutFinalized = isCutFinalizedStatus(tournament.status);
@@ -31,6 +32,9 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
   const liveRound = Math.max(1, ...golfers.map((golfer) => golfer.round ?? 1));
   const stage = tournamentStageCopy(tournament);
   const userRank = rows.find((row) => row.entry.userId === user.id)?.rank ?? null;
+  const picksRevealed = hybridStatus
+    ? !["setup", "picks_open"].includes(hybridStatus.competition.status)
+    : undefined;
 
   return (
     <MajorThemeProvider majorKey={tournament.majorKey}>
@@ -80,6 +84,7 @@ export default async function LeaderboardPage({ params }: { params: Promise<{ id
               tournament={tournament}
               currentUserId={user.id}
               revealAll={user.role === "admin"}
+              picksRevealed={picksRevealed}
               title="Fantasy standings"
             />
           </div>
