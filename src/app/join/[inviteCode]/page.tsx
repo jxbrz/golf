@@ -3,6 +3,7 @@ import { ArrowLeft, AlertTriangle, LockKeyhole, MailCheck } from "lucide-react";
 import { acceptInviteAction } from "@/app/actions";
 import { getSessionUser } from "@/lib/auth";
 import { getInviteByCode } from "@/lib/db-data/organisations";
+import { normalizeEmail } from "@/lib/email";
 
 export default async function JoinInvitePage({
   params,
@@ -18,7 +19,10 @@ export default async function JoinInvitePage({
   const expired = invite ? invite.status === "expired" || invite.expiresAt < new Date() : false;
   const accepted = invite?.status === "accepted";
   const invalid = !invite;
-  const canAccept = Boolean(invite && user && !expired && !accepted);
+  const emailMismatch = Boolean(
+    invite && user && normalizeEmail(user.email) !== normalizeEmail(invite.email),
+  );
+  const canAccept = Boolean(invite && user && !expired && !accepted && !emailMismatch);
   const title = invalid
     ? "This invite is not available."
     : accepted
@@ -56,6 +60,11 @@ export default async function JoinInvitePage({
           {error ? (
             <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-800">
               {error}
+            </p>
+          ) : null}
+          {emailMismatch ? (
+            <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-bold text-amber-900">
+              This invite was sent to {invite?.email}. Sign in with that email address to accept it.
             </p>
           ) : null}
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">

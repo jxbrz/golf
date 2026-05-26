@@ -98,6 +98,37 @@ describe("organisation onboarding helpers", () => {
     expect(db.state.organisationMembers[0].userId).toBe(db.state.users[0].id);
   });
 
+  it("does not duplicate organisation setup when approval is repeated", async () => {
+    db.seedRequest({ email: "owner@example.com" });
+
+    await approveOrganisationRequest("request_1", "u_admin");
+    const second = await approveOrganisationRequest("request_1", "u_admin");
+
+    expect(second).toEqual({ ok: true, message: "Request has already been reviewed." });
+    expect(db.state.organisations).toHaveLength(1);
+    expect(db.state.leagues).toHaveLength(1);
+    expect(db.state.organisationMembers).toHaveLength(1);
+  });
+
+  it("rolls back approval when later organisation setup fails", async () => {
+    db.seedRequest({ email: "owner@example.com" });
+    db.throwGroupCompetitionInsertOnce = true;
+
+    await expect(approveOrganisationRequest("request_1", "u_admin")).rejects.toThrow(
+      "group competition insert failed",
+    );
+
+    expect(db.state.organisationRequests[0].status).toBe("pending");
+    expect(db.state.users).toHaveLength(0);
+    expect(db.state.organisations).toHaveLength(0);
+    expect(db.state.organisationMembers).toHaveLength(0);
+    expect(db.state.groups).toHaveLength(0);
+    expect(db.state.leagues).toHaveLength(0);
+    expect(db.state.competitionRuleSets).toHaveLength(0);
+    expect(db.state.groupCompetitions).toHaveLength(0);
+    expect(db.state.leagueTournaments).toHaveLength(0);
+  });
+
   it("creates invites with normalized email", async () => {
     db.seedOrganisation();
 
@@ -138,6 +169,38 @@ describe("organisation onboarding helpers", () => {
       userId: "u_player",
       role: "player",
     });
+  });
+
+  it("does not accept invalid, expired or already accepted invites", async () => {
+    db.seedOrganisation();
+
+    const invalid = await acceptInvite("missing", {
+      id: "u_player",
+      name: "Player",
+      email: "player@example.com",
+    });
+    expect(invalid.ok).toBe(false);
+
+    db.seedInvite({ email: "player@example.com" });
+    db.state.invites[0].expiresAt = new Date("2026-01-01T00:00:00.000Z");
+    const expired = await acceptInvite("abc123", {
+      id: "u_player",
+      name: "Player",
+      email: "player@example.com",
+    });
+    expect(expired.ok).toBe(false);
+    expect(db.state.invites[0].status).toBe("expired");
+    expect(db.state.organisationMembers).toHaveLength(0);
+
+    db.seedInvite({ email: "player@example.com" });
+    db.state.invites[0].status = "accepted";
+    const accepted = await acceptInvite("abc123", {
+      id: "u_player",
+      name: "Player",
+      email: "player@example.com",
+    });
+    expect(accepted.ok).toBe(false);
+    expect(db.state.organisationMembers).toHaveLength(0);
   });
 });
 
@@ -191,6 +254,7 @@ function createFakeDb() {
   const api = {
     state,
     throwDuplicateUserOnce: false,
+    throwGroupCompetitionInsertOnce: false,
     reset() {
       state.users = [];
       state.organisationRequests = [];
@@ -203,6 +267,7 @@ function createFakeDb() {
       state.leagueTournaments = [];
       state.invites = [];
       api.throwDuplicateUserOnce = false;
+      api.throwGroupCompetitionInsertOnce = false;
     },
     seedRequest(input: { email: string }) {
       state.organisationRequests = [
@@ -288,28 +353,58 @@ function createFakeDb() {
     insert(table: unknown) {
       return {
         values(values: unknown) {
-          if (table === users && api.throwDuplicateUserOnce) {
-            api.throwDuplicateUserOnce = false;
-            state.users.push({
-              id: "user_race",
-              name: "Owner User",
-              email: "race@example.com",
-              role: "player",
-              createdAt: timestamp,
-            });
-            throw Object.assign(new Error("duplicate key value"), { code: "23505" });
-          }
-          const rows = rowsFor(table);
+          let conflict = false;
           const inserted = Array.isArray(values) ? values : [values];
-          rows.push(...inserted);
-          return {
+          const applyInsert = (ignoreConflict = false) => {
+            if (table === users && api.throwDuplicateUserOnce) {
+              api.throwDuplicateUserOnce = false;
+              state.users.push({
+                id: "user_race",
+                name: "Owner User",
+                email: "race@example.com",
+                role: "player",
+                createdAt: timestamp,
+              });
+              conflict = true;
+              if (!ignoreConflict) {
+                throw Object.assign(new Error("duplicate key value"), { code: "23505" });
+              }
+              return [];
+            }
+            if (table === groupCompetitions && api.throwGroupCompetitionInsertOnce) {
+              api.throwGroupCompetitionInsertOnce = false;
+              throw new Error("group competition insert failed");
+            }
+            const rows = rowsFor(table);
+            rows.push(...inserted);
+            return inserted;
+          };
+          let applied = false;
+          let appliedRows: unknown[] = [];
+          const query = {
+            onConflictDoNothing() {
+              if (!applied) {
+                appliedRows = applyInsert(true);
+                applied = true;
+              }
+              return query;
+            },
             returning() {
-              return Promise.resolve(inserted);
+              if (!applied) {
+                appliedRows = applyInsert(false);
+                applied = true;
+              }
+              return Promise.resolve(conflict ? [] : appliedRows);
             },
             then(resolve: (value: unknown[]) => void) {
-              return Promise.resolve(inserted).then(resolve);
+              if (!applied) {
+                appliedRows = applyInsert(false);
+                applied = true;
+              }
+              return Promise.resolve(appliedRows).then(resolve);
             },
           };
+          return query;
         },
       };
     },
@@ -327,7 +422,31 @@ function createFakeDb() {
         },
       };
     },
+    async transaction<T>(callback: (tx: typeof api) => Promise<T>) {
+      const snapshot = cloneState(state);
+      try {
+        return await callback(api);
+      } catch (error) {
+        restoreState(state, snapshot);
+        throw error;
+      }
+    },
   };
 
   return api;
+}
+
+function cloneState<T extends Record<string, unknown[]>>(state: T): T {
+  return Object.fromEntries(
+    Object.entries(state).map(([key, rows]) => [
+      key,
+      rows.map((row) => ({ ...(row as Record<string, unknown>) })),
+    ]),
+  ) as T;
+}
+
+function restoreState<T extends Record<string, unknown[]>>(state: T, snapshot: T) {
+  for (const key of Object.keys(state) as Array<keyof T>) {
+    state[key] = snapshot[key];
+  }
 }

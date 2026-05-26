@@ -84,97 +84,100 @@ export async function listOrganisationRequests() {
 export async function approveOrganisationRequest(requestId: string, adminUserId: string) {
   const db = getDb();
   const timestamp = new Date();
-  const [request] = await db
-    .select()
-    .from(organisationRequests)
-    .where(eq(organisationRequests.id, requestId))
-    .limit(1);
+  return db.transaction(async (tx) => {
+    const client = tx as unknown as typeof db;
+    const [request] = await client
+      .select()
+      .from(organisationRequests)
+      .where(eq(organisationRequests.id, requestId))
+      .limit(1);
 
-  if (!request) return { ok: false, message: "Organisation request was not found." };
-  if (request.status !== "pending") return { ok: true, message: "Request has already been reviewed." };
+    if (!request) return { ok: false, message: "Organisation request was not found." };
+    if (request.status !== "pending") return { ok: true, message: "Request has already been reviewed." };
 
-  const owner = await findOrCreateUserForRequest({
-    name: request.contactName,
-    email: request.email,
-    timestamp,
+    const owner = await findOrCreateUserForRequest(client, {
+      name: request.contactName,
+      email: request.email,
+      timestamp,
+    });
+    const activeTournament = getActiveTournament();
+    const slug = `${slugify(request.organisationName)}-${crypto.randomUUID().slice(0, 8)}`;
+    const organisationId = newId("org");
+    const groupId = newId("group");
+    const leagueId = newId("league");
+    const ruleSetId = newId("rule_set");
+
+    await client.insert(organisations).values({
+      id: organisationId,
+      name: request.organisationName,
+      slug,
+      type: request.organisationType,
+      createdByUserId: owner.id,
+      billingEmail: request.email,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    await ensureOrganisationMembershipWithClient(client, {
+      organisationId,
+      userId: owner.id,
+      role: "owner",
+      timestamp,
+    });
+
+    await client.insert(groups).values({
+      id: groupId,
+      organisationId,
+      name: `${request.organisationName} Group`,
+      slug: `${slug}-group`,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    await client.insert(leagues).values({
+      id: leagueId,
+      organisationId,
+      name: `${request.organisationName} ${activeTournament.year}`,
+      seasonYear: activeTournament.year,
+      status: "active",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    await client.insert(competitionRuleSets).values({
+      id: ruleSetId,
+      organisationId,
+      name: "Major Picks Default",
+      pickCount: 4,
+      budgetPoints: 90,
+      requiredMadeCutCount: 3,
+      maxActiveAfterCut: 3,
+      lockPolicy: "manual_or_deadline",
+      dropPolicy: "manual_then_auto_worst_before_round_3",
+      lowestRoundEnabled: true,
+      countbackPolicy: { order: ["back_9", "back_6", "back_3"] },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+
+    await attachCurrentTournamentToLeague(client, {
+      groupId,
+      leagueId,
+      ruleSetId,
+      tournamentId: activeTournament.id,
+      tournamentName: activeTournament.name,
+      tournamentYear: activeTournament.year,
+      pickDeadline: new Date(activeTournament.pickDeadline),
+      timestamp,
+    });
+
+    await client
+      .update(organisationRequests)
+      .set({ status: "approved", reviewedAt: timestamp, reviewedByUserId: adminUserId })
+      .where(eq(organisationRequests.id, requestId));
+
+    return { ok: true, message: "Organisation approved.", organisationId };
   });
-  const activeTournament = getActiveTournament();
-  const slug = `${slugify(request.organisationName)}-${crypto.randomUUID().slice(0, 8)}`;
-  const organisationId = newId("org");
-  const groupId = newId("group");
-  const leagueId = newId("league");
-  const ruleSetId = newId("rule_set");
-
-  await db.insert(organisations).values({
-    id: organisationId,
-    name: request.organisationName,
-    slug,
-    type: request.organisationType,
-    createdByUserId: owner.id,
-    billingEmail: request.email,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  await ensureOrganisationMembership({
-    organisationId,
-    userId: owner.id,
-    role: "owner",
-    timestamp,
-  });
-
-  await db.insert(groups).values({
-    id: groupId,
-    organisationId,
-    name: `${request.organisationName} Group`,
-    slug: `${slug}-group`,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  await db.insert(leagues).values({
-    id: leagueId,
-    organisationId,
-    name: `${request.organisationName} ${activeTournament.year}`,
-    seasonYear: activeTournament.year,
-    status: "active",
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  await db.insert(competitionRuleSets).values({
-    id: ruleSetId,
-    organisationId,
-    name: "Major Picks Default",
-    pickCount: 4,
-    budgetPoints: 90,
-    requiredMadeCutCount: 3,
-    maxActiveAfterCut: 3,
-    lockPolicy: "manual_or_deadline",
-    dropPolicy: "manual_then_auto_worst_before_round_3",
-    lowestRoundEnabled: true,
-    countbackPolicy: { order: ["back_9", "back_6", "back_3"] },
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  await attachCurrentTournamentToLeague({
-    groupId,
-    leagueId,
-    ruleSetId,
-    tournamentId: activeTournament.id,
-    tournamentName: activeTournament.name,
-    tournamentYear: activeTournament.year,
-    pickDeadline: new Date(activeTournament.pickDeadline),
-    timestamp,
-  });
-
-  await db
-    .update(organisationRequests)
-    .set({ status: "approved", reviewedAt: timestamp, reviewedByUserId: adminUserId })
-    .where(eq(organisationRequests.id, requestId));
-
-  return { ok: true, message: "Organisation approved.", organisationId };
 }
 
 export async function rejectOrganisationRequest(requestId: string, adminUserId: string) {
@@ -383,31 +386,30 @@ export async function getUserOrganisationContext(userId: string) {
   }
 }
 
-async function findOrCreateUserForRequest(input: { name: string; email: string; timestamp: Date }) {
-  const db = getDb();
+async function findOrCreateUserForRequest(
+  db: ReturnType<typeof getDb>,
+  input: { name: string; email: string; timestamp: Date },
+) {
   const email = normalizeEmail(input.email);
   const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (existing) return existing;
 
-  const userId = newId("user");
-  try {
-    const [created] = await db
-      .insert(users)
-      .values({
-        id: userId,
-        name: input.name.trim(),
-        email,
-        role: "player",
-        createdAt: input.timestamp,
-      })
-      .returning();
-    return created;
-  } catch (error) {
-    if (!isUniqueConstraintError(error)) throw error;
-    const [recovered] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    if (!recovered) throw error;
-    return recovered;
-  }
+  const [created] = await db
+    .insert(users)
+    .values({
+      id: newId("user"),
+      name: input.name.trim(),
+      email,
+      role: "player",
+      createdAt: input.timestamp,
+    })
+    .onConflictDoNothing()
+    .returning();
+  if (created) return created;
+
+  const [recovered] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  if (!recovered) throw new Error("Unable to create or recover user for organisation request.");
+  return recovered;
 }
 
 async function ensureDbUserFromSession(
@@ -440,6 +442,18 @@ async function ensureOrganisationMembership(input: {
   timestamp: Date;
 }) {
   const db = getDb();
+  return ensureOrganisationMembershipWithClient(db, input);
+}
+
+async function ensureOrganisationMembershipWithClient(
+  db: ReturnType<typeof getDb>,
+  input: {
+    organisationId: string;
+    userId: string;
+    role: typeof organisationMembers.$inferSelect.role;
+    timestamp: Date;
+  },
+) {
   const [existing] = await db
     .select()
     .from(organisationMembers)
@@ -451,34 +465,32 @@ async function ensureOrganisationMembership(input: {
 
   if (existing) return existing;
 
-  try {
-    const [created] = await db
-      .insert(organisationMembers)
-      .values({
-        id: newId("org_member"),
-        organisationId: input.organisationId,
-        userId: input.userId,
-        role: input.role,
-        createdAt: input.timestamp,
-      })
-      .returning();
-    return created;
-  } catch (error) {
-    if (!isUniqueConstraintError(error)) throw error;
-    const [recovered] = await db
-      .select()
-      .from(organisationMembers)
-      .where(and(
-        eq(organisationMembers.organisationId, input.organisationId),
-        eq(organisationMembers.userId, input.userId),
-      ))
-      .limit(1);
-    if (!recovered) throw error;
-    return recovered;
-  }
+  const [created] = await db
+    .insert(organisationMembers)
+    .values({
+      id: newId("org_member"),
+      organisationId: input.organisationId,
+      userId: input.userId,
+      role: input.role,
+      createdAt: input.timestamp,
+    })
+    .onConflictDoNothing()
+    .returning();
+  if (created) return created;
+
+  const [recovered] = await db
+    .select()
+    .from(organisationMembers)
+    .where(and(
+      eq(organisationMembers.organisationId, input.organisationId),
+      eq(organisationMembers.userId, input.userId),
+    ))
+    .limit(1);
+  if (!recovered) throw new Error("Unable to create or recover organisation membership.");
+  return recovered;
 }
 
-async function attachCurrentTournamentToLeague(input: {
+async function attachCurrentTournamentToLeague(db: ReturnType<typeof getDb>, input: {
   groupId: string;
   leagueId: string;
   ruleSetId: string;
@@ -488,7 +500,6 @@ async function attachCurrentTournamentToLeague(input: {
   pickDeadline: Date;
   timestamp: Date;
 }) {
-  const db = getDb();
   await db.insert(groupCompetitions).values({
     id: newId("competition"),
     groupId: input.groupId,
