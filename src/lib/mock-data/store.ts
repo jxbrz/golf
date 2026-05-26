@@ -137,9 +137,25 @@ function ensureStoreShape(store: Store) {
   store.providerLeaderboardCache ??= [];
   store.scoreSyncLogs ??= [];
   store.adminOverrides ??= [];
-  const platformAdmin = store.users.find((user) => user.email === "admin@majorpicks.local");
-  if (platformAdmin && platformAdmin.role === "admin") {
-    platformAdmin.role = "owner";
+  const legacyAdmin = store.users.find((user) => user.email === "admin@majorpicks.local");
+  if (legacyAdmin && legacyAdmin.role === "owner") {
+    legacyAdmin.role = "admin";
+  }
+  if (!store.users.some((user) => user.email === "owner@majorpicks.local")) {
+    store.users.unshift({
+      id: "u_owner",
+      name: "Platform Owner",
+      email: "owner@majorpicks.local",
+      role: "owner",
+      createdAt: nowIso(),
+    });
+  }
+  if (!store.credentials.some((credential) => credential.email === "owner@majorpicks.local")) {
+    store.credentials.unshift({
+      userId: "u_owner",
+      email: "owner@majorpicks.local",
+      password: "Owner123!",
+    });
   }
 }
 
@@ -1696,6 +1712,11 @@ function buildRoundScores(tournamentGolfers: TournamentGolfer[], timestamp: stri
 function defaultCredentials(): Credential[] {
   return [
     {
+      userId: "u_owner",
+      email: "owner@majorpicks.local",
+      password: "Owner123!",
+    },
+    {
       userId: "u_admin",
       email: "admin@majorpicks.local",
       password: "Admin123!",
@@ -1716,7 +1737,8 @@ function defaultCredentials(): Credential[] {
 function createSeedStore(): Store {
   const timestamp = nowIso();
   const users = [
-    ["u_admin", "Admin", "owner", "admin@majorpicks.local"],
+    ["u_owner", "Platform Owner", "owner", "owner@majorpicks.local"],
+    ["u_admin", "Admin", "admin", "admin@majorpicks.local"],
     ["u_player1", "Player One", "player", "player1@majorpicks.local"],
     ["u_player2", "Player Two", "player", "player2@majorpicks.local"],
   ].map(

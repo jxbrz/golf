@@ -72,8 +72,14 @@ async function seed() {
   await db.execute(sql`
     update users
     set role = 'owner'
+    where email = 'owner@majorpicks.local'
+  `);
+
+  await db.execute(sql`
+    update users
+    set role = 'admin'
     where email = 'admin@majorpicks.local'
-      and role = 'admin'
+      and role = 'owner'
   `);
 
   await db.insert(organisations).values(defaultOrganisation).onConflictDoNothing();

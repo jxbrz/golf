@@ -91,7 +91,8 @@ export default async function LoginPage({
         {showDemoAccounts ? (
           <section className="app-panel mt-4 p-4 text-sm">
             <p className="sport-label">Starter accounts</p>
-            <p className="mt-2 text-muted">Admin: admin@majorpicks.local / Admin123!</p>
+            <p className="mt-2 text-muted">Owner: owner@majorpicks.local / Owner123!</p>
+            <p className="mt-1 text-muted">Admin: admin@majorpicks.local / Admin123!</p>
             <p className="mt-1 text-muted">Players: player1@majorpicks.local or player2@majorpicks.local / Player123!</p>
           </section>
         ) : null}
