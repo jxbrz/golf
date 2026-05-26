@@ -1,20 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
-import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requirePlatformAdminOrOwner } from "@/lib/auth";
+import { OwnerShell } from "@/components/layout/OwnerShell";
 import { listPlatformUsers } from "@/lib/db-data/organisations";
-import { getActiveTournament } from "@/lib/mock-data/store";
 
 export default async function OwnerUsersPage() {
-  await requirePlatformAdminOrOwner();
-  const active = getActiveTournament();
   const users = await listPlatformUsers();
 
   return (
-    <MajorThemeProvider majorKey={active.majorKey}>
-      <AppShell tournament={active}>
-        <main className="space-y-4">
+    <OwnerShell>
+        <div className="space-y-4">
           <Link href="/owner" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
             <ArrowLeft size={17} />
             Back to owner dashboard
@@ -42,9 +36,8 @@ export default async function OwnerUsersPage() {
               )}
             </div>
           </section>
-        </main>
-      </AppShell>
-    </MajorThemeProvider>
+        </div>
+    </OwnerShell>
   );
 }
 

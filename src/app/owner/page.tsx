@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { Activity, Building2, ClipboardList, Flag, Inbox, ListChecks, RadioTower, UsersRound } from "lucide-react";
-import { AppShell } from "@/components/layout/AppShell";
-import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requirePlatformAdminOrOwner } from "@/lib/auth";
+import { OwnerShell } from "@/components/layout/OwnerShell";
 import { listOrganisationRequests, listOrganisations } from "@/lib/db-data/organisations";
-import { getActiveTournament, getStore } from "@/lib/mock-data/store";
+import { getStore } from "@/lib/mock-data/store";
 
 export default async function OwnerPage() {
-  await requirePlatformAdminOrOwner();
-  const active = getActiveTournament();
   const store = getStore();
+  const currentTournament = store.tournaments[0] ?? null;
   const [requests, organisations] = await Promise.all([
     listOrganisationRequests(),
     listOrganisations(),
@@ -17,9 +14,8 @@ export default async function OwnerPage() {
   const pendingRequests = requests.filter((request) => request.status === "pending").length;
 
   return (
-    <MajorThemeProvider majorKey={active.majorKey}>
-      <AppShell tournament={active}>
-        <main className="space-y-4">
+    <OwnerShell>
+        <div className="space-y-4">
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
             <p className="sport-label">Platform owner</p>
             <h1 className="mt-1 text-3xl font-black">Owner dashboard</h1>
@@ -41,15 +37,14 @@ export default async function OwnerPage() {
               <OwnerLink href="/owner/organisations" icon={<Building2 />} label="All organisations" />
               <OwnerLink href="/owner/leagues" icon={<ListChecks />} label="All leagues" />
               <OwnerLink href="/owner/users" icon={<UsersRound />} label="Platform users" />
-              <OwnerLink href={`/owner/tournaments/${active.id}`} icon={<ClipboardList />} label="Global tournament control" />
-              <OwnerLink href={`/owner/tournaments/${active.id}/scores`} icon={<RadioTower />} label="Scores and sync" />
-              <OwnerLink href={`/owner/tournaments/${active.id}/entries`} icon={<UsersRound />} label="Global entries" />
+              <OwnerLink href="/owner/tournaments" icon={<ClipboardList />} label="Global tournaments" />
+              <OwnerLink href={currentTournament ? `/owner/tournaments/${currentTournament.id}/scores` : "/owner/sync"} icon={<RadioTower />} label="Scores and sync" />
+              <OwnerLink href={currentTournament ? `/owner/tournaments/${currentTournament.id}/entries` : "/owner/tournaments"} icon={<UsersRound />} label="Global entries" />
               <OwnerLink href="/admin" icon={<Activity />} label="Organisation admin area" />
             </div>
           </section>
-        </main>
-      </AppShell>
-    </MajorThemeProvider>
+        </div>
+    </OwnerShell>
   );
 }
 

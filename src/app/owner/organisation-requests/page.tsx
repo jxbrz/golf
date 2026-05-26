@@ -4,15 +4,10 @@ import {
   approveOrganisationRequestAction,
   rejectOrganisationRequestAction,
 } from "@/app/actions";
-import { AppShell } from "@/components/layout/AppShell";
-import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requirePlatformAdminOrOwner } from "@/lib/auth";
+import { OwnerShell } from "@/components/layout/OwnerShell";
 import { listOrganisationRequests } from "@/lib/db-data/organisations";
-import { getActiveTournament } from "@/lib/mock-data/store";
 
 export default async function OwnerOrganisationRequestsPage() {
-  await requirePlatformAdminOrOwner();
-  const active = getActiveTournament();
   const requests = await listOrganisationRequests();
   const grouped = {
     pending: requests.filter((request) => request.status === "pending"),
@@ -21,9 +16,8 @@ export default async function OwnerOrganisationRequestsPage() {
   };
 
   return (
-    <MajorThemeProvider majorKey={active.majorKey}>
-      <AppShell tournament={active}>
-        <main className="space-y-4">
+    <OwnerShell>
+        <div className="space-y-4">
           <Link href="/owner" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
             <ArrowLeft size={17} />
             Back to owner dashboard
@@ -92,9 +86,8 @@ export default async function OwnerOrganisationRequestsPage() {
               </div>
             </section>
           ))}
-        </main>
-      </AppShell>
-    </MajorThemeProvider>
+        </div>
+    </OwnerShell>
   );
 }
 

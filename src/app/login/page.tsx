@@ -14,7 +14,10 @@ export default async function LoginPage({
 }) {
   const { error, invite } = await searchParams;
   const user = await getSessionUser();
-  if (user) redirect(invite ? `/join/${encodeURIComponent(invite)}` : "/app");
+  if (user) {
+    if (invite) redirect(`/join/${encodeURIComponent(invite)}`);
+    redirect(user.role === "owner" ? "/owner" : "/app");
+  }
   const tournament = getActiveTournament();
   const theme = majorThemes[tournament.majorKey];
   const showDemoAccounts =

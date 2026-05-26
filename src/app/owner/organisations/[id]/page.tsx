@@ -2,11 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Copy, MailPlus } from "lucide-react";
 import { createInviteAction } from "@/app/actions";
-import { AppShell } from "@/components/layout/AppShell";
-import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
-import { requirePlatformAdminOrOwner } from "@/lib/auth";
+import { OwnerShell } from "@/components/layout/OwnerShell";
 import { getOrganisationDetail } from "@/lib/db-data/organisations";
-import { getActiveTournament } from "@/lib/mock-data/store";
 
 export default async function OwnerOrganisationDetailPage({
   params,
@@ -15,8 +12,6 @@ export default async function OwnerOrganisationDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ invite?: string; inviteError?: string }>;
 }) {
-  await requirePlatformAdminOrOwner();
-  const active = getActiveTournament();
   const { id } = await params;
   const { invite, inviteError } = await searchParams;
   const detail = await getOrganisationDetail(id);
@@ -25,9 +20,8 @@ export default async function OwnerOrganisationDetailPage({
   const joinLink = invite ? `/join/${invite}` : null;
 
   return (
-    <MajorThemeProvider majorKey={active.majorKey}>
-      <AppShell tournament={active}>
-        <main className="space-y-4">
+    <OwnerShell>
+        <div className="space-y-4">
           <Link href="/owner/organisations" className="inline-flex items-center gap-2 text-sm font-black text-primary/72">
             <ArrowLeft size={17} />
             Back to all organisations
@@ -175,9 +169,8 @@ export default async function OwnerOrganisationDetailPage({
               </form>
             </section>
           </div>
-        </main>
-      </AppShell>
-    </MajorThemeProvider>
+        </div>
+    </OwnerShell>
   );
 }
 

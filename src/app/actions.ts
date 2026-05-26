@@ -380,6 +380,7 @@ export async function loginAction(formData: FormData) {
     redirect(`/login?error=1${inviteParam}`);
   }
   if (inviteCode) redirect(`/join/${encodeURIComponent(inviteCode)}`);
+  if (user.role === "owner") redirect("/owner");
   redirect("/app");
 }
 

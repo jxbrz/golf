@@ -68,3 +68,15 @@ Organisation competitions link to the global tournament and inherit its default 
 - Organisation admins do not control global score sync, global golfer scores, global odds, global tournament status or global finalisation.
 
 This keeps one real-world tournament lifecycle feeding many private organisation competitions.
+
+## Owner Area Separation
+
+The platform owner dashboard at `/owner` is not part of the player game or an organisation admin experience. A platform owner does not need an entry, picks, league membership, organisation membership or tournament participation to manage the product.
+
+The product has three separate route families:
+
+- Public marketing and onboarding: `/`, `/register-organisation`, `/join/[inviteCode]`, `/login`.
+- Player and organisation user app: `/app`, `/tournaments/[id]`, pick, leaderboard and drop routes.
+- Platform owner controls: `/owner`, organisation requests, organisations, global tournaments, users, sync and settings.
+
+Owner controls use global platform data. Organisation admins manage local organisation operations under `/admin`.
