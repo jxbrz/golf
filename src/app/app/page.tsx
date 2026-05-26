@@ -8,6 +8,7 @@ import {
   Clock,
   Flag,
   LockKeyhole,
+  ShieldCheck,
   Trophy,
   UsersRound,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import { EntryTeamCard } from "@/components/leaderboard/EntryTeamCard";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireCurrentUser } from "@/lib/auth";
 import { getDbEntry } from "@/lib/db-data/entries";
+import { getUserOrganisationContext } from "@/lib/db-data/organisations";
 import { getActiveTournament, getEntry, getLeaderboard } from "@/lib/mock-data/store";
 import { isPrePlayStatus, tournamentStageCopy } from "@/lib/tournament-status";
 import type { TournamentStatus } from "@/lib/types";
@@ -24,10 +26,14 @@ import { formatDateTime } from "@/lib/utils";
 export default async function Home() {
   const tournament = getActiveTournament();
   const user = await requireCurrentUser();
-  const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
+  const [entry, organisationContext] = await Promise.all([
+    getDbEntry(tournament.id, user.id),
+    getUserOrganisationContext(user.id),
+  ]);
+  const activeEntry = entry ?? getEntry(tournament.id, user.id);
   const prePlay = isPrePlayStatus(tournament.status);
   const stage = tournamentStageCopy(tournament);
-  const needsDrop = entry?.status === "drop_required";
+  const needsDrop = activeEntry?.status === "drop_required";
   const winnerRow =
     tournament.status === "final"
       ? getLeaderboard(tournament.id).find((row) => row.score !== null && row.status !== "eliminated" && row.entry.user.name)
@@ -42,13 +48,14 @@ export default async function Home() {
       <AppShell tournament={tournament} activeNav="home">
         <div className="space-y-5">
           <WelcomeHero
-            entrySubmitted={Boolean(entry?.submittedAt)}
+            entrySubmitted={Boolean(activeEntry?.submittedAt)}
             locked={tournament.status === "picks_locked"}
             prePlay={prePlay}
             tournament={tournament}
           />
           {winnerRow ? <WinnerBanner name={winnerRow.entry.user.name} /> : null}
-          {entry?.submittedAt ? (
+          <OrganisationContextPanel context={organisationContext} tournamentId={tournament.id} />
+          {activeEntry?.submittedAt ? (
             <div className="grid gap-4 lg:grid-cols-[1fr_24rem]">
               <section className="app-panel p-5">
                 <div className="flex items-start gap-3">
@@ -75,12 +82,62 @@ export default async function Home() {
                   </div>
                 </div>
               </section>
-              <EntryTeamCard entry={entry} tournament={tournament} />
+              <EntryTeamCard entry={activeEntry} tournament={tournament} />
             </div>
           ) : null}
         </div>
       </AppShell>
     </MajorThemeProvider>
+  );
+}
+
+function OrganisationContextPanel({
+  context,
+  tournamentId,
+}: {
+  context: Awaited<ReturnType<typeof getUserOrganisationContext>>;
+  tournamentId: string;
+}) {
+  if (context.length === 0) return null;
+
+  return (
+    <section className="app-panel p-4">
+      <div className="flex items-center gap-2">
+        <ShieldCheck size={19} className="text-[var(--secondary)]" />
+        <h2 className="text-xl font-black">Your leagues</h2>
+      </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-2">
+        {context.map((row) => (
+          <article key={row.organisation.id} className="rounded-lg border border-border bg-white p-4">
+            <p className="sport-label">{row.membership.role}</p>
+            <h3 className="mt-1 text-lg font-black">{row.organisation.name}</h3>
+            <div className="mt-3 grid gap-2">
+              {row.leagues.map(({ league, tournaments }) => {
+                const currentTournament = tournaments.find((linkedTournament) => linkedTournament.id === tournamentId);
+                return (
+                  <div key={league.id} className="rounded-md border border-border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="font-black">{league.name}</p>
+                        <p className="text-xs font-bold uppercase text-muted">{league.status}</p>
+                      </div>
+                      {currentTournament ? (
+                        <Link
+                          href={`/tournaments/${currentTournament.id}`}
+                          className="rounded-md bg-primary px-3 py-2 text-sm font-black text-white"
+                        >
+                          Open game
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 

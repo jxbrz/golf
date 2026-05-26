@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ClipboardList, Flag, Trophy } from "lucide-react";
+import { Building2, ClipboardList, Flag, Inbox, Trophy } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { MajorThemeProvider } from "@/components/theme/MajorThemeProvider";
 import { requireAdminUser } from "@/lib/auth";
@@ -38,6 +38,18 @@ export default async function AdminPage() {
           <section className="rounded-lg border border-border bg-surface p-4 scorecard-shadow">
             <h2 className="text-xl font-black">Quick tasks</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <Link
+                href="/admin/organisation-requests"
+                className="rounded-lg border border-border p-4 font-black text-primary"
+              >
+                <Inbox className="mb-2" /> Organisation Requests
+              </Link>
+              <Link
+                href="/admin/organisations"
+                className="rounded-lg border border-border p-4 font-black text-primary"
+              >
+                <Building2 className="mb-2" /> Organisations
+              </Link>
               <Link
                 href={`/admin/tournaments/${active.id}/entries`}
                 className="rounded-lg border border-border p-4 font-black text-primary"

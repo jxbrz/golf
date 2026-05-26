@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Building2, Mail, MessageSquareText, UserRound, UsersRound } from "lucide-react";
+import { requestOrganisationAccessAction } from "@/app/actions";
 
 const organisationTypes = [
   "Golf club",
@@ -10,10 +11,12 @@ const organisationTypes = [
   "Other",
 ];
 
-export default function RegisterOrganisationPage() {
-  async function requestOrganisationAccess() {
-    "use server";
-  }
+export default async function RegisterOrganisationPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
 
   return (
     <main className="min-h-screen bg-[#f4f7f2] px-4 py-6 text-primary sm:px-6 lg:px-8">
@@ -33,7 +36,13 @@ export default function RegisterOrganisationPage() {
             </p>
           </div>
 
-          <form action={requestOrganisationAccess} className="grid gap-5 p-5 sm:p-7">
+          {error ? (
+            <div className="mx-5 mt-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800 sm:mx-7">
+              We could not submit that request. Check the details and try again.
+            </div>
+          ) : null}
+
+          <form action={requestOrganisationAccessAction} className="grid gap-5 p-5 sm:p-7">
             <label className="block">
               <span className="flex items-center gap-2 text-sm font-black uppercase text-muted">
                 <Building2 size={16} />
@@ -73,7 +82,7 @@ export default function RegisterOrganisationPage() {
                   Your name
                 </span>
                 <input
-                  name="name"
+                  name="contactName"
                   type="text"
                   placeholder="Sam Taylor"
                   required
@@ -105,6 +114,7 @@ export default function RegisterOrganisationPage() {
                 type="number"
                 min="4"
                 placeholder="40"
+                required
                 className="mt-2 h-12 w-full rounded-md border border-border bg-white px-3 text-base font-semibold outline-none focus:border-primary"
               />
             </label>

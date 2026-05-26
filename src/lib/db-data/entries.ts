@@ -158,6 +158,13 @@ export async function getDbTournament(tournamentId: string) {
 export async function getActiveDbGroupCompetition(tournamentId: string) {
   if (!process.env.DATABASE_URL) return null;
   const db = getDb();
+  const [defaultCompetition] = await db
+    .select()
+    .from(groupCompetitions)
+    .where(eq(groupCompetitions.id, `competition_${tournamentId}`))
+    .limit(1);
+  if (defaultCompetition) return defaultCompetition;
+
   const [row] = await db
     .select()
     .from(groupCompetitions)

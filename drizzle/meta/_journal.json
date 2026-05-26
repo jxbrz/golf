@@ -29,6 +29,13 @@
       "when": 1779805040091,
       "tag": "0003_stormy_colossus",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1779832154051,
+      "tag": "0004_loose_power_pack",
+      "breakpoints": true
     }
   ]
 }

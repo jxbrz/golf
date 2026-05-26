@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { clearSession, createSession, requireAdminUser, requireCurrentUser } from "@/lib/auth";
+import { z } from "zod";
+import {
+  clearSession,
+  createSession,
+  getSessionUser,
+  requireAdminUser,
+  requireCurrentUser,
+} from "@/lib/auth";
 import {
   adminUpsertDbEntryPicks,
   dropDbPlayer,
@@ -10,6 +17,13 @@ import {
   submitDbEntry,
   updateDbGroupCompetitionForWeekendStep,
 } from "@/lib/db-data/entries";
+import {
+  acceptInvite,
+  approveOrganisationRequest,
+  createInvite,
+  createOrganisationRequest,
+  rejectOrganisationRequest,
+} from "@/lib/db-data/organisations";
 import {
   advanceWeekendStep,
   advanceWeekendStepFromProvider,
@@ -28,6 +42,23 @@ import {
   updateTournamentStatus,
 } from "@/lib/mock-data/store";
 import type { TournamentStatus } from "@/lib/types";
+
+const organisationRequestSchema = z.object({
+  organisationName: z.string().trim().min(2),
+  organisationType: z.enum(["golf_club", "society", "company", "school", "friends", "other"]),
+  contactName: z.string().trim().min(2),
+  email: z.string().trim().email(),
+  expectedPlayers: z.coerce.number().int().min(1),
+  message: z.string().trim().optional(),
+});
+
+const inviteSchema = z.object({
+  organisationId: z.string().min(1),
+  leagueId: z.string().min(1),
+  email: z.string().trim().email(),
+  role: z.enum(["admin", "player"]),
+  expiresAt: z.coerce.date(),
+});
 
 export async function submitEntryAction(formData: FormData) {
   const user = await requireCurrentUser();
@@ -235,6 +266,97 @@ export async function adminUpdateEntryPicksAction(formData: FormData) {
   revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
   revalidatePath(`/tournaments/${tournamentId}/results`);
   redirect(`/admin/tournaments/${tournamentId}/entries`);
+}
+
+export async function requestOrganisationAccessAction(formData: FormData) {
+  const parsed = organisationRequestSchema.safeParse({
+    organisationName: formData.get("organisationName"),
+    organisationType: formData.get("organisationType"),
+    contactName: formData.get("contactName"),
+    email: formData.get("email"),
+    expectedPlayers: formData.get("expectedPlayers"),
+    message: formData.get("message"),
+  });
+
+  if (!parsed.success) {
+    redirect("/register-organisation?error=invalid");
+  }
+
+  try {
+    await createOrganisationRequest({
+      ...parsed.data,
+      message: parsed.data.message || null,
+    });
+  } catch (error) {
+    console.error("Unable to create organisation request.", error);
+    redirect("/register-organisation?error=server");
+  }
+
+  redirect("/register-organisation/thanks");
+}
+
+export async function approveOrganisationRequestAction(formData: FormData) {
+  const admin = await requireAdminUser();
+  const requestId = String(formData.get("requestId") || "");
+  if (!requestId) redirect("/admin/organisation-requests?error=missing");
+
+  const result = await approveOrganisationRequest(requestId, admin.id);
+  revalidatePath("/admin");
+  revalidatePath("/admin/organisation-requests");
+  revalidatePath("/admin/organisations");
+  if (!result.ok) redirect(`/admin/organisation-requests?error=${encodeURIComponent(result.message)}`);
+  redirect(`/admin/organisations/${result.organisationId}`);
+}
+
+export async function rejectOrganisationRequestAction(formData: FormData) {
+  const admin = await requireAdminUser();
+  const requestId = String(formData.get("requestId") || "");
+  if (!requestId) redirect("/admin/organisation-requests?error=missing");
+
+  const result = await rejectOrganisationRequest(requestId, admin.id);
+  revalidatePath("/admin");
+  revalidatePath("/admin/organisation-requests");
+  if (!result.ok) redirect(`/admin/organisation-requests?error=${encodeURIComponent(result.message)}`);
+  redirect("/admin/organisation-requests?reviewed=rejected");
+}
+
+export async function createInviteAction(formData: FormData) {
+  const admin = await requireAdminUser();
+  const parsed = inviteSchema.safeParse({
+    organisationId: formData.get("organisationId"),
+    leagueId: formData.get("leagueId"),
+    email: formData.get("email"),
+    role: formData.get("role"),
+    expiresAt: formData.get("expiresAt"),
+  });
+  const organisationId = String(formData.get("organisationId") || "");
+  if (!parsed.success) {
+    redirect(`/admin/organisations/${organisationId}?inviteError=invalid`);
+  }
+  if (parsed.data.expiresAt <= new Date()) {
+    redirect(`/admin/organisations/${organisationId}?inviteError=invalid`);
+  }
+
+  const result = await createInvite({ ...parsed.data, createdByUserId: admin.id });
+  revalidatePath(`/admin/organisations/${parsed.data.organisationId}`);
+  if (!result.ok || !result.invite) {
+    redirect(`/admin/organisations/${parsed.data.organisationId}?inviteError=${encodeURIComponent(result.message)}`);
+  }
+  redirect(`/admin/organisations/${parsed.data.organisationId}?invite=${result.invite.inviteCode}`);
+}
+
+export async function acceptInviteAction(formData: FormData) {
+  const inviteCode = String(formData.get("inviteCode") || "");
+  if (!inviteCode) redirect("/");
+  const user = await getSessionUser();
+  if (!user) redirect(`/login?invite=${encodeURIComponent(inviteCode)}`);
+
+  const result = await acceptInvite(inviteCode, user);
+  if (!result.ok) {
+    redirect(`/join/${encodeURIComponent(inviteCode)}?error=${encodeURIComponent(result.message)}`);
+  }
+  revalidatePath("/app");
+  redirect("/app");
 }
 
 export async function loginAction(formData: FormData) {

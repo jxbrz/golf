@@ -6,6 +6,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const userRoleEnum = pgEnum("user_role", ["admin", "player"]);
@@ -26,6 +27,11 @@ export const groupRoleEnum = pgEnum("group_role", ["admin", "player"]);
 export const leagueStatusEnum = pgEnum("league_status", ["draft", "active", "complete"]);
 export const inviteRoleEnum = pgEnum("invite_role", ["admin", "player"]);
 export const inviteStatusEnum = pgEnum("invite_status", ["pending", "accepted", "expired"]);
+export const organisationRequestStatusEnum = pgEnum("organisation_request_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
 export const majorKeyEnum = pgEnum("major_key", [
   "masters",
   "pga",
@@ -94,13 +100,32 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const organisationRequests = pgTable("organisation_requests", {
+  id: text("id").primaryKey(),
+  organisationName: text("organisation_name").notNull(),
+  organisationType: organisationTypeEnum("organisation_type").notNull().default("other"),
+  contactName: text("contact_name").notNull(),
+  email: text("email").notNull(),
+  expectedPlayers: integer("expected_players").notNull(),
+  message: text("message"),
+  status: organisationRequestStatusEnum("status").notNull().default("pending"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  reviewedByUserId: text("reviewed_by_user_id").references(() => users.id),
+});
+
 export const organisationMembers = pgTable("organisation_members", {
   id: text("id").primaryKey(),
   organisationId: text("organisation_id").notNull().references(() => organisations.id),
   userId: text("user_id").notNull().references(() => users.id),
   role: organisationRoleEnum("role").notNull().default("player"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => ({
+  organisationUserUnique: uniqueIndex("organisation_members_org_user_unique").on(
+    table.organisationId,
+    table.userId,
+  ),
+}));
 
 export const leagues = pgTable("leagues", {
   id: text("id").primaryKey(),
