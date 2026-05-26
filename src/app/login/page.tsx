@@ -10,11 +10,11 @@ import { majorThemes } from "@/lib/theme/major-themes";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; invite?: string }>;
 }) {
+  const { error, invite } = await searchParams;
   const user = await getSessionUser();
-  if (user) redirect("/app");
-  const { error } = await searchParams;
+  if (user) redirect(invite ? `/join/${encodeURIComponent(invite)}` : "/app");
   const tournament = getActiveTournament();
   const theme = majorThemes[tournament.majorKey];
   const showDemoAccounts =
@@ -29,7 +29,9 @@ export default async function LoginPage({
               <MajorMark majorKey={tournament.majorKey} size="lg" />
               <h1 className="mt-8 max-w-xl text-6xl font-black leading-tight">Major Picks</h1>
               <p className="mt-4 max-w-md text-lg font-semibold leading-8 text-white/78">
-                Sign in to your private Major Picks league for {theme.label} {tournament.year}.
+                {invite
+                  ? "Sign in to accept your league invite."
+                  : `Sign in to your private Major Picks league for ${theme.label} ${tournament.year}.`}
               </p>
             </div>
             <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-md border border-white/15">
@@ -49,10 +51,13 @@ export default async function LoginPage({
             <p className="sport-label">Private competition</p>
             <h1 className="mt-1 text-3xl font-black">Sign in</h1>
             <p className="mt-2 font-semibold text-muted">
-              Access your league, manage your picks and follow the standings.
+              {invite
+                ? "Use the email address your organiser invited, then return to accept your league place."
+                : "Access your league, manage your picks and follow the standings."}
             </p>
           </div>
           <form action={loginAction} className="space-y-4 p-5">
+            {invite ? <input type="hidden" name="inviteCode" value={invite} /> : null}
             {error ? (
               <p className="rounded-md bg-rose-50 p-3 text-sm font-bold text-rose-800">
                 Email or password was not recognised.

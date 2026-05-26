@@ -30,6 +30,10 @@ export default async function JoinInvitePage({
       : expired
         ? "This invite has expired."
         : "You have been invited to join a Major Picks league.";
+  const supportLine =
+    invite && !expired && !accepted
+      ? `Invite for ${invite.email} · code ${inviteCode}`
+      : `Invite code ${inviteCode}`;
 
   return (
     <main className="min-h-screen bg-[#f4f7f2] px-4 py-6 text-primary sm:px-6 lg:px-8">
@@ -40,7 +44,17 @@ export default async function JoinInvitePage({
         </Link>
 
         <section className="mt-6 rounded-lg border border-border bg-white p-6 scorecard-shadow sm:p-8">
-          <span className={`flex size-12 items-center justify-center rounded-md ${invalid || expired || accepted ? "bg-red-50 text-red-800" : "bg-primary text-secondary"}`}>
+          <span
+            className={`flex size-12 items-center justify-center rounded-md ${
+              invalid
+                ? "bg-red-50 text-red-800"
+                : expired
+                  ? "bg-amber-50 text-amber-900"
+                  : accepted
+                    ? "bg-emerald-50 text-emerald-800"
+                    : "bg-primary text-secondary"
+            }`}
+          >
             {invalid || expired || accepted ? <AlertTriangle size={26} /> : <MailCheck size={26} />}
           </span>
           <p className="sport-label mt-5">Private invite</p>
@@ -54,8 +68,8 @@ export default async function JoinInvitePage({
                   ? "You can sign in and go to your dashboard to view your leagues."
                   : `Join ${inviteDetails?.organisation?.name ?? "your organisation"}${inviteDetails?.league ? ` in ${inviteDetails.league.name}` : ""}. Sign in with ${invite.email} to accept this invite.`}
           </p>
-          <p className="mt-4 inline-flex rounded-md border border-border bg-[#f8fafc] px-3 py-2 text-xs font-black uppercase text-muted">
-            Invite code: <span className="ml-2 text-primary">{inviteCode}</span>
+          <p className="mt-4 text-xs font-black uppercase tracking-wide text-muted">
+            {supportLine}
           </p>
           {error ? (
             <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-bold text-red-800">
@@ -76,7 +90,10 @@ export default async function JoinInvitePage({
                 </button>
               </form>
             ) : (
-              <Link href={accepted ? "/app" : "/login"} className="app-button h-12 px-5 text-base">
+              <Link
+                href={accepted ? "/app" : invite && !expired ? `/login?invite=${encodeURIComponent(inviteCode)}` : "/login"}
+                className="app-button h-12 px-5 text-base"
+              >
                 {accepted ? "Go to dashboard" : "Sign in"}
               </Link>
             )}

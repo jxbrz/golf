@@ -362,9 +362,14 @@ export async function acceptInviteAction(formData: FormData) {
 export async function loginAction(formData: FormData) {
   const email = String(formData.get("email"));
   const password = String(formData.get("password"));
+  const inviteCode = String(formData.get("inviteCode") || "").trim();
   const user = await createSession(email, password);
 
-  if (!user) redirect("/login?error=1");
+  if (!user) {
+    const inviteParam = inviteCode ? `&invite=${encodeURIComponent(inviteCode)}` : "";
+    redirect(`/login?error=1${inviteParam}`);
+  }
+  if (inviteCode) redirect(`/join/${encodeURIComponent(inviteCode)}`);
   redirect("/app");
 }
 
