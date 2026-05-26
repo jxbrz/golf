@@ -41,7 +41,7 @@ export async function submitEntryAction(formData: FormData) {
   if (!result.ok) {
     redirect(`/tournaments/${tournamentId}/pick?error=${encodeURIComponent(result.message)}`);
   }
-  revalidatePath("/");
+  revalidatePath("/app");
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
   revalidatePath(`/tournaments/${tournamentId}/team`);
@@ -58,7 +58,7 @@ export async function dropPlayerAction(formData: FormData) {
   if (!result.ok) {
     redirect(`/tournaments/${tournamentId}/team?error=${encodeURIComponent(result.message)}#drop`);
   }
-  revalidatePath("/");
+  revalidatePath("/app");
   revalidatePath(`/tournaments/${tournamentId}`);
   revalidatePath(`/tournaments/${tournamentId}/team`);
   revalidatePath(`/tournaments/${tournamentId}/leaderboard`);
@@ -86,7 +86,7 @@ export async function resetTournamentToNoPicksAction(formData: FormData) {
   const tournamentId = String(formData.get("tournamentId"));
   await resetDbTournamentEntries(tournamentId);
   resetTournamentToNoPicks(tournamentId);
-  revalidatePath("/");
+  revalidatePath("/app");
   revalidatePath("/admin");
   revalidatePath(`/admin/tournaments/${tournamentId}`);
   revalidatePath(`/admin/tournaments/${tournamentId}/entries`);
@@ -243,7 +243,7 @@ export async function loginAction(formData: FormData) {
   const user = await createSession(email, password);
 
   if (!user) redirect("/login?error=1");
-  redirect("/");
+  redirect("/app");
 }
 
 export async function logoutAction() {

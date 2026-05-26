@@ -22,7 +22,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ id:
   }
   const entry = (await getDbEntry(tournament.id, user.id)) ?? getEntry(tournament.id, user.id);
   if (user.role !== "admin" && !entry?.submittedAt && ["draft", "picks_open", "picks_locked"].includes(tournament.status)) {
-    redirect("/");
+    redirect("/app");
   }
   if (user.role !== "admin") {
     redirect(`/tournaments/${tournament.id}/leaderboard`);

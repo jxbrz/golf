@@ -13,7 +13,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const user = await getSessionUser();
-  if (user) redirect("/");
+  if (user) redirect("/app");
   const { error } = await searchParams;
   const tournament = getActiveTournament();
   const theme = majorThemes[tournament.majorKey];

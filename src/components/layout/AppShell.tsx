@@ -59,20 +59,20 @@ export async function AppShell({
         ]
       : user.role !== "admin" && prePlay
         ? [
-            { href: "/", label: "Home", icon: Home, key: "home" as const },
+            { href: "/app", label: "Home", icon: Home, key: "home" as const },
             { href: `/tournaments/${tournament.id}/pick`, label: entry?.submittedAt ? "Team" : "Pick Team", icon: ListChecks, key: "team" as const },
             { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
           ]
         : user.role !== "admin"
           ? [
-              { href: "/", label: "Home", icon: Home, key: "home" as const },
+              { href: "/app", label: "Home", icon: Home, key: "home" as const },
               { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const },
               { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
               ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag, key: "more" as const }] : []),
               { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
             ]
           : [
-              { href: "/", label: "Home", icon: Home, key: "home" as const },
+              { href: "/app", label: "Home", icon: Home, key: "home" as const },
               { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel, icon: ListChecks, key: "team" as const },
               { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
               ...(showDropNav ? [{ href: `/tournaments/${tournament.id}/drop`, label: "Drop", icon: Flag, key: "more" as const }] : []),
@@ -85,24 +85,24 @@ export async function AppShell({
           { href: `/tournaments/${tournament.id}/results`, label: "Results", icon: Medal, key: "results" as const },
           { href: `/tournaments/${tournament.id}/players`, label: "Field Results", icon: Users, key: "field" as const },
           { href: `/tournaments/${tournament.id}/pick`, label: "Team", icon: ListChecks, key: "team" as const },
-          { href: "/", label: "Home", icon: Home, key: "home" as const },
+          { href: "/app", label: "Home", icon: Home, key: "home" as const },
         ]
       : user.role === "admin"
       ? [
-          { href: "/", label: "Home", icon: Home, key: "home" as const },
+          { href: "/app", label: "Home", icon: Home, key: "home" as const },
           { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
           { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
           { href: `/admin/tournaments/${tournament.id}`, label: "Admin", icon: Shield, key: "admin" as const },
         ]
       : prePlay
         ? [
-            { href: "/", label: "Home", icon: Home, key: "home" as const },
+            { href: "/app", label: "Home", icon: Home, key: "home" as const },
             { href: `/tournaments/${tournament.id}/pick`, label: teamNavLabel, icon: ListChecks, key: "team" as const },
             { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
             { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
           ]
       : [
-          { href: "/", label: "Home", icon: Home, key: "home" as const },
+          { href: "/app", label: "Home", icon: Home, key: "home" as const },
           { href: `/tournaments/${tournament.id}/leaderboard`, label: "Standings", icon: Trophy, key: "standings" as const },
           { href: `/tournaments/${tournament.id}/players`, label: fieldNavLabel, icon: Users, key: "field" as const },
           ...(showDropNav
@@ -113,7 +113,7 @@ export async function AppShell({
   return (
     <div className="min-h-screen w-full pb-24 lg:pb-0">
       <aside className="app-sidebar fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-white/10 text-white lg:flex lg:flex-col">
-        <Link href="/" className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+        <Link href="/app" className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
           <MajorMark majorKey={tournament.majorKey} size="sm" />
           <span>
             <span className="app-display block text-xl font-bold leading-5">Major Picks</span>
@@ -173,7 +173,7 @@ export async function AppShell({
                   <ArrowLeft size={24} strokeWidth={2.2} />
                 </Link>
               ) : (
-                <Link href="/" aria-label="Home">
+                <Link href="/app" aria-label="Home">
                   <MajorMark majorKey={tournament.majorKey} size="sm" />
                 </Link>
               )}

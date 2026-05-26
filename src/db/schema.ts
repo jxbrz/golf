@@ -12,9 +12,20 @@ export const userRoleEnum = pgEnum("user_role", ["admin", "player"]);
 export const organisationRoleEnum = pgEnum("organisation_role", [
   "owner",
   "admin",
-  "member",
+  "player",
+]);
+export const organisationTypeEnum = pgEnum("organisation_type", [
+  "golf_club",
+  "society",
+  "company",
+  "school",
+  "friends",
+  "other",
 ]);
 export const groupRoleEnum = pgEnum("group_role", ["admin", "player"]);
+export const leagueStatusEnum = pgEnum("league_status", ["draft", "active", "complete"]);
+export const inviteRoleEnum = pgEnum("invite_role", ["admin", "player"]);
+export const inviteStatusEnum = pgEnum("invite_status", ["pending", "accepted", "expired"]);
 export const majorKeyEnum = pgEnum("major_key", [
   "masters",
   "pga",
@@ -69,6 +80,8 @@ export const organisations = pgTable("organisations", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").notNull().unique(),
+  type: organisationTypeEnum("type").notNull().default("other"),
+  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
   billingEmail: text("billing_email"),
   ...timestamps,
 });
@@ -85,8 +98,38 @@ export const organisationMembers = pgTable("organisation_members", {
   id: text("id").primaryKey(),
   organisationId: text("organisation_id").notNull().references(() => organisations.id),
   userId: text("user_id").notNull().references(() => users.id),
-  role: organisationRoleEnum("role").notNull().default("member"),
+  role: organisationRoleEnum("role").notNull().default("player"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const leagues = pgTable("leagues", {
+  id: text("id").primaryKey(),
+  organisationId: text("organisation_id").notNull().references(() => organisations.id),
+  name: text("name").notNull(),
+  seasonYear: integer("season_year").notNull(),
+  status: leagueStatusEnum("status").notNull().default("draft"),
+  ...timestamps,
+});
+
+export const leagueTournaments = pgTable("league_tournaments", {
+  id: text("id").primaryKey(),
+  leagueId: text("league_id").notNull().references(() => leagues.id),
+  tournamentId: text("tournament_id").notNull().references(() => tournaments.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const invites = pgTable("invites", {
+  id: text("id").primaryKey(),
+  organisationId: text("organisation_id").notNull().references(() => organisations.id),
+  leagueId: text("league_id").references(() => leagues.id),
+  email: text("email").notNull(),
+  inviteCode: text("invite_code").notNull().unique(),
+  role: inviteRoleEnum("role").notNull().default("player"),
+  status: inviteStatusEnum("status").notNull().default("pending"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdByUserId: text("created_by_user_id").notNull().references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  acceptedAt: timestamp("accepted_at", { withTimezone: true }),
 });
 
 export const groups = pgTable("groups", {

@@ -10,6 +10,8 @@ import {
   groupCompetitions,
   groupMembers,
   groups,
+  leagues,
+  leagueTournaments,
   organisationMembers,
   organisations,
   tournaments,
@@ -20,6 +22,7 @@ import {
 const store = getStore();
 const defaultOrganisationId = "org_default";
 const defaultGroupId = "group_default";
+const defaultLeagueId = "league_default_2026";
 const defaultRuleSetId = "rule_set_major_picks_default";
 
 function asDate(value: string | null) {
@@ -41,6 +44,8 @@ async function seed() {
     id: defaultOrganisationId,
     name: "Major Picks",
     slug: "major-picks",
+    type: "other" as const,
+    createdByUserId: store.users.find((user) => user.role === "admin")?.id ?? store.users[0]!.id,
     billingEmail: null,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -73,13 +78,26 @@ async function seed() {
         id: `org_member_${user.id}`,
         organisationId: defaultOrganisation.id,
         userId: user.id,
-        role: user.role === "admin" ? ("owner" as const) : ("member" as const),
+        role: user.role === "admin" ? ("owner" as const) : ("player" as const),
         createdAt: timestamp,
       })),
     )
     .onConflictDoNothing();
 
   await db.insert(groups).values(defaultGroup).onConflictDoNothing();
+
+  await db
+    .insert(leagues)
+    .values({
+      id: defaultLeagueId,
+      organisationId: defaultOrganisation.id,
+      name: "Major Picks 2026",
+      seasonYear: 2026,
+      status: "active",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    })
+    .onConflictDoNothing();
 
   await db
     .insert(competitionRuleSets)
@@ -146,6 +164,18 @@ async function seed() {
         currentRound: currentRoundForStatus(tournament.status),
         createdAt: asDate(tournament.createdAt)!,
         updatedAt: asDate(tournament.updatedAt)!,
+      })),
+    )
+    .onConflictDoNothing();
+
+  await db
+    .insert(leagueTournaments)
+    .values(
+      store.tournaments.map((tournament) => ({
+        id: `league_tournament_${tournament.id}`,
+        leagueId: defaultLeagueId,
+        tournamentId: tournament.id,
+        createdAt: timestamp,
       })),
     )
     .onConflictDoNothing();

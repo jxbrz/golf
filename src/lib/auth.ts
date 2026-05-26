@@ -19,7 +19,7 @@ export async function requireCurrentUser() {
 
 export async function requireAdminUser() {
   const user = await requireCurrentUser();
-  if (user.role !== "admin") redirect("/");
+  if (user.role !== "admin") redirect("/app");
   return user;
 }
 
