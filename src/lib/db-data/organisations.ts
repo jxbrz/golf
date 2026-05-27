@@ -77,8 +77,13 @@ export async function createOrganisationRequest(input: OrganisationRequestInput)
 
 export async function listOrganisationRequests() {
   if (!process.env.DATABASE_URL) return [];
-  const db = getDb();
-  return db.select().from(organisationRequests).orderBy(desc(organisationRequests.createdAt));
+  try {
+    const db = getDb();
+    return await db.select().from(organisationRequests).orderBy(desc(organisationRequests.createdAt));
+  } catch (error) {
+    console.warn("Unable to read organisation requests.", error);
+    return [];
+  }
 }
 
 export async function approveOrganisationRequest(requestId: string, adminUserId: string) {
@@ -202,70 +207,90 @@ export async function rejectOrganisationRequest(requestId: string, adminUserId: 
 
 export async function listOrganisations() {
   if (!process.env.DATABASE_URL) return [];
-  const db = getDb();
-  const [organisationRows, memberRows, leagueRows] = await Promise.all([
-    db.select().from(organisations).orderBy(desc(organisations.createdAt)),
-    db.select().from(organisationMembers),
-    db.select().from(leagues),
-  ]);
+  try {
+    const db = getDb();
+    const [organisationRows, memberRows, leagueRows] = await Promise.all([
+      db.select().from(organisations).orderBy(desc(organisations.createdAt)),
+      db.select().from(organisationMembers),
+      db.select().from(leagues),
+    ]);
 
-  return organisationRows.map((organisation) => ({
-    organisation,
-    memberCount: memberRows.filter((member) => member.organisationId === organisation.id).length,
-    leagueCount: leagueRows.filter((league) => league.organisationId === organisation.id).length,
-  }));
+    return organisationRows.map((organisation) => ({
+      organisation,
+      memberCount: memberRows.filter((member) => member.organisationId === organisation.id).length,
+      leagueCount: leagueRows.filter((league) => league.organisationId === organisation.id).length,
+    }));
+  } catch (error) {
+    console.warn("Unable to read organisations.", error);
+    return [];
+  }
 }
 
 export async function listPlatformUsers() {
   if (!process.env.DATABASE_URL) return [];
-  const db = getDb();
-  return db.select().from(users).orderBy(desc(users.createdAt));
+  try {
+    const db = getDb();
+    return await db.select().from(users).orderBy(desc(users.createdAt));
+  } catch (error) {
+    console.warn("Unable to read platform users.", error);
+    return [];
+  }
 }
 
 export async function listPlatformLeagues() {
   if (!process.env.DATABASE_URL) return [];
-  const db = getDb();
-  const [leagueRows, organisationRows] = await Promise.all([
-    db.select().from(leagues).orderBy(desc(leagues.createdAt)),
-    db.select().from(organisations),
-  ]);
-  const organisationsById = new Map(organisationRows.map((organisation) => [organisation.id, organisation]));
+  try {
+    const db = getDb();
+    const [leagueRows, organisationRows] = await Promise.all([
+      db.select().from(leagues).orderBy(desc(leagues.createdAt)),
+      db.select().from(organisations),
+    ]);
+    const organisationsById = new Map(organisationRows.map((organisation) => [organisation.id, organisation]));
 
-  return leagueRows.map((league) => ({
-    league,
-    organisation: organisationsById.get(league.organisationId) ?? null,
-  }));
+    return leagueRows.map((league) => ({
+      league,
+      organisation: organisationsById.get(league.organisationId) ?? null,
+    }));
+  } catch (error) {
+    console.warn("Unable to read platform leagues.", error);
+    return [];
+  }
 }
 
 export async function getOrganisationDetail(organisationId: string) {
   if (!process.env.DATABASE_URL) return null;
-  const db = getDb();
-  const [organisation] = await db
-    .select()
-    .from(organisations)
-    .where(eq(organisations.id, organisationId))
-    .limit(1);
-  if (!organisation) return null;
-
-  const [memberRows, leagueRows, inviteRows] = await Promise.all([
-    db
+  try {
+    const db = getDb();
+    const [organisation] = await db
       .select()
-      .from(organisationMembers)
-      .where(eq(organisationMembers.organisationId, organisationId)),
-    db.select().from(leagues).where(eq(leagues.organisationId, organisationId)),
-    db.select().from(invites).where(eq(invites.organisationId, organisationId)),
-  ]);
-  const memberUserRows = memberRows.length
-    ? await db.select().from(users).where(inArray(users.id, memberRows.map((member) => member.userId)))
-    : [];
-  const usersById = new Map(memberUserRows.map((user) => [user.id, user]));
+      .from(organisations)
+      .where(eq(organisations.id, organisationId))
+      .limit(1);
+    if (!organisation) return null;
 
-  return {
-    organisation,
-    leagues: leagueRows,
-    invites: inviteRows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
-    members: memberRows.map((member) => ({ member, user: usersById.get(member.userId) ?? null })),
-  };
+    const [memberRows, leagueRows, inviteRows] = await Promise.all([
+      db
+        .select()
+        .from(organisationMembers)
+        .where(eq(organisationMembers.organisationId, organisationId)),
+      db.select().from(leagues).where(eq(leagues.organisationId, organisationId)),
+      db.select().from(invites).where(eq(invites.organisationId, organisationId)),
+    ]);
+    const memberUserRows = memberRows.length
+      ? await db.select().from(users).where(inArray(users.id, memberRows.map((member) => member.userId)))
+      : [];
+    const usersById = new Map(memberUserRows.map((user) => [user.id, user]));
+
+    return {
+      organisation,
+      leagues: leagueRows,
+      invites: inviteRows.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+      members: memberRows.map((member) => ({ member, user: usersById.get(member.userId) ?? null })),
+    };
+  } catch (error) {
+    console.warn("Unable to read organisation detail.", error);
+    return null;
+  }
 }
 
 export async function createInvite(input: InviteInput) {
